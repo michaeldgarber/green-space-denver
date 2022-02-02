@@ -3,25 +3,18 @@
 #The purpose of this is to wrangle and check the NDVI data loaded in this script:
 library(tidyverse)
 library(terra)
+library(raster)
 library(mapview)
 library(sf)
-
-
-## can I read it back?---------
-# setwd(here("data-processed"))
-# ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
-# test_write_raster = ndvi_den_metro_terr_2016
-# terra::writeRaster(
-#   test_write_raster,
-#   overwrite=TRUE,
-#   #  datatype = "INT1U", 
-#   filename = "test_write_raster.tif" 
-# )
-
-# test_write_raster_read = terra::rast("test_write_raster.tif")
-# test_write_raster_read %>% plot() #yay! worked.
-
+library(here)
+library(scales)
+library(lubridate)
+# Read the 5-year terra raster file--------
+# Note this different from the usual way I'd load a file
+setwd(here("data-processed"))
+ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
 ndvi_den_metro_terr_5_yr
+
 # visualize dates using the raster version to check-------
 #check on cloud cover, etc.
 ndvi_den_metro_terr_5_yr$`20210805_NDVI` %>% raster::raster() %>% 
@@ -38,14 +31,13 @@ ndvi_den_metro_terr_5_yr$`20210720_NDVI` %>% raster::raster() %>%
 ndvi_den_metro_terr_5_yr$`20210728_NDVI` %>% raster::raster() %>% 
   mapview() 
 
-
-#note data are more missing in 2020...less frequent for some reason.
+#Note data are more missing in 2020...less frequent for some reason.
 ndvi_den_metro_terr_5_yr$`20200101_NDVI`  %>% raster::raster() %>% mapview() #data available
 ndvi_den_metro_terr_5_yr$`20200109_NDVI` %>% raster::raster() %>% mapview() #missing
 ndvi_den_metro_terr_5_yr$`20200703_NDVI` %>% raster::raster() %>% mapview() 
 
 
-#okay, so my workflow is going to be:
+#okay, so workflow:
 #1. download data from rgee as a rasterstack, i.e., using the raster package
 #2. convert to terra using terra:rast()
 #3. save to disk using the terra package's writeRaster function above
@@ -78,8 +70,12 @@ pivot_longer_fix_date = function(df){
 
 group_by_date_summarise_ndvi = function(df) {
   df %>% 
-    group_by(date) %>% 
-    summarise(ndvi_mean = mean(ndvi, na.rm=TRUE)) %>% 
+    group_by(date, test_place_name) %>% #include place name just to keep the var around
+    summarise(
+      ndvi_mean = mean(ndvi, na.rm=TRUE),
+      ndvi_var = var(ndvi, na.rm=TRUE),
+      ndvi_sd = sd(ndvi, na.rm=TRUE)
+      ) %>% 
     ungroup() %>% 
     mutate(
       month = lubridate::month(date),
@@ -87,8 +83,6 @@ group_by_date_summarise_ndvi = function(df) {
     )
 }
 
-library(lubridate)
-library(scales)
 ggplot_ndvi_over_time = function(df){
   df %>% 
     ggplot(
@@ -121,14 +115,15 @@ bbox_evergreen_east = st_bbox(
 ) %>% 
   sf::st_as_sfc() 
 
-mv_good_date =ndvi_den_metro_terr_5_yr$`20210704_NDVI` %>% raster::raster() %>%  
+mv_good_date =ndvi_den_metro_terr_5_yr$`20210704_NDVI` %>% 
+  raster::raster() %>%  
   mapview(layer.name = "NDVI") 
-mv_bbox_evergreen_east = bbox_evergreen_east %>% mapview(layer.name = "evergreen_east")
+mv_bbox_evergreen_east = bbox_evergreen_east %>% 
+  mapview(layer.name = "evergreen_east")
 mv_good_date+mv_bbox_evergreen_east
 
 
-#test this method
-ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
+#summarize NDVI in the Evergreen East area
 ndvi_den_metro_terr_5_yr_evergreen_east = ndvi_den_metro_terr_5_yr %>% 
   terra::crop(bbox_evergreen_east) %>%
   pivot_longer_fix_date() %>% 
@@ -137,25 +132,13 @@ ndvi_den_metro_terr_5_yr_evergreen_east = ndvi_den_metro_terr_5_yr %>%
 ndvi_den_metro_terr_5_yr_evergreen_east_day= ndvi_den_metro_terr_5_yr_evergreen_east %>% 
   group_by_date_summarise_ndvi()
 
-## 
-library(scales)
-ndvi_den_metro_terr_5_yr_evergreen_east_day %>% filter(year==2019) %>% View()
-
 #ggplot over time
 ndvi_den_metro_terr_5_yr_evergreen_east_day %>% 
-  ggplot(
-    aes(
-      x=date, 
-      y=ndvi_mean  
-    ))+
-  geom_line()+
-  geom_point()+
-  scale_x_date(labels=date_format("%Y-%m-%d"), date_breaks = "2 months")+
-  theme(axis.text.x = element_text(angle = 45, hjust=1))
+  ggplot_ndvi_over_time()
 
-ndvi_den_metro_terr_5_yr_evergreen_east_day %>% 
-  filter(ndvi_mean < .2) %>% 
-  View()
+# ndvi_den_metro_terr_5_yr_evergreen_east_day %>% 
+#   filter(ndvi_mean < .2) %>% 
+#   View()
 
 #test some that appear problematic per evergreen east
 ndvi_den_metro_terr_5_yr$`20160422_NDVI`  %>% raster::raster() %>% mapview()#maybe fine?
@@ -194,7 +177,7 @@ ndvi_den_metro_terr_5_yr_indian_tree_golf_day %>%
   ggplot_ndvi_over_time()
 
 #borderline cases between 0.3 and 0.5 and in summer
-ndvi_den_metro_terr_5_yr_indian_tree_golf %>% 
+ndvi_den_metro_terr_5_yr_indian_tree_golf_day %>% 
   filter(ndvi_mean>0.3 & ndvi_mean<0.5) %>% 
   filter(month>=5&month<=8)
 
@@ -214,7 +197,6 @@ ndvi_den_metro_terr_5_yr$`20160406_NDVI`  %>% raster::raster() %>% mapview()
 #SE corner 39.74549373003514, -104.9561144255883
 #NE corner 39.746296514307176, -104.95634095869859
 #NW corner 39.74627741072699, -104.95626462928261
-
 bbox_city_park= st_bbox(
   c(
     xmin = -104.957913933541, #westmost
@@ -234,8 +216,164 @@ ndvi_den_metro_terr_5_yr_city_park = ndvi_den_metro_terr_5_yr %>%
   mutate(test_place_name = "city_park")
 
 ndvi_den_metro_terr_5_yr_city_park_day= ndvi_den_metro_terr_5_yr_city_park %>% 
-  group_by_date_summarise_ndvi()
+  group_by_date_summarise_ndvi() 
+
+ndvi_den_metro_terr_5_yr_city_park_day %>% 
+  ggplot_ndvi_over_time()
 
 
-#test on a good day
-#ndvi_den_metro_terr_5_yr_city_park$`20210704_NDVI` %>% raster::raster() %>% mapview() #all very high.
+#test on a good day per the raster above
+ndvi_den_metro_terr_5_yr_city_park_day %>% 
+  filter(date== "2021-07-04") #yup, very high.
+
+## rbind test places together------
+#so you can visualize them all to get a sense for the consistency
+#of the weird measurements
+ndvi_test_places_day = ndvi_den_metro_terr_5_yr_evergreen_east_day %>% 
+  bind_rows(
+    ndvi_den_metro_terr_5_yr_indian_tree_golf_day,
+    ndvi_den_metro_terr_5_yr_city_park_day
+  ) %>% 
+  #note my tolerance for including bad data is lower than my tolerance
+  #for excluding good data. That is, I prefer specificity.
+  
+  #0.35 seems reasonable for evergreen_east, but it's a tough call.
+  mutate(
+    month_summer = case_when(
+      month>=6 & month <=8 ~1,
+      TRUE ~0),
+    month_summer_include_may = case_when(
+      month>=5 & month <=8 ~1,
+      TRUE ~0)    ,
+    valid_city_park = case_when(
+      month_summer_include_may == 1 &
+        test_place_name == "city_park" & 
+        ndvi_mean>0.6 ~1,
+      TRUE ~0),
+    
+    valid_indian_tree_golf = case_when(
+      month_summer_include_may == 1 &
+        test_place_name == "indian_tree_golf" &
+        ndvi_mean>0.6 ~1,
+      TRUE ~0),
+    
+    valid_evergreen_east = case_when(
+      month_summer_include_may == 1 &
+        test_place_name == "evergreen_east" & 
+        ndvi_mean>0.35 ~1,
+      TRUE ~0)
+  )
+
+#check
+table(ndvi_test_places_day$valid_indian_tree_golf)
+table(ndvi_test_places_day$valid_city_park)
+table(ndvi_test_places_day$valid_evergreen_east)
+#make little datasets for each...the meaning of the var will change.
+date_when_valid_evergreen_east = ndvi_test_places_day %>% 
+  distinct(date, valid_evergreen_east) 
+date_when_valid_city_park = ndvi_test_places_day %>% 
+  distinct(date, valid_city_park) 
+date_when_valid_indian_tree_golf = ndvi_test_places_day %>% 
+  distinct(date, valid_indian_tree_golf)
+
+## wrangle valid dates------
+#now link these. there is probably a more elegant way...using pivot_wider maybe,
+#but this will work. we are changing the meaning of the valid variables slightly
+#so they apply at the date level
+ndvi_test_places_day_wrangle = ndvi_test_places_day %>% 
+  dplyr::select(-starts_with("valid_")) %>% 
+  left_join(date_when_valid_evergreen_east, by = "date") %>% 
+  left_join(date_when_valid_city_park, by = "date") %>% 
+  left_join(date_when_valid_indian_tree_golf, by = "date") %>% 
+  mutate(
+    date_is_valid_all = case_when(
+      valid_evergreen_east==1 & 
+      valid_city_park==1 &
+      valid_indian_tree_golf==1 ~ 1,
+    TRUE ~0
+  ))
+
+ndvi_test_places_day_wrangle %>% 
+  group_by(date_is_valid_all) %>% 
+  summarise(n=n())
+date_when_valid_all = ndvi_test_places_day_wrangle %>% 
+  distinct(date, date_is_valid_all)
+
+date_when_valid_all %>% 
+  group_by(date_is_valid_all) %>% 
+  summarise(n=n())
+  #40 days over the five years.
+
+#save this. this is an indicator for valid dates over the five years.
+setwd(here("data-processed"))
+save(date_when_valid_all, file = "date_when_valid_all.RData")
+
+### visualize by site name-----------
+ndvi_test_places_day %>% 
+  ggplot(
+    aes(
+      x=date, 
+      y=ndvi_mean  
+    ))+
+  geom_line(aes(colour = test_place_name))+
+  geom_point(aes(colour = test_place_name))+
+  scale_x_date(labels=date_format("%Y-%m-%d"), date_breaks = "2 months")+
+  theme(axis.text.x = element_text(angle = 45, hjust=1))
+
+### visualize all three during summer months only (including may)----------
+ndvi_test_places_day %>% 
+  filter(month>=5 & month <=8) %>%
+  ggplot(
+    aes(
+      x=date, 
+      y=ndvi_mean  
+    ))+
+  geom_line(aes(colour = test_place_name))+
+  geom_point(aes(colour = test_place_name))+
+  scale_x_date(labels=date_format("%Y-%m-%d"), date_breaks = "2 months")+
+  scale_y_continuous(n.breaks = 10)+
+  theme(axis.text.x = element_text(angle = 45, hjust=1))
+#it looks like anything below 0.6 for city park and indian tree is invalid and anything
+#below .35 for evergreen east is invalid
+
+#what happens if we restrict to city park above 0.6. Do we get invalid results for
+#the other two zones?
+dates_summer_when_ndvi_valid = ndvi_den_metro_terr_5_yr_city_park_day %>% 
+  filter(month>=5 & month <=8) %>% 
+  filter(ndvi_mean>0.60) %>% 
+  mutate(city_park_above_06=1) %>% 
+  distinct(date, city_park_above_06)
+
+#link that to the dataset with all three, restrict to those dates, and visualize
+ndvi_test_places_day %>% 
+  left_join(dates_summer_when_ndvi_city_park_above_06, by = "date") %>% 
+  filter(city_park_above_06==1) %>% 
+  ggplot(
+    aes(
+      x=date, 
+      y=ndvi_mean  
+    ))+
+  geom_line(aes(colour = test_place_name))+
+  geom_point(aes(colour = test_place_name))+
+  scale_x_date(labels=date_format("%Y-%m-%d"), date_breaks = "2 months")+
+  theme(axis.text.x = element_text(angle = 45, hjust=1))
+
+#visualize using the new variables
+ndvi_test_places_day_wrangle %>% 
+  filter(date_is_valid_all==1) %>% 
+  ggplot(
+    aes(
+      x=date, 
+      y=ndvi_mean  
+    ))+
+  geom_line(aes(colour = test_place_name))+
+  geom_point(aes(colour = test_place_name))+
+  scale_x_date(labels=date_format("%Y-%m-%d"), date_breaks = "2 months")+
+  scale_y_continuous(n.breaks = 10)+
+  theme(axis.text.x = element_text(angle = 45, hjust=1))
+
+# Link valid dates with main dataset again-----------########
+
+  
+  
+

@@ -27,10 +27,11 @@ library(reticulate)
 library(rgee)
 setwd(here("data-processed"))
 
+# Check rgee setup and Python environment---------
 reticulate::py_config()
 rgee::ee_check() #worked.
 rgee::ee_check_credentials()
-#source(here("scripts", "configure  _rgee_lenovo.R")) #initialize rgee for Windows
+#source(here("scripts", "configure  _rgee_lenovo.R")) #initialize rgee for Windows PC
 rgee::ee_Initialize(drive = T) #must run every time.
 
 #Load denver area data for your region of interest
@@ -108,13 +109,15 @@ landsat_8_ndvi_image_coll_2021<- ee$ImageCollection('LANDSAT/LC08/C01/T1_8DAY_ND
 ee_print(landsat_8_ndvi_image_coll_2017) #12 bands. about 2.4 mb
 ee_print(landsat_8_ndvi_image_coll_2019)
 ee_print(landsat_8_ndvi_image_coll_2020)
+
 #  convert LANDSAT image collection to raster --------
 n_m_per_pixel = 30#30 is the lowest you can go. 
 #try this with better understanding of terra read/write
 #note renaming...removing the lsat...was too long.
 ndvi_den_metro_rast_2016 = landsat_8_ndvi_image_coll_2016 %>% 
   ee_as_raster(
-    dsn = "ndvi_den_metro_rast_2016", #very important to specify; otherwise will overwrite and duplicate info
+    dsn = "ndvi_den_metro_rast_2016", #very important to specify; 
+                                  #otherwise will overwrite and  duplicate info
     region = den_metro_ee, #use metro to ensure coverage throughout region
     scale = n_m_per_pixel,  #number of meters per pixel. smaller number...slower speed
     via = "drive" #worked after I updated the googledrive package.
@@ -189,9 +192,8 @@ library(here)
 setwd(here("data-processed"))
 #I tried several ways to save, including the suggestion here to save as .rds 
 # https://tmieno2.github.io/R-as-GIS-for-Economists/read-write-stars.html
-#What worked best for me was to convert to terra and then save using writeRaster 
-#and then you can convert
-#back if needed (round trip)
+#What worked best for me was to convert to terra and then save using terra::writeRaster 
+#and then you can convert back to raster::raster if needed (i.e., round trip)
 
 #https://geocompr.robinlovelace.net/read-write.html#file-formats
 #this worked.
@@ -204,4 +206,5 @@ terra::writeRaster(
   filename = "ndvi_den_metro_terr_5_yr.tif" 
 )
 
-
+#The workflow continues here:
+#filename: 1b_wrangle_check_landsat_ndvi_denver
