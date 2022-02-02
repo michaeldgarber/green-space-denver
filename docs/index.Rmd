@@ -12,5 +12,8 @@ output:
 
 ---
 # Demo
-hi how are yoyu
-## Demo 2
+hi how are you
+
+## subheading 1
+
+## subheading 2
