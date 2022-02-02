@@ -1,0 +1,16 @@
+---
+title: "demo index"
+author: "Michael D Garber"
+date: "2/2/2022"
+output:
+  html_document:
+    fig_caption: yes
+    toc: true
+    toc_float: true
+    df_print: paged
+  theme: readable
+
+---
+# Demo
+hi how are yoyu
+## Demo 2
