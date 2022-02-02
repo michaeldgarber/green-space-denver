@@ -2,10 +2,6 @@
 title: "Preliminary NDVI analyses"
 author: "Michael D Garber"
 date: "2/2/2022"
-output:
-  html_document:
-    toc: true
-    toc_depth: 2
 ---
 
 This document presents some preliminary analyses characterizing the NDVI of certain places and census tracts throughout the Denver metro area.
@@ -25,5 +21,4 @@ load("places_native_geo.RData")
 places_native_geo %>% 
   mapview(zcol = "place_type",
           layer.name = "Place category")
-
 ```
