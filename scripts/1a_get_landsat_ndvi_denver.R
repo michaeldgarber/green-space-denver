@@ -1,6 +1,7 @@
 #filename: 1_get_landsat_ndvi_denver
 #Revised 12/27/21
-#Revised 1/17/22 on Mac
+#Revised 1/17/22 on Mac (switched OS)
+#Revised 2/1/22
 #Planning a pipeline:
 
 #0 -download denver region data
@@ -32,8 +33,7 @@ rgee::ee_check_credentials()
 #source(here("scripts", "configure  _rgee_lenovo.R")) #initialize rgee for Windows
 rgee::ee_Initialize(drive = T) #must run every time.
 
-
-#load denver area data for your region of interest
+#Load denver area data for your region of interest
 setwd(here("data-processed"))
 load("den_metro_co_geo.RData")
 load("den_jeff_co_geo.RData")
@@ -41,7 +41,6 @@ load("den_jeff_co_geo.RData")
 # create bounding box------------
 #1/25/22 I considered using all counties, including Adams and Arapahoe,
 #but I decided that a bounding box around Denver County and Jefferson county is sufficient.
-#Look. It covers a lot.
 
 den_jeff_co_geo %>% mapview()
 den_metro_bbox = den_jeff_co_geo %>% 
@@ -190,7 +189,7 @@ library(here)
 setwd(here("data-processed"))
 #I tried several ways to save, including the suggestion here to save as .rds 
 # https://tmieno2.github.io/R-as-GIS-for-Economists/read-write-stars.html
-#What seems to work the best is to convert to terra and then save using writeRaster 
+#What worked best for me was to convert to terra and then save using writeRaster 
 #and then you can convert
 #back if needed (round trip)
 

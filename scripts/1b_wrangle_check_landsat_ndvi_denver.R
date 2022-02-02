@@ -1,6 +1,10 @@
 #filename: 1b_wrangle_check_landsat_ndvi_denver
 
 #The purpose of this is to wrangle and check the NDVI data loaded in this script:
+library(tidyverse)
+library(terra)
+library(mapview)
+library(sf)
 
 
 ## can I read it back?---------
