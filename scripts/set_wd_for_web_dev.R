@@ -5,3 +5,5 @@ library(here)
 setwd(here("docs"))
 
 rmarkdown::render_site()
+
+#Must knit the analyses file you care about separately from this render_site function
