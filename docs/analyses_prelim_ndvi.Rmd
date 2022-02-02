@@ -9,3 +9,17 @@ This document presents some preliminary analyses characterizing the NDVI of cert
 # Outline  
 1. Characterize NDVI of certain places
 2. Characterize NDVI of census tracts
+
+```{r mapview, eval=TRUE, echo=TRUE, warning=FALSE, message=TRUE}
+library(here)
+library(tidyverse)
+library(sf)
+library(mapview)
+
+setwd(here("data-processed"))
+load("places_native_geo.RData")
+places_native_geo %>% 
+  mapview(zcol = "place_type",
+          layer.name = "Place category")
+
+```
