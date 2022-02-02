@@ -1,19 +1,4 @@
 ---
-title: "demo index"
-author: "Michael D Garber"
-date: "2/2/2022"
-output:
-  html_document:
-    fig_caption: yes
-    toc: true
-    toc_float: true
-    df_print: paged
-  theme: readable
-
+title: "index"
+output: html_document
 ---
-# Demo
-hi how are you
-
-## subheading 1
-
-## subheading 2
