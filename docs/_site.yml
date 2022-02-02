@@ -1,11 +1,11 @@
-name: "my-website"
+name: "green-space-denver"
 output_dir: "."
 navbar:
-  title: "My Website"
+  title: "green-space-denver"
   left:
     - text: "Home"
       href: index.html
     - text: "About"
       href: about.html
-    - text: "analyses"
+    - text: "Analyses"
       href: analyses_prelim_ndvi.html
