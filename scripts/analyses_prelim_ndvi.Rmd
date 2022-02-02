@@ -17,3 +17,4 @@ This document presents some preliminary analyses characterizing the NDVI of cert
 1. Characterize NDVI of certain places
 2. Characterize NDVI of census tracts
 
+update
