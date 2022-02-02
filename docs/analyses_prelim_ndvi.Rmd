@@ -25,7 +25,6 @@ This document presents some preliminary analyses characterizing the NDVI of cert
 ```{r load packages, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 library(tidyverse)
 library(mapview)
-library(terra)
 library(sf)
 library(here)
 ```
