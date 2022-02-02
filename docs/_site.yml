@@ -1,11 +1,8 @@
-name: "mysite"
+name: "my-website"
 navbar:
-  title: "mysite"
+  title: "My Website"
   left:
-  - text: "index"
-    href: index.html
-  - text: "about"
-    href: about.html
-  - text: "analyses"
-    href: analyses_prelim_ndvi.html
-output_dir:: "docs"
+    - text: "Home"
+      href: index.html
+    - text: "About"
+      href: about.html

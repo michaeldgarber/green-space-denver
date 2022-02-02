@@ -1,4 +1,5 @@
 ---
 title: "About This Website"
-output: html_document
 ---
+
+More about this website.
