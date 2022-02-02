@@ -2,9 +2,12 @@
 title: "Preliminary NDVI analyses"
 author: "Michael D Garber"
 date: "2/2/2022"
-output: 
-  html_document: 
-    theme: readable
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    df_print: paged
+  theme: readable
 ---
 
 ```{r setup, include=FALSE}
@@ -17,4 +20,26 @@ This document presents some preliminary analyses characterizing the NDVI of cert
 1. Characterize NDVI of certain places
 2. Characterize NDVI of census tracts
 
-update
+# Load packages
+```{r load packages, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(mapview)
+library(terra)
+library(sf)
+library(here)
+```
+
+```{r load places, eval=TRUE, echo=TRUE}
+setwd(here("data-processed"))
+load("places_native_geo.RData")
+```
+# test a mapview
+```{r mapview places, eval=TRUE, echo=TRUE}
+places_native_geo %>% 
+  mapview(zcol = "place_type",
+          layer.name = "Place category")
+```
+
+# another heading
+## a subheading
+## another subheading
