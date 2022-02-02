@@ -7,17 +7,24 @@ date: "2/2/2022"
 This document presents some preliminary analyses characterizing the NDVI of certain places and census tracts throughout the Denver metro area.
 
 # Outline  
-1. Characterize NDVI of certain places
+
 2. Characterize NDVI of census tracts
 
-```{r mapview, eval=TRUE, echo=TRUE, warning=FALSE, message=TRUE}
+```{r loadpackages, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 library(here)
 library(tidyverse)
 library(sf)
 library(mapview)
+```
 
+Load data. Note data are created in this folder: https://github.com/michaeldgarber/green-space-denver/tree/main/scripts
+```{r loaddata, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 load("places_native_geo.RData")
+```
+
+Map the places of interest, classified by type.
+```{r mapview, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 places_native_geo %>% 
   mapview(zcol = "place_type",
           layer.name = "Place category")
