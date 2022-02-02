@@ -2,8 +2,10 @@ name: "mysite"
 navbar:
   title: "mysite"
   left:
-  - text: "Home"
+  - text: "index"
     href: index.html
-  - text: "About"
+  - text: "about"
     href: about.html
+  - text: "analyses"
+    href: analyses_prelim_ndvi.html
 output_dir:: "docs"
