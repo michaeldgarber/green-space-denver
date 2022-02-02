@@ -1,0 +1,11 @@
+---
+title: "Preliminary NDVI analyses"
+author: "Michael D Garber"
+date: "2/2/2022"
+---
+
+This document presents some preliminary analyses characterizing the NDVI of certain places and census tracts throughout the Denver metro area.
+
+# Outline  
+1. Characterize NDVI of certain places
+2. Characterize NDVI of census tracts
