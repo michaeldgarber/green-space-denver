@@ -35,7 +35,7 @@ ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
 #comment: I'm using raster for the crop, because using terra was givinv me an error.
 ## 
 #-----intersect the raster file with these buffers-------------#
-ndvi_den_botanic_1000_m_cropped_rast = ndvi_lsat_den_jeff_co_rast %>% 
+ndvi_den_botanic_1000_m_cropped_rast = ndvi_den_metro_terr_5_yr  %>% 
   raster::crop(den_botanic_buff_1000_m)
 save(ndvi_den_botanic_1000_m_cropped_rast, file = "ndvi_den_botanic_1000_m_cropped_rast.RData")
 plot(ndvi_den_botanic_1000_m_cropped_rast)
