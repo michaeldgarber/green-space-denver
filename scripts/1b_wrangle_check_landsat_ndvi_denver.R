@@ -302,6 +302,9 @@ ndvi_test_places_day_wrangle = ndvi_test_places_day %>%
     TRUE ~0
   ))
 
+setwd(here("data-processed"))
+save(ndvi_test_places_day_wrangle, file = "ndvi_test_places_day_wrangle.RData")
+
 ndvi_test_places_day_wrangle %>% 
   group_by(date_is_valid_all) %>% 
   summarise(n=n())
@@ -318,7 +321,7 @@ setwd(here("data-processed"))
 save(date_when_valid_all, file = "date_when_valid_all.RData")
 
 ### visualize by site name-----------
-ndvi_test_places_day %>% 
+ndvi_test_places_day_wrangle %>% 
   ggplot(
     aes(
       x=date, 

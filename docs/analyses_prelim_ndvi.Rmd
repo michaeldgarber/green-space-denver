@@ -13,9 +13,10 @@ library(tidyverse)
 library(sf)
 library(terra)
 library(mapview)
-library(mapview)
-library(knitr)
+library(knitr) #to make sure kable works
 library(viridis)
+library(scales)
+library(lubridate) #for ggplot
 ```
 
 # NDVI for the Denver area, 2016-2021
@@ -51,7 +52,7 @@ mv_good_date
 
 
 # Characterize NDVI of places of interest
-## Determine valid dates
+## Determine valid dates by testing a few places
 First, pick a few places where we would expect NDVI to be high in the summer on a cloud-free day. If it's not high, then we can assume the image is bad (i.e., clouds in the way). These test places were determined by examining the cloud-free day (July 4, 2021) above. We chose three areas: an area east of Evergreen, Colorado; a plot in City Park; and a plot in the Indian Tree Golf Club:
 
 (These areas are defined here: https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/1b_wrangle_check_landsat_ndvi_denver.R)
@@ -71,12 +72,27 @@ mv_den_metro_bbox = den_metro_bbox %>% mapview(layer.name = "Study area")
 mv_den_metro_bbox+ mv_evergreen_east + mv_indian_tree_golf + mv_city_park
 ```
 
+## What is NDVI over time for these places?
+Let's look at the temporal NDVI trend for these three places, without excluding any dates. This is the mean NDVI on that day. That is, each place includes several pixels of size 30 meters squared. This is the average of the NDVI for those pixels for that place on that day.
+```{r testplacesggplot, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("ndvi_test_places_day_wrangle.RData")
+ndvi_test_places_day_wrangle %>% 
+  ggplot(
+    aes(
+      x=date, 
+      y=ndvi_mean  
+    ))+
+  geom_line(aes(colour = test_place_name))+
+  geom_point(aes(colour = test_place_name))+
+  scale_x_date(labels=date_format("%Y-%m-%d"), date_breaks = "3 months")+
+  theme(axis.text.x = element_text(angle = 45, hjust=1))
+```
 
-
+## Places of interest
 Load the places-of-interest dataset, which is created here:
 
 https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_read_denver_native_zones.R
-
 
 ```{r loaddata, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
