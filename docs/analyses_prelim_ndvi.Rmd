@@ -74,7 +74,7 @@ mv_den_metro_bbox+ mv_evergreen_east + mv_indian_tree_golf + mv_city_park
 
 ## What is NDVI over time for these places?
 Let's look at the temporal NDVI trend for these three places, without excluding any dates. This is the mean NDVI on that day. That is, each place includes several pixels of size 30 meters squared. This is the average of the NDVI for those pixels for that place on that day.
-```{r testplacesggplot, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
+```{r testplacesggplot, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
 setwd(here("data-processed"))
 load("ndvi_test_places_day_wrangle.RData")
 ndvi_test_places_day_wrangle %>% 
@@ -89,7 +89,9 @@ ndvi_test_places_day_wrangle %>%
   theme(axis.text.x = element_text(angle = 45, hjust=1))
 ```
 
+Hmm, clearly some 
 ## Places of interest
+
 Load the places-of-interest dataset, which is created here:
 
 https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_read_denver_native_zones.R
