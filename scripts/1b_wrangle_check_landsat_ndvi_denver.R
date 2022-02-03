@@ -117,7 +117,7 @@ bbox_evergreen_east = st_bbox(
 
 mv_good_date =ndvi_den_metro_terr_5_yr$`20210704_NDVI` %>% 
   raster::raster() %>%  
-  mapview(layer.name = "NDVI") 
+  mapview(layer.name = "NDVI")
 mv_bbox_evergreen_east = bbox_evergreen_east %>% 
   mapview(layer.name = "evergreen_east")
 mv_good_date+mv_bbox_evergreen_east
