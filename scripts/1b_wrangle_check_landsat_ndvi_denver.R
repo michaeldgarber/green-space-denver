@@ -115,6 +115,9 @@ bbox_evergreen_east = st_bbox(
 ) %>% 
   sf::st_as_sfc() 
 
+#save so can re-use
+setwd(here("data-processed"))
+save(bbox_evergreen_east, file = "bbox_evergreen_east.RData")
 mv_good_date =ndvi_den_metro_terr_5_yr$`20210704_NDVI` %>% 
   raster::raster() %>%  
   mapview(layer.name = "NDVI")
@@ -163,6 +166,9 @@ bbox_indian_tree_golf= st_bbox(
 ) %>% 
   sf::st_as_sfc() 
 
+setwd(here("data-processed"))
+save(bbox_indian_tree_golf, file = "bbox_indian_tree_golf.RData")
+
 bbox_indian_tree_golf %>% mapview()
 
 ndvi_den_metro_terr_5_yr_indian_tree_golf = ndvi_den_metro_terr_5_yr %>% 
@@ -207,6 +213,9 @@ bbox_city_park= st_bbox(
   crs=st_crs(4326)
 ) %>% 
   sf::st_as_sfc() 
+
+setwd(here("data-processed"))
+save(bbox_city_park, file = "bbox_city_park.RData")
 
 bbox_city_park %>% mapview()
 

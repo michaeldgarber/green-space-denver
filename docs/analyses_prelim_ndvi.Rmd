@@ -15,35 +15,69 @@ library(terra)
 library(mapview)
 library(mapview)
 library(knitr)
+library(viridis)
 ```
 
 # NDVI for the Denver area, 2016-2021
 We obtained the normalized difference vegetation index (NDVI) from the Landsat-8 satellite at a resolution of 30 meters squared at a roughly 15-day interval between 2016 and 2021 for the following area around Denver:
+
+## Study area
 ```{r denverbbox, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 load("den_metro_bbox.RData")
-den_metro_bbox %>% mapview(layer.name = "Study area")
+mv_den_metro_bbox = den_metro_bbox %>% mapview(layer.name = "Study area")
+mv_den_metro_bbox
 ```
 
 We gathered this data using the [rgee package](https://cran.r-project.org/web/packages/rgee/index.html), an R package that facilitates connection to the Google Earth Engine via Python. Please see these two scripts for specific details on the process for gathering and processing the NDVI data in this area:
+
 https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/1a_get_landsat_ndvi_denver.R
+
 https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/1b_wrangle_check_landsat_ndvi_denver.R
 
+## NDVI for one day
 Here is the NDVI over the study area on a cloud-free day, July 4, 2021:
 ```{r terragoodmo, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, cache = TRUE}
 setwd(here("data-processed"))
+pal_viridis_trunc=viridis::viridis_pal(end=.9) #trunc for truncated
 ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
 mv_good_date =ndvi_den_metro_terr_5_yr$`20210704_NDVI` %>% 
   raster::raster() %>%  
-  mapview(layer.name = "NDVI, July 4, 2021")
+  mapview(
+    col.regions = pal_viridis_trunc,
+    layer.name = "NDVI, July 4, 2021")
 mv_good_date
 ```
 
 
 # Characterize NDVI of places of interest
+## Determine valid dates
+First, pick a few places where we would expect NDVI to be high in the summer on a cloud-free day. If it's not high, then we can assume the image is bad (i.e., clouds in the way). These test places were determined by examining the cloud-free day (July 4, 2021) above. We chose three areas: an area east of Evergreen, Colorado; a plot in City Park; and a plot in the Indian Tree Golf Club:
+
+(These areas are defined here: https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/1b_wrangle_check_landsat_ndvi_denver.R)
+
+```{r loadtestareas, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, cache = TRUE}
+setwd(here("data-processed"))
+load("bbox_evergreen_east.RData")
+load("bbox_indian_tree_golf.RData")
+load("bbox_city_park.RData")
+mv_evergreen_east = bbox_evergreen_east %>%
+  mapview(col.regions = "red", alpha.regions = .2, layer.name = "Evergreen East")
+mv_indian_tree_golf = bbox_indian_tree_golf %>%
+  mapview(col.regions = "red", alpha.regions = .2, layer.name = "Indian Tree Golf")
+mv_city_park =bbox_city_park %>%
+  mapview(col.regions = "red", alpha.regions = .2, layer.name = "City Park plot")
+mv_den_metro_bbox = den_metro_bbox %>% mapview(layer.name = "Study area")
+mv_den_metro_bbox+ mv_evergreen_east + mv_indian_tree_golf + mv_city_park
+```
 
 
-Load data. Note data are created in this folder: https://github.com/michaeldgarber/green-space-denver/tree/main/scripts
+
+Load the places-of-interest dataset, which is created here:
+
+https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_read_denver_native_zones.R
+
+
 ```{r loaddata, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 load("places_native_geo.RData")
