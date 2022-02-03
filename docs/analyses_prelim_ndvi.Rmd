@@ -26,7 +26,8 @@ We obtained the normalized difference vegetation index (NDVI) from the Landsat-8
 ## Study area
 ```{r denverbbox, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
-load("den_metro_bbox_custom.RData")#around Denver and Jefferson Counties but only as far south as Castle Rock, i.e, not all of Jeff Co to limit data gathered
+load("den_metro_bbox_custom.RData")
+#around Denver and Jefferson Counties but only as far south as Castle Rock, i.e, not all of Jeff Co to limit data gathered
 mv_den_metro_bbox_custom = den_metro_bbox_custom %>% mapview(layer.name = "Study area")
 mv_den_metro_bbox_custom
 ```
