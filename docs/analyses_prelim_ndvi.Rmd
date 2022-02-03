@@ -89,7 +89,8 @@ ndvi_test_places_day_wrangle %>%
   theme(axis.text.x = element_text(angle = 45, hjust=1))
 ```
 
-Hmm, clearly some 
+Hmm, if we look closely, we can see that there are some very low NDVI values for some of these places even in the summer, which is not plausible. Those low values must indicate obstruction by clouds. So I'm going to exclude those dates.
+
 ## Places of interest
 
 Load the places-of-interest dataset, which is created here:
