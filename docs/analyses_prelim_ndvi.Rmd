@@ -250,7 +250,7 @@ native_places_ndvi_day_nogeo %>%
   kable()
 ```
 
-next steps...
+Next steps...
 # NDVI of census tracts
 Census tracts downloaded via tidycensus here:
 Note, for now we are restricting to census tracts in Denver County and Jefferson County. And the bounding box only goes as far south as Castle Rock, so it excludes the large southern census tract(s) in Jefferson County.
