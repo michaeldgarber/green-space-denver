@@ -106,7 +106,7 @@ mv_bad_date
 
 
 
-## Places of interest
+## Load places of interest
 
 Load the places-of-interest dataset, which is created here:
 

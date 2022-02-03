@@ -30,31 +30,6 @@ setwd(here("data-processed"))
 #1_get_landsat_ndvi_denver.R
 ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
 
-# Intersect the NDVI file with Denver botanic-----------
-## First crop using raster
-#comment: I'm using raster for the crop, because using terra was givinv me an error.
-## 
-#-----intersect the raster file with these buffers-------------#
-ndvi_den_botanic_1000_m_cropped_rast = ndvi_den_metro_terr_5_yr  %>% 
-  raster::crop(den_botanic_buff_1000_m)
-save(ndvi_den_botanic_1000_m_cropped_rast, file = "ndvi_den_botanic_1000_m_cropped_rast.RData")
-plot(ndvi_den_botanic_1000_m_cropped_rast)
-
-#now convert to terra but don't use terra's crop function (was throwing error)
-ndvi_den_botanic_1000_m_cropped_terr = ndvi_den_botanic_1000_m_cropped_rast %>% 
-  terra::rast()
-plot(ndvi_den_botanic_1000_m_cropped_terr)
-ndvi_den_botanic_1000_m_cropped_terr
-ndvi_den_botanic_1000_m_cropped_rast
-#valid dates include 5/25, 6/2, 6/10, 7/4
-ndvi_den_botanic_1000_m_cropped_rast$X20210525_NDVI %>% 
-  mapview(
-    col.regions = pal_terrain_col ,
-    layer.name = "NDVI"
-    
-  )
-
-plot(ndvi_den_botanic_1000_m_cropped_rast) #use june 10th
 
 # Measure NDVI in the specific places-------------
 load("places_native_nogeo.RData")
