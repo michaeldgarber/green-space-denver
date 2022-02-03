@@ -106,7 +106,7 @@ mv_bad_date =ndvi_den_metro_terr_5_yr$`20180517_NDVI` %>% #Use 2018-05-17
 mv_bad_date
 ```
 
-The specific NDVI thresholds for each thresholds are noted in this script (https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/1b_wrangle_check_landsat_ndvi_denver.R) and warrant further discussion) and warrant further discussion. 
+The specific NDVI thresholds for each thresholds are noted in this script (https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/1b_wrangle_check_landsat_ndvi_denver.R) and warrant further discussion. 
 
 The valid dates are restricted to May, June, July, and August and specifically are:
 ```{r printvaliddates, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
@@ -241,7 +241,7 @@ native_places_ndvi_day_nogeo %>%
 
 
 ## Simple summary (median) of NDVI for these places
-```{r summariseoverall, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
+```{r summariseoverall, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, results = 'asis'}
 native_places_ndvi_day_nogeo %>% 
   filter(date_is_valid_all==1) %>% 
   group_by(place_type, place_name_fac) %>% 
@@ -250,4 +250,11 @@ native_places_ndvi_day_nogeo %>%
   kable()
 ```
 
+next steps...
+# NDVI of census tracts
+Census tracts downloaded via tidycensus here:
+Note, for now we are restricting to census tracts in Denver County and Jefferson County. And the bounding box only goes as far south as Castle Rock, so it excludes the large southern census tract(s) in Jefferson County.
+
+# NDVI of public green spaces
+Parks, etc., downloaded via osmdata here:
 

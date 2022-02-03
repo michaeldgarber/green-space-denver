@@ -21,7 +21,7 @@ ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
 
 # Read census tract and OSM data---------####
 load("den_jeff_co_tracts_no_water_geo.RData")
-
+den_jeff_co_tracts_no_water_geo %>% mapview()
 # census tract NDVI----------
 ## Summarize NDVI by census tract-------------
 den_metro_ndvi_long_int =ndvi_den_metro_terr_5_yr %>% 
@@ -29,15 +29,17 @@ den_metro_ndvi_long_int =ndvi_den_metro_terr_5_yr %>%
   #presumably sorted by their order of appearance
   #note have to convert to vector first
   #note I am using the den and jeff co county version only and I removed water
-  terra::extract(terra::vect(den_jeff_co_tracts_no_water_geo)) %>% #have to convert to vector first
+  #must convert to vector first
+  terra::extract(terra::vect(den_jeff_co_tracts_no_water_geo)) %>% 
   as_tibble() 
 
 #takes a while (about 10 mins) so might as well save
-
-save(den_metro_ndvi_long_int, file = "den_metro_ndvi_long_int.RData") #saving also takes about 5 mins.
+#saving also takes about 5 mins.
+save(den_metro_ndvi_long_int, file = "den_metro_ndvi_long_int.RData") 
 object.size(den_metro_ndvi_long_int)
 
 #for interactive coding, separate because the first step takes so long. eventually combine
+#load("den_metro_ndvi_long_int.RData")
 den_metro_tracts_ndvi_long = den_metro_ndvi_long_int %>% 
   pivot_longer( #make long form
     cols = contains("20"),#contains a year that begins with 20..flexible
@@ -53,6 +55,8 @@ den_metro_tracts_ndvi_long = den_metro_ndvi_long_int %>%
     ) %>% 
   dplyr::select(tract_id_row_number, ndvi, date) 
 
+nrow(den_metro_tracts_ndvi_long)
+save(den_metro_tracts_ndvi_long, file = "den_metro_tracts_ndvi_long.RData")
 den_metro_tracts_ndvi_long
 nrow(den_metro_tracts_ndvi_long)
 #create an ID that will link to the extracted values (row number)
@@ -78,6 +82,7 @@ den_metro_tracts_ndvi_day_geo = den_metro_tracts_ndvi_long %>%
   left_join(den_jeff_co_nogeo, by = "county_fips") %>% 
   st_as_sf() #it has geometry. just make it so.
 
+save(den_metro_tracts_ndvi_day_geo, file = "den_metro_tracts_ndvi_day_geo.RData")
 den_metro_tracts_ndvi_day_geo 
 ## visualize census tracts NDVI ---------
 ### define color palettes------------------
@@ -116,7 +121,7 @@ den_metro_tracts_ndvi_day_geo %>%
 load("den_jeff_co_green_space_public_no_water.RData")
 den_jeff_co_green_space_public_no_water
 den_metro_green_space_ndvi_long_int =ndvi_den_metro_terr_5_yr %>% 
-  terra::extract(terra::vect(den_jeff_co_green_space_public_no_water)) %>% #have to convert to vector first
+  terra::extract(terra::vect(den_jeff_co_green_space_public_no_water)) %>% 
   as_tibble() 
 
 #takes a while so save.
@@ -130,7 +135,7 @@ den_metro_green_space_ndvi_long = den_metro_green_space_ndvi_long_int %>%
     values_to = "ndvi"
   ) %>% 
   mutate(
-    date_fixed_char = substr(date_ndvi, 1,8), #different from the other one because this one begins with the year
+    date_fixed_char = substr(date_ndvi, 1,8),
     date_fixed_date = lubridate::as_date(date_fixed_char)
   ) %>% 
   rename(
@@ -139,6 +144,7 @@ den_metro_green_space_ndvi_long = den_metro_green_space_ndvi_long_int %>%
   ) %>% 
   dplyr::select(park_id_row_number, ndvi, date) 
 
+save(den_metro_green_space_ndvi_long, file = "den_metro_green_space_ndvi_long.RData")
 #create an ID that will link to the extracted values (row number)
 den_jeff_co_green_space_public_no_water_w_extract_id = den_jeff_co_green_space_public_no_water %>% 
   st_transform(4326) %>% 
@@ -157,6 +163,7 @@ den_metro_green_space_ndvi_day_geo = den_metro_green_space_ndvi_long %>%
   st_as_sf() %>% #it has geometry. just make it so.
   dplyr::select(contains("id_row_nu"), contains("ndvi"), date) 
 
+save(den_metro_green_space_ndvi_day_geo, file = "den_metro_green_space_ndvi_day_geo.RData")
 ## visualize NDVI of parks and green space------------
 load("den_jeff_co_geo.RData")
 mv_den_jeff_co_geo = den_jeff_co_geo %>%  
@@ -178,3 +185,4 @@ mv_den_metro_green_space_ndvi_day_geo+mv_den_jeff_co_geo
 # Filter out cloudy images--------
 #Some people use 0.1 as a threshold, but what about water?
 #https://www.neonscience.org/resources/learning-hub/tutorials/dc-ndvi-calc-raster-time-series
+#go to the other code where you worked on this
