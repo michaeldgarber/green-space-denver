@@ -78,14 +78,6 @@ native_places_ndvi = ndvi_den_metro_terr_5_yr %>%
   rename(
     place_id = ID) %>% #for left join below
   dplyr::select(place_id, ndvi, date) %>% 
-  mutate(date_is_valid = case_when(
-    date == lubridate::as_date("20210525") ~1,
-    date == lubridate::as_date("20210602") ~1,
-    date == lubridate::as_date("20210610") ~1,
-    date == lubridate::as_date("20210704") ~1,
-    date == lubridate::as_date("20210728") ~1,
-    TRUE ~0
-  )) %>% 
   #link in the place names
   left_join(places_native_nogeo, by = "place_id")
 

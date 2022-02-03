@@ -206,6 +206,11 @@ kenderick_lake_xeriscape_garden %>% mapview()
 
 # Combine them---------
 library(forcats)
+sf::sf_use_s2(TRUE) #was creating invalid spherical geometry. 
+#note this works but then I can't get a mapview b/c geometry is mixed.
+#https://github.com/r-spatial/mapview/issues/342
+#so keep true and don't measure area.
+#https://gis.stackexchange.com/questions/413584
 places_native_geo = den_botanic_native_100 %>% 
   bind_rows(
     #the original set of places
@@ -236,8 +241,12 @@ places_native_geo = den_botanic_native_100 %>%
     ) %>% 
   #arrange descending by percent native
   arrange(desc(native_percent)) %>% 
-  mutate(place_id = row_number())
+  st_make_valid() %>% #for measuring area. doesn't work for all
+  mutate(
+#    area_m2 = as.numeric(st_area(geometry)), #see above
+    place_id = row_number()) 
 
+mapviewOptions(fgb = TRUE)
 places_native_geo %>% 
   mapview(zcol = "native_percent",
           layer.name = "Percent native")

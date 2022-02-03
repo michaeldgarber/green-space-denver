@@ -26,9 +26,9 @@ We obtained the normalized difference vegetation index (NDVI) from the Landsat-8
 ## Study area
 ```{r denverbbox, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
-load("den_metro_bbox.RData")
-mv_den_metro_bbox = den_metro_bbox %>% mapview(layer.name = "Study area")
-mv_den_metro_bbox
+load("den_metro_bbox_custom.RData")#around Denver and Jefferson Counties but only as far south as Castle Rock, i.e, not all of Jeff Co to limit data gathered
+mv_den_metro_bbox_custom = den_metro_bbox_custom %>% mapview(layer.name = "Study area")
+mv_den_metro_bbox_custom
 ```
 
 We gathered this data using the [rgee package](https://cran.r-project.org/web/packages/rgee/index.html), an R package that facilitates connection to the Google Earth Engine via Python. Please see these two scripts for specific details on the process for gathering and processing the NDVI data in this area:
@@ -69,8 +69,8 @@ mv_indian_tree_golf = bbox_indian_tree_golf %>%
   mapview(col.regions = "red", alpha.regions = .2, layer.name = "Indian Tree Golf")
 mv_city_park =bbox_city_park %>%
   mapview(col.regions = "red", alpha.regions = .2, layer.name = "City Park plot")
-mv_den_metro_bbox = den_metro_bbox %>% mapview(layer.name = "Study area")
-mv_den_metro_bbox+ mv_evergreen_east + mv_indian_tree_golf + mv_city_park
+mv_den_metro_bbox_custom = den_metro_bbox_custom %>% mapview(layer.name = "Study area")
+mv_den_metro_bbox_custom+ mv_evergreen_east + mv_indian_tree_golf + mv_city_park
 ```
 
 ## What is NDVI over time for these places?
