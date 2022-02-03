@@ -23,7 +23,7 @@ library(lubridate) #for ggplot
 # NDVI for the Denver area, 2016-2021
 We obtained the normalized difference vegetation index (NDVI) from the Landsat-8 satellite at a resolution of 30 meters squared at a roughly 15-day interval between 2016 and 2021 for the following area around Denver:
 
-## Study area
+## Define study area
 ```{r denverbbox, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 load("den_metro_bbox_custom.RData")
@@ -54,7 +54,8 @@ mv_good_date
 
 
 # Characterize NDVI of places of interest
-## Determine valid dates by testing a few places
+## First, determine valid (cloud-free) dates
+### Testing a few places with expected high NDVI
 First, pick a few places where we would expect NDVI to be high in the summer on a cloud-free day. If it's not high, then we can assume the image is bad (i.e., clouds in the way). These test places were determined by examining the cloud-free day (July 4, 2021) above. We chose three areas: an area east of Evergreen, Colorado; a plot in City Park; and a plot in the Indian Tree Golf Club:
 
 (These areas are defined here: https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/1b_wrangle_check_landsat_ndvi_denver.R)
@@ -65,16 +66,17 @@ load("bbox_evergreen_east.RData")
 load("bbox_indian_tree_golf.RData")
 load("bbox_city_park.RData")
 mv_evergreen_east = bbox_evergreen_east %>%
-  mapview(col.regions = "red", alpha.regions = .2, layer.name = "Evergreen East")
+  mapview(col.regions = "red",  layer.name = "Evergreen East")
 mv_indian_tree_golf = bbox_indian_tree_golf %>%
-  mapview(col.regions = "red", alpha.regions = .2, layer.name = "Indian Tree Golf")
+  mapview(col.regions = "red", layer.name = "Indian Tree Golf")
 mv_city_park =bbox_city_park %>%
-  mapview(col.regions = "red", alpha.regions = .2, layer.name = "City Park plot")
-mv_den_metro_bbox_custom = den_metro_bbox_custom %>% mapview(layer.name = "Study area")
+  mapview(col.regions = "red",  layer.name = "City Park plot")
+mv_den_metro_bbox_custom = den_metro_bbox_custom %>% 
+  mapview(layer.name = "Study area", alpha.regions = .2)
 mv_den_metro_bbox_custom+ mv_evergreen_east + mv_indian_tree_golf + mv_city_park
 ```
 
-## What is NDVI over time for these places?
+### What is NDVI over time for these test places?
 Let's look at the temporal NDVI trend for these three places, without excluding any dates. This is the mean NDVI on that day. That is, each place includes several pixels of size 30 meters squared. This is the average of the NDVI for those pixels for that place on that day.
 ```{r testplacesggplot, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
 setwd(here("data-processed"))
@@ -91,7 +93,7 @@ ndvi_test_places_day_wrangle %>%
   theme(axis.text.x = element_text(angle = 45, hjust=1))
 ```
 
-Hmm, if we look closely, we can see that there are some very low NDVI values for some of these places even in the summer, which is not plausible. Those low values must indicate obstruction by clouds. For example, look at a day when NDVI was measured as very low in City Park despite it being mid-May when we would expect it to be higher. So I'm going to exclude dates like these. The specific thresholds are noted in this script (https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/1b_wrangle_check_landsat_ndvi_denver.R) and warrant further discussion.
+Hmm, if we look closely, we can see that there are some very low NDVI values for some of these places even in the summer, which is not plausible. Those low values must indicate obstruction by clouds. For example, look at a day when NDVI was measured as very low in City Park despite it being mid-May when we would expect it to be higher. So I'm going to exclude dates like these. 
 ```{r mapviewbaddate, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 pal_viridis_trunc=viridis::viridis_pal(end=.9) #trunc for truncated
@@ -104,18 +106,28 @@ mv_bad_date =ndvi_den_metro_terr_5_yr$`20180517_NDVI` %>% #Use 2018-05-17
 mv_bad_date
 ```
 
+The specific NDVI thresholds for each thresholds are noted in this script (https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/1b_wrangle_check_landsat_ndvi_denver.R) and warrant further discussion) and warrant further discussion. 
+
+The valid dates are restricted to May, June, July, and August and specifically are:
+```{r printvaliddates, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("lookup_date_is_valid_all.RData") #load dataset of valid dates created elsewhere
+lookup_date_is_valid_all %>% 
+  filter(date_is_valid_all==1) %>% 
+  dplyr::select(date) %>% 
+  pull()
+```
 
 
 ## Load places of interest
 
-Load the places-of-interest dataset, which is created here:
-
-https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_read_denver_native_zones.R
+Load the places-of-interest dataset, which is created here: https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_read_denver_native_zones.R
 
 ```{r loaddata, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 load("places_native_geo.RData")
 load("places_native_nogeo.RData")
+load("native_places_ndvi_day_nogeo.RData")
 ```
 
 Print information about the places of interest, including approximate percent nativity where available.
@@ -125,9 +137,117 @@ places_native_nogeo %>%
   kable()
 ```
 
+
 Map these places by type (nativity spectrum or high-plant diversity).
-```{r mapview, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
+```{r mapviewplacesnative, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 places_native_geo %>% 
   mapview(zcol = "place_type",
           layer.name = "Place category")
 ```
+
+## Graph NDVI over time for these places
+During valid dates only (above).
+
+### For the places with percent nativity values
+The first set of polygons sent over.
+```{r ggplotndvinative, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
+native_places_ndvi_day_nogeo %>% 
+  filter(date_is_valid_all==1) %>% 
+  filter(place_type == "native spectrum") %>% 
+  ggplot(aes(
+    x=date, 
+    y=ndvi_50 # median
+  ))+
+  geom_ribbon( #ribbon around 25th and 75th percentile
+    aes(ymin =ndvi_25, ymax = ndvi_75 ),
+    alpha=.4
+  )+
+  ylab("NDVI, Median") +
+  xlab("Date") +
+  geom_line( size=.7 ) +#note size better than lwd
+  geom_point()+
+  scale_x_date(breaks = pretty_breaks())+
+  scale_y_continuous(
+    limits = c(0, NA),  #force axis origin to be zero
+    breaks= seq(0,0.8,by = 0.1))+ 
+  theme(
+    axis.text.x=element_text(angle=60, hjust=1),
+        panel.border = element_rect(
+          colour = "gray72", size = 0.5, fill=NA))+
+  facet_grid(   # facet them
+    cols = vars(place_name_fac),
+    labeller = label_wrap_gen() #wrap facet labels
+  )
+```
+
+
+### For the places with high plant diversity
+This is the second set of polygons sent.
+
+```{r ggplotndvidivers, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
+native_places_ndvi_day_nogeo %>% 
+  filter(date_is_valid_all==1) %>% 
+  filter(place_type == "high diversity") %>% 
+  ggplot(aes(
+    x=date, 
+    y=ndvi_50 # median
+  ))+
+  geom_ribbon( 
+    aes(ymin =ndvi_25, ymax = ndvi_75 ),
+    alpha=.4
+  )+
+  ylab("NDVI, Median") +
+  xlab("Date") +
+  geom_line( size=.7 ) + 
+  geom_point()+
+  scale_x_date(breaks = pretty_breaks())+
+  scale_y_continuous(
+    limits = c(0, NA),  
+    breaks= seq(0,0.8,by = 0.1))+ 
+  theme(
+    axis.text.x=element_text(angle=60, hjust=1),
+        panel.border = element_rect(
+          colour = "gray72", size = 0.5, fill=NA))+
+  facet_grid(   
+    cols = vars(place_name_fac),
+    labeller = label_wrap_gen() #wrap facet labels
+  )
+```
+
+
+## Graph NDVI against percent nativity
+Among the first set of polygons with values for percent nativity.
+```{r ggplotscatter, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
+native_places_ndvi_day_nogeo %>% 
+  filter(date_is_valid_all==1) %>% 
+  filter(place_type == "native spectrum") %>% 
+  ggplot(aes(
+    x=native_percent, 
+    y=ndvi_50 # median
+  ))+
+  geom_point(
+    aes(colour=place_name_fac), size = 1.5, 
+    alpha=.5 #varying alpha to illustrate density
+    ) +
+  xlab("Percent native") +
+  ylab("NDVI, median") +
+  scale_y_continuous(
+    limits = c(0, NA),  #force axis origin to be zero
+    breaks= seq(0,0.8,by = 0.1))+ 
+  scale_color_hue(
+    name = "Place name"
+  )
+```
+
+
+## Simple summary (median) of NDVI for these places
+```{r summariseoverall, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
+native_places_ndvi_day_nogeo %>% 
+  filter(date_is_valid_all==1) %>% 
+  group_by(place_type, place_name_fac) %>% 
+  summarise(ndvi_median = median(ndvi_50, na.rm=TRUE) ) %>% 
+  ungroup() %>% 
+  kable()
+```
+
+

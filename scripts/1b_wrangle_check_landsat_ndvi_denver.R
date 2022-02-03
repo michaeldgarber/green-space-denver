@@ -308,10 +308,11 @@ save(ndvi_test_places_day_wrangle, file = "ndvi_test_places_day_wrangle.RData")
 ndvi_test_places_day_wrangle %>% 
   group_by(date_is_valid_all) %>% 
   summarise(n=n())
-date_when_valid_all = ndvi_test_places_day_wrangle %>% 
+lookup_date_is_valid_all =ndvi_test_places_day_wrangle %>% 
   distinct(date, date_is_valid_all)
 
-date_when_valid_all %>% 
+save(lookup_date_is_valid_all, file = "lookup_date_is_valid_all.RData")
+lookup_date_is_valid_all %>% 
   group_by(date_is_valid_all) %>% 
   summarise(n=n())
   #40 days over the five years.

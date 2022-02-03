@@ -1,8 +1,7 @@
 #filename: 2_summarize_ndvi_specific_places
 #the processing steps once data are downloaded and converted into raster in previous code
-#note the previous code takes a while
+#note the previous code, which downloads the NDVI data using rgee, takes a while
 
-#Revised 1/19/22
 library(tidyverse)
 library(sf)
 library(mapview)
@@ -13,6 +12,9 @@ library(viridisLite)
 library(viridis)
 library(shades)
 library(ggmap)
+library(lubridate)
+library(stringr)
+
 
 # Load data--------------
 ## Load specific places provided by Michael Guidi----------
@@ -22,7 +24,7 @@ setwd(here("data-processed"))
 load("places_native_geo.RData") #sent from Michael Guidi
 
 places_native_geo %>% mapview(zcol = "place_name")
-## Read raster data-------------
+## Read raster data in terra format-------------
 #i.e., load the data
 setwd(here("data-processed"))
 #read raster data. 
@@ -34,12 +36,12 @@ ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
 # Measure NDVI in the specific places-------------
 load("places_native_nogeo.RData")
 places_native_nogeo
-library(lubridate)
-library(stringr)
+#load the dataset of valid dates per those three test places
+load("lookup_date_is_valid_all.RData")
+lookup_date_is_valid_all
 ## create long-form dataset of NDVI by place over time--------
 native_places_ndvi = ndvi_den_metro_terr_5_yr %>% 
-  #note because it's a stack, this does it for many days
-  terra::extract(vect(places_native_geo)) %>% 
+  terra::extract(vect(places_native_geo)) %>% #for every day
   as_tibble() %>% 
   pivot_longer(
     cols = contains("20"),#contains a year that begins with 20..flexible 
@@ -54,24 +56,24 @@ native_places_ndvi = ndvi_den_metro_terr_5_yr %>%
     place_id = ID) %>% #for left join below
   dplyr::select(place_id, ndvi, date) %>% 
   #link in the place names
-  left_join(places_native_nogeo, by = "place_id")
+  left_join(places_native_nogeo, by = "place_id") %>% 
+  #link valid dates
+  left_join(lookup_date_is_valid_all, by = "date")
 
+names(native_places_ndvi)
 native_places_ndvi %>% 
-  filter(date_is_valid==1) %>% 
-  dplyr::select(ndvi, date)
+  filter(date_is_valid_all==1) %>% 
+  dplyr::select(place_name_short, ndvi, date)
 
-native_places_ndvi %>% 
-  filter(date_is_valid==1) %>% 
-  ggplot(aes(x=date, y=ndvi))+
-  geom_line()+
-  geom_point()+
-  facet_grid(cols = vars(place_name))
-
-lookup_date_is_valid = native_places_ndvi %>% 
-  distinct(date_is_valid, date)
+#this works but don't run...takes forever because so much data.
+# native_places_ndvi %>% 
+#   filter(date_is_valid_all==1) %>% 
+#   ggplot(aes(x=date, y=ndvi))+
+#   geom_line()+
+#   geom_point()+
+#   facet_grid(cols = vars(place_name))
 
 ## Summarize NDVI (mean, min, max, etc.) over time for each place-------
-
 native_places_ndvi_day_geo = native_places_ndvi %>% 
   group_by(place_id, date) %>% 
   summarise(
@@ -82,14 +84,30 @@ native_places_ndvi_day_geo = native_places_ndvi %>%
     ndvi_50 = median(ndvi, na.rm=TRUE),
     ndvi_mean = mean(ndvi, na.rm=TRUE)) %>% 
   ungroup() %>% 
+  #recreate month and year columns
+  mutate(
+    month = lubridate::month(date),
+    year=lubridate::year(date)
+  ) %>% 
   left_join(places_native_geo, by = "place_id") %>%    #link in the place names
-  left_join(lookup_date_is_valid, by = "date") %>% #valid dates
-  st_as_sf()
+  left_join(lookup_date_is_valid_all, by = "date") %>% #valid dates
+  st_as_sf()  #we have geometry so might as well use it.
 
-#test
+#save and make a no-geo version for speed
+setwd(here("data-processed"))
+save(native_places_ndvi_day_geo, file = "native_places_ndvi_day_geo.RData")
+
+native_places_ndvi_day_nogeo = native_places_ndvi_day_geo %>% 
+  st_set_geometry(NULL) %>% 
+  as_tibble()
+save(native_places_ndvi_day_nogeo, file = "native_places_ndvi_day_nogeo.RData")
+
+## test NDVI on a cloud-free day--------------
+table(lookup_date_is_valid_all$date_is_valid_all)
+lookup_date_is_valid_all %>% filter(date_is_valid_all==1) 
 pal_viridis_trunc=viridis::viridis_pal(end=.9) #trunc for truncated
 native_places_ndvi_day_geo %>% 
-  filter(date == "2021-05-25") %>% 
+  filter(date == "2016-06-09") %>% 
   mapview(
     layer.name = "NDVI, Median",
     col.regions = pal_viridis_trunc,
@@ -98,8 +116,20 @@ native_places_ndvi_day_geo %>%
 
 ## ggplot - line graph of NDVI over time with median, 25th, and 75th as ribbon by area-------
 library(scales)
-native_places_ndvi_day_geo %>% 
-  filter(date_is_valid==1) %>% 
+names(native_places_ndvi_day_nogeo)
+table(native_places_ndvi_day_nogeo$place_type)
+
+#confirm valid dates are only in may, june, july, august
+native_places_ndvi_day_nogeo %>% 
+  filter(date_is_valid_all==1) %>% 
+  group_by(month) %>% 
+  summarise(n_obs=n())
+
+### ggplot ndvi over time native spectrum areas---------
+#Too many to graph at once
+native_places_ndvi_day_nogeo %>% 
+  filter(date_is_valid_all==1) %>% 
+  filter(place_type == "native spectrum") %>% 
   ggplot(aes(
     x=date, 
     y=ndvi_50 #plot median
@@ -112,7 +142,8 @@ native_places_ndvi_day_geo %>%
   xlab("Date") +
   geom_line( size=.7 ) +#note size better than lwd
   geom_point()+
-  scale_x_date(labels=date_format("%Y-%m-%d"), date_breaks = "2 weeks") +
+  scale_x_date(breaks = pretty_breaks())+
+#  scale_x_date(labels=date_format("%Y-%m-%d"), date_breaks = "6 months") +
   scale_y_continuous(
     limits = c(0, NA),  #force axis origin to be zero
     breaks= seq(0,0.8,by = 0.1))+ 
@@ -123,17 +154,58 @@ native_places_ndvi_day_geo %>%
     cols = vars(place_name_fac),
     labeller = label_wrap_gen() #wrap facet labels
   )
-  
-  
+
+table(places_native_nogeo$place_name_fac)
+
+### ggplot ndvi over time for high-diversity areas---------
+table(native_places_ndvi_day_nogeo$place_type)
+native_places_ndvi_day_nogeo %>% 
+  filter(date_is_valid_all==1) %>% 
+  filter(place_type == "high diversity") %>% 
+  ggplot(aes(
+    x=date, 
+    y=ndvi_50 #plot median
+  ))+
+  geom_ribbon( #ribbon around 25th and 75th percentile
+    aes(ymin =ndvi_25, ymax = ndvi_75 ),
+    alpha=.4
+  )+
+  ylab("NDVI, Median") +
+  xlab("Date") +
+  geom_line( size=.7 ) +#note size better than lwd
+  geom_point()+
+  scale_x_date(breaks = pretty_breaks())+
+  scale_y_continuous(
+    limits = c(0, NA),  #force axis origin to be zero
+    breaks= seq(0,0.8,by = 0.1))+ 
+  theme(axis.text.x=element_text(angle=60, hjust=1),
+        panel.border = element_rect(
+          colour = "gray72", size = 0.5, fill=NA))+
+  facet_grid(   #now facet them
+    cols = vars(place_name_fac),
+    labeller = label_wrap_gen() #wrap facet labels
+  )
+
+### simple summaries of each type (percent nativity and high diversity)----------
+native_places_ndvi_day_nogeo %>% 
+  filter(date_is_valid_all==1) %>% 
+  group_by(place_type, place_name_fac) %>% 
+  summarise(ndvi_median = median(ndvi_50, na.rm=TRUE) )
+
 
 ## ggplot - NDVI vs percent native over all dates---------
-native_places_ndvi_day_geo %>% 
-  filter(date_is_valid==1) %>% 
+#restricted to areas with nativity values
+native_places_ndvi_day_nogeo %>% 
+  filter(date_is_valid_all==1) %>% 
+  filter(place_type == "native spectrum") %>% 
   ggplot(aes(
     x=native_percent, 
     y=ndvi_50 #plot median
   ))+
-  geom_point(aes(colour=place_name_fac), size = 2) +
+  geom_point(
+    aes(colour=place_name_fac), size = 1.5, 
+    alpha=.5 #varying alpha to illustrate density
+    ) +
   xlab("Percent native") +
   ylab("NDVI, median") +
   scale_y_continuous(
@@ -177,68 +249,4 @@ mv_places_native = places_native_geo %>%
     layer.name = "Places")
 
 mv_ndvi_lsat_den_jeff_co_rast_20210610 + mv_places_native
-# Buffer areas...not current focus-----------
-
-## around botanic gardens point of various sizes ----------------
-den_botanic = as_tibble("Denver Botanic Gardens") %>% 
-  rename(address=value)
-
-den_botanic_sf = mutate_geocode(den_botanic, address, force = TRUE) %>% 
-  st_as_sf(coords = c("lon", "lat"),crs = 4326) 
-
-#add a buffer of various sizes.
-den_botanic_buff_30_m = den_botanic_sf %>% 
-  st_buffer(30)
-
-den_botanic_buff_100_m = den_botanic_sf %>% 
-  st_buffer(100)
-
-den_botanic_buff_500_m = den_botanic_sf %>% 
-  st_buffer(500)
-
-den_botanic_buff_1000_m = den_botanic_sf %>% 
-  st_buffer(1000)
-
-mapview(den_botanic_buff_1000_m)
-
-#create a mapview of the border
-mv_den_botanic_native_100 = den_botanic_native_100 %>% 
-  mapview(
-    layer.name = "100% native zone, Botanic Gardens",
-    color = "black",
-    col.regions = "black",
-    alpha.regions = 0,
-    lwd=2
-    
-  )
-mv_den_botanic_native_100
-
-## north table mountain-------------
-north_table = as_tibble("North Table Mountain, Golden CO") %>% 
-  rename(address=value)
-
-north_table_sf = mutate_geocode(north_table, address, force = TRUE) %>% 
-  st_as_sf(coords = c("lon", "lat"),crs = 4326) 
-
-north_table_1000_m = north_table_sf %>% 
-  st_buffer(1000)
-
-north_table_2000_m = north_table_sf %>% 
-  st_buffer(2000)
-
-ndvi_north_table_1000_m_cropped_rast = ndvi_lsat_den_jeff_co_rast %>% 
-  raster::crop(north_table_1000_m)
-
-ndvi_north_table_2000_m_cropped_rast = ndvi_lsat_den_jeff_co_rast %>% 
-  raster::crop(north_table_2000_m)
-
-mv_ndvi_north_table_2000_m_cropped_rast_20210610 = ndvi_north_table_2000_m_cropped_rast$X20210610_NDVI %>% 
-  mapview(
-    col.regions = pal_terrain_col ,
-    layer.name = "NDVI"
-  )
-
-#visualize
-mv_ndvi_north_table_2000_m_cropped_rast_20210610 
-
 
