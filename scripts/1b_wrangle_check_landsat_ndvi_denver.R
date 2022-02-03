@@ -384,7 +384,6 @@ ndvi_test_places_day_wrangle %>%
   scale_y_continuous(n.breaks = 10)+
   theme(axis.text.x = element_text(angle = 45, hjust=1))
 
-# Link valid dates with main dataset again-----------########
 
   
   

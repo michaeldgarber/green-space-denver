@@ -12,6 +12,7 @@ library(here)
 library(tidyverse)
 library(sf)
 library(terra)
+library(raster) 
 library(mapview)
 library(knitr) #to make sure kable works
 library(viridis)
@@ -38,7 +39,7 @@ https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/1b_wrangl
 
 ## NDVI for one day
 Here is the NDVI over the study area on a cloud-free day, July 4, 2021:
-```{r terragoodmo, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, cache = TRUE}
+```{r terragoodmo, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 pal_viridis_trunc=viridis::viridis_pal(end=.9) #trunc for truncated
 ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
@@ -57,7 +58,7 @@ First, pick a few places where we would expect NDVI to be high in the summer on 
 
 (These areas are defined here: https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/1b_wrangle_check_landsat_ndvi_denver.R)
 
-```{r loadtestareas, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, cache = TRUE}
+```{r loadtestareas, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 load("bbox_evergreen_east.RData")
 load("bbox_indian_tree_golf.RData")
@@ -89,7 +90,20 @@ ndvi_test_places_day_wrangle %>%
   theme(axis.text.x = element_text(angle = 45, hjust=1))
 ```
 
-Hmm, if we look closely, we can see that there are some very low NDVI values for some of these places even in the summer, which is not plausible. Those low values must indicate obstruction by clouds. So I'm going to exclude those dates.
+Hmm, if we look closely, we can see that there are some very low NDVI values for some of these places even in the summer, which is not plausible. Those low values must indicate obstruction by clouds. For example, look at a day when NDVI was measured as very low in City Park despite it being mid-May when we would expect it to be higher. So I'm going to exclude dates like these. The specific thresholds are noted in this script (https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/1b_wrangle_check_landsat_ndvi_denver.R) and warrant further discussion.
+```{r mapviewbaddate, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+pal_viridis_trunc=viridis::viridis_pal(end=.9) #trunc for truncated
+ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
+mv_bad_date =ndvi_den_metro_terr_5_yr$`20180517_NDVI` %>% #Use 2018-05-17
+  raster::raster() %>%  
+  mapview(
+    col.regions = pal_viridis_trunc,
+    layer.name = "NDVI, May 17, 2018")
+mv_bad_date
+```
+
+
 
 ## Places of interest
 

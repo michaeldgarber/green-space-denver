@@ -57,7 +57,6 @@ ndvi_den_botanic_1000_m_cropped_rast$X20210525_NDVI %>%
 plot(ndvi_den_botanic_1000_m_cropped_rast) #use june 10th
 
 # Measure NDVI in the specific places-------------
-places_native_geo
 load("places_native_nogeo.RData")
 places_native_nogeo
 library(lubridate)
