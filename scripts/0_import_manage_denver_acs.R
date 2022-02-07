@@ -168,6 +168,7 @@ save(den_co_geo, file = "den_co_geo.RData")
 den_co_geo %>% mapview(zcol = "county_fips")
 
 #denver and jefferson counties
+load("den_metro_co_geo.RData")
 den_jeff_co_geo = den_metro_co_geo %>% 
   filter(county_fips == "031" | county_fips == "059") 
 save(den_jeff_co_geo , file = "den_jeff_co_geo.RData")

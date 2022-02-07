@@ -37,8 +37,8 @@ mv_den_jeff_co_tracts_no_water_geo + mv_den_metro_bbox_custom
 load("lookup_date_is_valid_all.RData") #valid dates
 lookup_date_is_valid_all
 
-load("den_jeff_co_green_space_public_no_water.RData") #green space, no water
-den_jeff_co_green_space_public_no_water
+load("den_jeff_co_green_space_no_water.RData") #green space, no water
+den_jeff_co_green_space_no_water
 
 
 # census tract NDVI----------
@@ -112,12 +112,13 @@ load("den_metro_tracts_ndvi_day_geo.RData")
 #continue wrangling from this saved dataset so we don't have to load the long-form data, as it's 
 #800 million observations.
 
-### Load valid dates-----------
+#link valid dates
 den_metro_tracts_ndvi_day_wrangle_geo = den_metro_tracts_ndvi_day_geo %>% 
   left_join(lookup_date_is_valid_all, by = "date")
 
 save(den_metro_tracts_ndvi_day_wrangle_geo, file = "den_metro_tracts_ndvi_day_wrangle_geo.RData")
 
+#a no-geo version
 den_metro_tracts_ndvi_day_wrangle_nogeo = den_metro_tracts_ndvi_day_wrangle_geo %>% 
   st_set_geometry(NULL) %>% 
   as_tibble()
@@ -172,8 +173,9 @@ den_metro_tracts_ndvi_day_geo %>%
 
 # green space NDVI----
 ## Summarize NDVI of parks and public green space------
+names(den_jeff_co_green_space_no_water)
 den_metro_green_space_ndvi_long_int =ndvi_den_metro_terr_5_yr %>% 
-  terra::extract(terra::vect(den_jeff_co_green_space_public_no_water)) %>% 
+  terra::extract(terra::vect(den_jeff_co_green_space_no_water)) %>% 
   as_tibble() 
 
 #takes a while so save.
@@ -183,7 +185,7 @@ save(den_metro_green_space_ndvi_long_int,
 #for interactive coding, separate because the first step takes so long. eventually combine
 den_metro_green_space_ndvi_long = den_metro_green_space_ndvi_long_int %>% 
   pivot_longer( #long form
-    cols = contains("20"),#contains a year that begins with 20..flexible enough as other code doesn't have the X
+    cols = contains("20"),#contains a year that begins with 20..
     names_to = "date_ndvi",
     values_to = "ndvi"
   ) %>% 
@@ -199,9 +201,10 @@ den_metro_green_space_ndvi_long = den_metro_green_space_ndvi_long_int %>%
 
 save(den_metro_green_space_ndvi_long, file = "den_metro_green_space_ndvi_long.RData")
 #create an ID that will link to the extracted values (row number)
-den_jeff_co_green_space_public_no_water_w_extract_id = den_jeff_co_green_space_public_no_water %>% 
+den_jeff_co_green_space_no_water_w_extract_id = den_jeff_co_green_space_no_water %>% 
   st_transform(4326) %>% 
   mutate(park_id_row_number=row_number()) 
+names(den_jeff_co_green_space_no_water_w_extract_id)
 
 den_metro_green_space_ndvi_day_geo = den_metro_green_space_ndvi_long %>% 
   group_by(park_id_row_number, date) %>% 
@@ -211,14 +214,34 @@ den_metro_green_space_ndvi_day_geo = den_metro_green_space_ndvi_long %>%
     ndvi_median = median(ndvi, na.rm=TRUE),
     ndvi_mean = mean(ndvi, na.rm=TRUE)) %>% 
   ungroup() %>% 
-  #link the fips code. this also has tract-level geometry
-  left_join(den_jeff_co_green_space_public_no_water_w_extract_id, by = "park_id_row_number") %>% 
-  st_as_sf() %>% #it has geometry. just make it so.
-  dplyr::select(contains("id_row_nu"), contains("ndvi"), date) 
+  #link the look-up. this also has geometry.
+  left_join(den_jeff_co_green_space_no_water_w_extract_id, by = "park_id_row_number") %>% 
+  st_as_sf()  #it has geometry. just make it so.
 
 save(den_metro_green_space_ndvi_day_geo, file = "den_metro_green_space_ndvi_day_geo.RData")
+
+## wrangle day-level green space NDVI---------
+setwd(here("data-processed"))
+# link valid dates
+load("den_metro_green_space_ndvi_day_geo.RData")
+load("lookup_date_is_valid_all.RData")
+den_metro_green_space_ndvi_day_geo
+den_metro_green_space_ndvi_day_wrangle_geo = den_metro_green_space_ndvi_day_geo %>% 
+  left_join(lookup_date_is_valid_all, by = "date")
+
+save(den_metro_green_space_ndvi_day_wrangle_geo,
+     file = "den_metro_green_space_ndvi_day_wrangle_geo.RData")
+#a no-geo version
+den_metro_green_space_ndvi_day_wrangle_nogeo = den_metro_green_space_ndvi_day_wrangle_geo %>% 
+  st_set_geometry(NULL) %>% 
+  as_tibble()
+save(den_metro_green_space_ndvi_day_wrangle_nogeo, 
+     file = "den_metro_green_space_ndvi_day_wrangle_nogeo.RData")
+
+
 ## visualize NDVI of parks and green space------------
 load("den_jeff_co_geo.RData")
+pal_viridis_trunc=viridis::viridis_pal(end=.9) #trunc for truncated
 mv_den_jeff_co_geo = den_jeff_co_geo %>%  
   mapview(
     layer.name = "County name",
@@ -226,7 +249,7 @@ mv_den_jeff_co_geo = den_jeff_co_geo %>%
     col.regions = c("red", "orange"),
     lwd=2,
     zcol = "county_name_short", alpha.regions = 0)
-mv_den_metro_green_space_ndvi_day_geo=den_metro_green_space_ndvi_day_geo %>% 
+mv_den_metro_green_space_ndvi_day_geo = den_metro_green_space_ndvi_day_wrangle_geo %>% 
   filter(date == "2021-05-25") %>% 
   mapview(
     layer.name = "NDVI, Median",

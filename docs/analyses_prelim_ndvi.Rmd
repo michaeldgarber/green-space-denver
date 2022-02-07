@@ -1,7 +1,7 @@
 ---
 title: "Preliminary NDVI analyses, Denver area"
 author: "Michael D Garber"
-date: "February 2, 2022"
+date: "February 7, 2022"
 ---
 
 This document presents some preliminary analyses characterizing the NDVI of certain places and census tracts throughout the Denver area.
@@ -263,15 +263,15 @@ https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_load_de
 We then removed bodies of water from the census tract here:
 https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/1_merge_tracts_with_water.R
 
-Here is a map of the median NDVI of the census tracts in the area on 2021-05-25. Note that the southernmost portion of the southernmost census tract of Jefferson County is excluded because it was outside of the area from which we gathered data on NDVI.
-```{r ndvitracts2021-05-25, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
+Here is a map of the median NDVI of the census tracts in the area on 2021-06-10. Note that the southernmost portion of the southernmost census tract of Jefferson County is excluded because it was outside of the area from which we gathered data on NDVI.
+```{r ndvitracts2021-06-10, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
 setwd(here("data-processed"))
 load("den_metro_tracts_ndvi_day_wrangle_geo.RData")
 load("den_metro_bbox_custom_sf.RData")
 pal_viridis_trunc=viridis::viridis_pal(end=.9)  
 
 den_metro_tracts_ndvi_day_wrangle_geo %>% 
-  filter(date == "2021-05-25") %>% 
+  filter(date == "2021-06-10") %>% 
   st_intersection(den_metro_bbox_custom_sf) %>% 
   mapview(
     layer.name = "NDVI, Median",
@@ -281,7 +281,7 @@ den_metro_tracts_ndvi_day_wrangle_geo %>%
 ```
 
 And the analogous map on 2021-07-04:
-```{r ndvitracts2021-07-04, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
+```{r ndvitracts2021-07-04, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE, fig.width=10}
 den_metro_tracts_ndvi_day_wrangle_geo %>% 
   filter(date == "2021-07-04") %>% 
   st_intersection(den_metro_bbox_custom_sf) %>% 
@@ -292,15 +292,47 @@ den_metro_tracts_ndvi_day_wrangle_geo %>%
     )
 ```
 
-Here is a histogram of the distribution of median NDVI on May 5:
-```{r ndvitractshisto2021-05-25, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
+Here is a histogram of the distribution of median NDVI for these census tracts on June 10, 2021:
+```{r ndvitractshisto2021-06-10, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
+setwd(here("data-processed"))
+load("den_metro_tracts_ndvi_day_wrangle_nogeo.RData")
 den_metro_tracts_ndvi_day_wrangle_nogeo %>% 
-  filter(date == "2021-05-25") %>% 
+  filter(date == "2021-06-10") %>% 
   ggplot(aes(ndvi_median))+
   geom_histogram()
 ```
 
 
 # NDVI of public green spaces
-Parks, etc., downloaded via osmdata here:
+In this section, we examine the NDVI levels of public green space in this area, including city parks and nature reserves. Please see this code for more details on how we gathered the polygons for the greens spaces: https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_load_denver_osm_parks_water.R
 
+Here are the parks we downloaded:
+```{r parkbytype, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
+setwd(here("data-processed"))
+load("den_jeff_co_green_space_public.RData")
+den_jeff_co_green_space_public %>% 
+  mapview(zcol = "osm_value", layer.name = "Green space type")
+```
+
+Like with census tracts, we removed bodies of water from these green spaces before measuring NDVI. Here is the NDVI on June 10, 2021:
+```{r ndviparks2021-06-10, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
+setwd(here("data-processed"))
+load("den_metro_green_space_ndvi_day_wrangle_geo.RData")
+load("den_jeff_co_geo.RData")
+pal_viridis_trunc=viridis::viridis_pal(end=.9) #trunc for truncated
+mv_den_jeff_co_geo = den_jeff_co_geo %>%  
+  mapview(
+    layer.name = "County name",
+    color = c("red", "orange"),
+    col.regions = c("red", "orange"),
+    lwd=2,
+    zcol = "county_name_short", alpha.regions = 0)
+mv_den_metro_green_space_ndvi_day_geo = den_metro_green_space_ndvi_day_wrangle_geo %>% 
+  filter(date == "2021-06-10") %>% 
+  mapview(
+    layer.name = "NDVI, Median",
+    col.regions = pal_viridis_trunc,
+    zcol = "ndvi_median" 
+  )
+mv_den_metro_green_space_ndvi_day_geo+mv_den_jeff_co_geo
+```

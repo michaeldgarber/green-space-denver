@@ -43,6 +43,7 @@ den_jeff_co_bbox %>% mapview()
 # save(den_area_nature_reserve, file = "den_area_nature_reserve.RData")
 # save(den_area_protected_area, file = "den_area_protected_area.RData")
 
+#load rather than re-downloading unless the bounding box changes
 load("den_area_park.RData")
 load("den_area_nature_reserve.RData")
 load("den_area_protected_area.RData")
@@ -102,7 +103,8 @@ den_area_protected_area_resolved = den_area_protected_area_polygons %>%
 #load this file from the other code
 load("den_jeff_co_geo.RData")
 #note name change to specify that it's just these two counties
-den_jeff_co_green_space_public =den_area_park_resolved %>% 
+#update to change to green space (omit the word public for brevity)
+den_jeff_co_green_space =den_area_park_resolved %>% 
   bind_rows(
     den_area_nature_reserve_resolved,
     den_area_protected_area_resolved
@@ -113,21 +115,23 @@ den_jeff_co_green_space_public =den_area_park_resolved %>%
   st_intersection(
     den_jeff_co_geo
   ) %>% 
+#  rename name to osm_name (as you've done in other projects)
+  rename(osm_name = name) %>% 
   #just select a few fields...can add more later as needed
   dplyr::select(
     starts_with("osm"),
     contains("fips"),
-    contains("name"),
-    contains("owner"),
+    contains("osm_name"),
+#    contains("owner"),
     contains("protect"),
-    contains("admin"),
+#    contains("admin"),
     contains("boundary")
-                )
-    
-names(den_jeff_co_green_space_public)
-save(den_jeff_co_green_space_public, file = "den_jeff_co_green_space_public.RData")
-den_jeff_co_green_space_public %>% mapview(zcol = "osm_key")
+                ) 
+names(den_jeff_co_green_space)
+save(den_jeff_co_green_space, file = "den_jeff_co_green_space.RData")
+load("den_jeff_co_green_space.RData")
 
+den_jeff_co_green_space %>% mapview(zcol = "osm_value")
 # Bodies of water------------
 ## Download bodies of water---------------
 # den_area_water = opq(bbox = den_jeff_co_bbox) %>%
@@ -157,7 +161,7 @@ den_area_water_resolved = den_area_water_polygons %>%
 save(den_area_water_resolved, file = "den_area_water_resolved.RData")
 
 ## create a union of all of this for an easy int-----------
-#warning: this takes forever.
+#warning: this takes forever (about 10 minutes)
 # union_method_1_t_start = Sys.time()
 # den_area_water_resolved_union_method_1 = den_area_water_resolved %>%
 #   st_union() 
@@ -182,17 +186,17 @@ den_area_water_resolved_union_method_2 %>% mapview()
 # Remove bodies of water from parks-----------
 #use st_difference https://cran.r-project.org/web/packages/sf/vignettes/sf3.html
 
-den_jeff_co_green_space_public_no_water = den_jeff_co_green_space_public %>% 
+den_jeff_co_green_space_no_water = den_jeff_co_green_space %>% 
   st_difference(den_area_water_resolved_union_method_2) %>% 
   st_make_valid() #this did the trick!
 
-save(den_jeff_co_green_space_public_no_water, file = "den_jeff_co_green_space_public_no_water.RData")
+save(den_jeff_co_green_space_no_water, file = "den_jeff_co_green_space_no_water.RData")
 #I was going to use tmap because mapview was failing silently but all good after st_make_valid()
 #I had issues getting mapview to render mixed geometries
 #https://github.com/r-spatial/mapview/issues/342
 #https://github.com/r-spatial/mapview/issues/85
-names(den_jeff_co_green_space_public_no_water)
-den_jeff_co_green_space_public_no_water %>% 
+names(den_jeff_co_green_space_no_water)
+den_jeff_co_green_space_no_water %>% 
   mapview(
-    zcol = "osm_key",
-    layer.name = "hi")
+    zcol = "osm_value",
+    layer.name = "Green space by type")
