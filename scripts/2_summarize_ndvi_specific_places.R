@@ -215,38 +215,3 @@ native_places_ndvi_day_nogeo %>%
     name = "Place name"
   )
   
-
-den_jeff_co_green_space_ndvi_day_geo = den_jeff_co_green_space_ndvi_long %>% 
-  group_by(park_id_row_number, date) %>% 
-  summarise(
-    ndvi_min = min(ndvi, na.rm=TRUE),
-    ndvi_max = max(ndvi, na.rm=TRUE),
-    ndvi_median = median(ndvi, na.rm=TRUE),
-    ndvi_mean = mean(ndvi, na.rm=TRUE)) %>% 
-  ungroup() %>% 
-  #link the fips code. this also has tract-level geometry
-  left_join(den_jeff_co_green_space_public_no_water_w_extract_id, by = "park_id_row_number") %>% 
-  st_as_sf() %>% #it has geometry. just make it so.
-  dplyr::select(contains("id_row_nu"), contains("ndvi"), date) 
-
-
-## Map areas against one month of NDVI-----------
-#valid dates include 5/25, 6/2, 6/10, 7/4
-pal_viridis_trunc=viridis::viridis_pal(end=.9) #trunc for truncated
-mv_ndvi_lsat_den_jeff_co_rast_20210610 =ndvi_lsat_den_jeff_co_rast$X20210610_NDVI %>% 
-  mapview(
-    maxpixels =  4863888,
-    col.regions = pal_viridis_trunc,
-    layer.name = "NDVI, 2021-06-10"
-  )
-
-mv_places_native = places_native_geo %>% 
-  mapview(
-    color = "black",
-    lwd=2,
-    col.regions = "red",
-    alpha.regions = .5,
-    layer.name = "Places")
-
-mv_ndvi_lsat_den_jeff_co_rast_20210610 + mv_places_native
-

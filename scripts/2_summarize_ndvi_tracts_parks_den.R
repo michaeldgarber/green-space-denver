@@ -95,7 +95,9 @@ den_metro_tracts_ndvi_day_geo = den_metro_tracts_ndvi_long %>%
   summarise(
     ndvi_min = min(ndvi, na.rm=TRUE),
     ndvi_max = max(ndvi, na.rm=TRUE),
-    ndvi_median = median(ndvi, na.rm=TRUE),
+    ndvi_25 = quantile(ndvi, probs = c(0.25), na.rm=TRUE),
+    ndvi_75 = quantile(ndvi, probs = c(0.75), na.rm=TRUE),
+    ndvi_med = median(ndvi, na.rm=TRUE),
     ndvi_mean = mean(ndvi, na.rm=TRUE)) %>% 
   ungroup() %>% 
   #link the fips code. this also has tract-level geometry
@@ -155,7 +157,7 @@ den_metro_tracts_ndvi_day_wrangle_geo %>%
   mapview(
     layer.name = "NDVI, Median",
      col.regions = pal_viridis_trunc,
-    zcol = "ndvi_median" 
+    zcol = "ndvi_med" 
     )
 
 #valid dates include 5/25, 6/2, 6/10, 7/4
@@ -168,7 +170,7 @@ den_metro_tracts_ndvi_day_geo %>%
   mapview(
     layer.name = "NDVI, Median",
     col.regions = pal_viridis_trunc,
-    zcol = "ndvi_median" 
+    zcol = "ndvi_med" 
   )
 
 # green space NDVI----
@@ -211,7 +213,9 @@ den_metro_green_space_ndvi_day_geo = den_metro_green_space_ndvi_long %>%
   summarise(
     ndvi_min = min(ndvi, na.rm=TRUE),
     ndvi_max = max(ndvi, na.rm=TRUE),
-    ndvi_median = median(ndvi, na.rm=TRUE),
+    ndvi_25 = quantile(ndvi, probs = c(0.25), na.rm=TRUE),
+    ndvi_75 = quantile(ndvi, probs = c(0.75), na.rm=TRUE),
+    ndvi_med = median(ndvi, na.rm=TRUE),
     ndvi_mean = mean(ndvi, na.rm=TRUE)) %>% 
   ungroup() %>% 
   #link the look-up. this also has geometry.
@@ -225,7 +229,6 @@ setwd(here("data-processed"))
 # link valid dates
 load("den_metro_green_space_ndvi_day_geo.RData")
 load("lookup_date_is_valid_all.RData")
-den_metro_green_space_ndvi_day_geo
 den_metro_green_space_ndvi_day_wrangle_geo = den_metro_green_space_ndvi_day_geo %>% 
   left_join(lookup_date_is_valid_all, by = "date")
 
@@ -237,7 +240,7 @@ den_metro_green_space_ndvi_day_wrangle_nogeo = den_metro_green_space_ndvi_day_wr
   as_tibble()
 save(den_metro_green_space_ndvi_day_wrangle_nogeo, 
      file = "den_metro_green_space_ndvi_day_wrangle_nogeo.RData")
-
+names(den_me)
 
 ## visualize NDVI of parks and green space------------
 load("den_jeff_co_geo.RData")
@@ -254,7 +257,7 @@ mv_den_metro_green_space_ndvi_day_geo = den_metro_green_space_ndvi_day_wrangle_g
   mapview(
     layer.name = "NDVI, Median",
     col.regions = pal_viridis_trunc,
-    zcol = "ndvi_median" 
+    zcol = "ndvi_med" 
   )
 mv_den_metro_green_space_ndvi_day_geo+mv_den_jeff_co_geo
 

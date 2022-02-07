@@ -327,7 +327,12 @@ mv_den_jeff_co_geo = den_jeff_co_geo %>%
     col.regions = c("red", "orange"),
     lwd=2,
     zcol = "county_name_short", alpha.regions = 0)
-mv_den_metro_green_space_ndvi_day_geo = den_metro_green_space_ndvi_day_wrangle_geo %>% 
+mv_den_metro_green_space_ndvi_day_geo = den_metro_green_space_ndvi_day_wrangle_geo %>%
+  dplyr::select( #limit some of the variables before mapview
+    starts_with("osm"),
+    starts_with("ndvi"),
+    starts_with("date"),
+    starts_with("county")) %>% 
   filter(date == "2021-06-10") %>% 
   mapview(
     layer.name = "NDVI, Median",
@@ -335,4 +340,16 @@ mv_den_metro_green_space_ndvi_day_geo = den_metro_green_space_ndvi_day_wrangle_g
     zcol = "ndvi_median" 
   )
 mv_den_metro_green_space_ndvi_day_geo+mv_den_jeff_co_geo
+```
+
+Most parks are in the city, and most protected areas are in the mountains. Summarize NDVI by type of green space:
+```{r summarise_by_park_type, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, results = 'asis'}
+setwd(here("data-processed"))
+load("den_metro_green_space_ndvi_day_wrangle_nogeo.RData")
+den_metro_green_space_ndvi_day_wrangle_nogeo %>% 
+  filter(date_is_valid_all==1) %>% 
+  group_by(osm_value) %>% 
+  summarise(ndvi_median = median(ndvi_median, na.rm=TRUE) ) %>% 
+  ungroup() %>% 
+  kable()
 ```
