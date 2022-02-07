@@ -60,7 +60,7 @@ First, pick a few places where we would expect NDVI to be high in the summer on 
 
 (These areas are defined here: https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/1b_wrangle_check_landsat_ndvi_denver.R)
 
-```{r loadtestareas, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
+```{r loadtestareas, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
 setwd(here("data-processed"))
 load("bbox_evergreen_east.RData")
 load("bbox_indian_tree_golf.RData")
@@ -94,7 +94,7 @@ ndvi_test_places_day_wrangle %>%
 ```
 
 Hmm, if we look closely, we can see that there are some very low NDVI values for some of these places even in the summer, which is not plausible. Those low values must indicate obstruction by clouds. For example, look at a day when NDVI was measured as very low in City Park despite it being mid-May when we would expect it to be higher. So I'm going to exclude dates like these. 
-```{r mapviewbaddate, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
+```{r mapviewbaddate, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
 setwd(here("data-processed"))
 pal_viridis_trunc=viridis::viridis_pal(end=.9) #trunc for truncated
 ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
@@ -139,7 +139,7 @@ places_native_nogeo %>%
 
 
 Map these places by type (nativity spectrum or high-plant diversity).
-```{r mapviewplacesnative, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
+```{r mapviewplacesnative, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
 places_native_geo %>% 
   mapview(zcol = "place_type",
           layer.name = "Place category")
@@ -250,10 +250,56 @@ native_places_ndvi_day_nogeo %>%
   kable()
 ```
 
-Next steps...
+
 # NDVI of census tracts
-Census tracts downloaded via tidycensus here:
-Note, for now we are restricting to census tracts in Denver County and Jefferson County. And the bounding box only goes as far south as Castle Rock, so it excludes the large southern census tract(s) in Jefferson County.
+The goal of this section is to summarize NDVI for census tracts in Denver County and Jefferson Counties. Before characterizing NDVI of each census tract, we removed bodies of water. NDVI values of water approach -1, and we did not want to "penalize" a census tract for having large amounts of water.
+
+We download census tracts using the tidycensus package in this script:
+https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_import_manage_denver_acs.R
+
+We downloaded bodies of water using the osmdata package in this script:
+https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_load_denver_osm_parks_water.R
+
+We then removed bodies of water from the census tract here:
+https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/1_merge_tracts_with_water.R
+
+Here is a map of the median NDVI of the census tracts in the area on 2021-05-25. Note that the southernmost portion of the southernmost census tract of Jefferson County is excluded because it was outside of the area from which we gathered data on NDVI.
+```{r ndvitracts2021-05-25, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
+setwd(here("data-processed"))
+load("den_metro_tracts_ndvi_day_wrangle_geo.RData")
+load("den_metro_bbox_custom_sf.RData")
+pal_viridis_trunc=viridis::viridis_pal(end=.9)  
+
+den_metro_tracts_ndvi_day_wrangle_geo %>% 
+  filter(date == "2021-05-25") %>% 
+  st_intersection(den_metro_bbox_custom_sf) %>% 
+  mapview(
+    layer.name = "NDVI, Median",
+     col.regions = pal_viridis_trunc,
+    zcol = "ndvi_median" 
+    )
+```
+
+And the analogous map on 2021-07-04:
+```{r ndvitracts2021-07-04, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
+den_metro_tracts_ndvi_day_wrangle_geo %>% 
+  filter(date == "2021-07-04") %>% 
+  st_intersection(den_metro_bbox_custom_sf) %>% 
+  mapview(
+    layer.name = "NDVI, Median",
+     col.regions = pal_viridis_trunc,
+    zcol = "ndvi_median" 
+    )
+```
+
+Here is a histogram of the distribution of median NDVI on May 5:
+```{r ndvitractshisto2021-05-25, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
+den_metro_tracts_ndvi_day_wrangle_nogeo %>% 
+  filter(date == "2021-05-25") %>% 
+  ggplot(aes(ndvi_median))+
+  geom_histogram()
+```
+
 
 # NDVI of public green spaces
 Parks, etc., downloaded via osmdata here:

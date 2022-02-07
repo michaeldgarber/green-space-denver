@@ -63,6 +63,11 @@ den_metro_bbox_custom = st_bbox(
 )
 save(den_metro_bbox_custom, file = "den_metro_bbox_custom.RData")
 mapview(den_metro_bbox_custom, col.regions="red")+mapview(den_metro_bbox)#great
+
+#save one version that is of class sf so can be used in subsequent sf operations
+den_metro_bbox_custom_sf = den_metro_bbox_custom %>%   
+  sf::st_as_sfc()
+save(den_metro_bbox_custom_sf, file = "den_metro_bbox_custom_sf.RData")
 #convert bbox to ee image so it can be used as the region of interest
 den_metro_ee = den_metro_bbox_custom %>% 
   sf::st_as_sfc() %>% 

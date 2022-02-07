@@ -305,9 +305,12 @@ ndvi_test_places_day_wrangle = ndvi_test_places_day %>%
 setwd(here("data-processed"))
 save(ndvi_test_places_day_wrangle, file = "ndvi_test_places_day_wrangle.RData")
 
+
 ndvi_test_places_day_wrangle %>% 
   group_by(date_is_valid_all) %>% 
   summarise(n=n())
+
+### Save valid dates--------------
 lookup_date_is_valid_all =ndvi_test_places_day_wrangle %>% 
   distinct(date, date_is_valid_all)
 

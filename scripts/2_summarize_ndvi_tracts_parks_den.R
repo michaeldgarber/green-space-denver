@@ -1,7 +1,7 @@
 #filename: 2_summarize_ndvi_tracts_parks_den
 
-#The goal of this script is to link the landsat raster file with the ACS census-tract data to begin to characterize
-#census tracts by NDVI
+#The goal of this script is to link the landsat raster file with the ACS census-tract data to 
+#begin to characterize census tracts by NDVI
 #And do the same for the parks and public green spaces
 
 library(here)
@@ -11,17 +11,36 @@ library(raster)
 library(mapview)
 library(sf)
 
-# Read raster data------------
+# Read in (load) data-------
 setwd(here("data-processed"))
 getwd()
 #read raster data. see for additional discussion on the nuances of reading and writing raster data
-#1_get_landsat_ndvi_denver.R
+#created here: ~green-space-denver/scripts/1a_get_landsat_ndvi_denver.R
 ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
 
-
-# Read census tract and OSM data---------####
+# Read census tract and OSM data 
+#created here: ~/green-space-denver/scripts/1_merge_tracts_with_water.R
+#limit to the bounding box used to gather the NDVI data
+#defined in 1a_get_landsat_ndvi_denver
 load("den_jeff_co_tracts_no_water_geo.RData")
-den_jeff_co_tracts_no_water_geo %>% mapview()
+load("den_metro_bbox_custom_sf.RData") #load bounding box
+mv_den_jeff_co_tracts_no_water_geo = den_jeff_co_tracts_no_water_geo  %>% 
+  mapview(col.regions = "cadetblue1", layer.name = "tracts")
+
+#check coverage of these census tracts compared with the bounding box
+mv_den_metro_bbox_custom = den_metro_bbox_custom_sf %>% 
+  mapview(col.regions = "coral", layer.name = "bbox")
+mv_den_jeff_co_tracts_no_water_geo + mv_den_metro_bbox_custom
+#okay so it just excludes census tract 08059012058
+
+#from other code (1b_wrangle_check_landsat_ndvi_..)
+load("lookup_date_is_valid_all.RData") #valid dates
+lookup_date_is_valid_all
+
+load("den_jeff_co_green_space_public_no_water.RData") #green space, no water
+den_jeff_co_green_space_public_no_water
+
+
 # census tract NDVI----------
 ## Summarize NDVI by census tract-------------
 den_metro_ndvi_long_int =ndvi_den_metro_terr_5_yr %>% 
@@ -58,17 +77,20 @@ den_metro_tracts_ndvi_long = den_metro_ndvi_long_int %>%
 nrow(den_metro_tracts_ndvi_long)
 save(den_metro_tracts_ndvi_long, file = "den_metro_tracts_ndvi_long.RData")
 den_metro_tracts_ndvi_long
+nrow(den_metro_tracts_ndvi_long)# wow. almost a billion observations!
 nrow(den_metro_tracts_ndvi_long)
+
 #create an ID that will link to the extracted values (row number)
 den_jeff_co_tracts_geo_w_extract_id = den_jeff_co_tracts_no_water_geo %>% 
   st_transform(4326) %>% 
   mutate( tract_id_row_number=row_number()) 
 
-
 den_jeff_co_tracts_geo_w_extract_id 
 load("den_jeff_co_nogeo.RData")
+
+## Summarize census tract NDVI by day------------
 den_metro_tracts_ndvi_day_geo = den_metro_tracts_ndvi_long %>% 
-  #naming is hard. but calling this _day to indicate a daily summary.
+  #naming is difficult, but let's call this _day to indicate a daily summary.
   group_by(tract_id_row_number, date) %>% 
   summarise(
     ndvi_min = min(ndvi, na.rm=TRUE),
@@ -83,16 +105,48 @@ den_metro_tracts_ndvi_day_geo = den_metro_tracts_ndvi_long %>%
   st_as_sf() #it has geometry. just make it so.
 
 save(den_metro_tracts_ndvi_day_geo, file = "den_metro_tracts_ndvi_day_geo.RData")
-den_metro_tracts_ndvi_day_geo 
+load("den_metro_tracts_ndvi_day_geo.RData")
+
+
+## wrangle day-level census tract NDVI---------
+#continue wrangling from this saved dataset so we don't have to load the long-form data, as it's 
+#800 million observations.
+
+### Load valid dates-----------
+den_metro_tracts_ndvi_day_wrangle_geo = den_metro_tracts_ndvi_day_geo %>% 
+  left_join(lookup_date_is_valid_all, by = "date")
+
+save(den_metro_tracts_ndvi_day_wrangle_geo, file = "den_metro_tracts_ndvi_day_wrangle_geo.RData")
+
+den_metro_tracts_ndvi_day_wrangle_nogeo = den_metro_tracts_ndvi_day_wrangle_geo %>% 
+  st_set_geometry(NULL) %>% 
+  as_tibble()
+
+save(den_metro_tracts_ndvi_day_wrangle_nogeo, file = "den_metro_tracts_ndvi_day_wrangle_nogeo.RData")
+
+#what are the valid dates, again?
+lookup_date_is_valid_all %>% 
+  filter(date_is_valid_all==1) %>% 
+  dplyr::select(date) %>% 
+  pull()
+
+
 ## visualize census tracts NDVI ---------
+den_metro_bbox_custom_sf %>% mapview()
 ### define color palettes------------------
 pal_terrain_col = rev(terrain.colors(568)) #mapview below has 586 colors
 pal_terrain_col #it just interpolates by repeating.
 #use viridis instead. more flexible. annoying to pick an exact number.
 pal_viridis_trunc=viridis::viridis_pal(end=.9) #trunc for truncated
 table(den_metro_tracts_ndvi_day_geo$county_name_short)
+
+#overall
+den_metro_tracts_ndvi_day_wrangle_geo %>% 
+  filter(date == "2021-05-25") %>% 
+  st_intersection(den_metro_bbox_custom_sf) %>% 
+  mapview()
 ### may 25, 2021-------
-den_metro_tracts_ndvi_day_geo %>% 
+den_metro_tracts_ndvi_day_wrangle_geo %>% 
   filter(date == "2021-05-25") %>% 
   filter(
     county_name_short == "Jefferson"| 
@@ -118,8 +172,6 @@ den_metro_tracts_ndvi_day_geo %>%
 
 # green space NDVI----
 ## Summarize NDVI of parks and public green space------
-load("den_jeff_co_green_space_public_no_water.RData")
-den_jeff_co_green_space_public_no_water
 den_metro_green_space_ndvi_long_int =ndvi_den_metro_terr_5_yr %>% 
   terra::extract(terra::vect(den_jeff_co_green_space_public_no_water)) %>% 
   as_tibble() 
@@ -127,6 +179,7 @@ den_metro_green_space_ndvi_long_int =ndvi_den_metro_terr_5_yr %>%
 #takes a while so save.
 save(den_metro_green_space_ndvi_long_int, 
      file = "den_metro_green_space_ndvi_long_int.RData")
+
 #for interactive coding, separate because the first step takes so long. eventually combine
 den_metro_green_space_ndvi_long = den_metro_green_space_ndvi_long_int %>% 
   pivot_longer( #long form
@@ -182,7 +235,6 @@ mv_den_metro_green_space_ndvi_day_geo=den_metro_green_space_ndvi_day_geo %>%
   )
 mv_den_metro_green_space_ndvi_day_geo+mv_den_jeff_co_geo
 
-# Filter out cloudy images--------
-#Some people use 0.1 as a threshold, but what about water?
-#https://www.neonscience.org/resources/learning-hub/tutorials/dc-ndvi-calc-raster-time-series
-#go to the other code where you worked on this
+
+
+
