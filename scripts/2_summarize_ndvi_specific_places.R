@@ -81,7 +81,7 @@ native_places_ndvi_day_geo = native_places_ndvi %>%
     ndvi_max = max(ndvi, na.rm=TRUE),
     ndvi_25 = quantile(ndvi, probs = c(0.25), na.rm=TRUE),
     ndvi_75 = quantile(ndvi, probs = c(0.75), na.rm=TRUE),
-    ndvi_50 = median(ndvi, na.rm=TRUE),
+    ndvi_med = median(ndvi, na.rm=TRUE),
     ndvi_mean = mean(ndvi, na.rm=TRUE)) %>% 
   ungroup() %>% 
   #recreate month and year columns
@@ -111,7 +111,7 @@ native_places_ndvi_day_geo %>%
   mapview(
     layer.name = "NDVI, Median",
     col.regions = pal_viridis_trunc,
-    zcol = "ndvi_50" 
+    zcol = "ndvi_med" 
   )
 
 ## ggplot - line graph of NDVI over time with median, 25th, and 75th as ribbon by area-------
@@ -132,7 +132,7 @@ native_places_ndvi_day_nogeo %>%
   filter(place_type == "native spectrum") %>% 
   ggplot(aes(
     x=date, 
-    y=ndvi_50 #plot median
+    y=ndvi_med #plot median
   ))+
   geom_ribbon( #ribbon around 25th and 75th percentile
     aes(ymin =ndvi_25, ymax = ndvi_75 ),
@@ -164,7 +164,7 @@ native_places_ndvi_day_nogeo %>%
   filter(place_type == "high diversity") %>% 
   ggplot(aes(
     x=date, 
-    y=ndvi_50 #plot median
+    y=ndvi_med #plot median
   ))+
   geom_ribbon( #ribbon around 25th and 75th percentile
     aes(ymin =ndvi_25, ymax = ndvi_75 ),
@@ -190,7 +190,7 @@ native_places_ndvi_day_nogeo %>%
 native_places_ndvi_day_nogeo %>% 
   filter(date_is_valid_all==1) %>% 
   group_by(place_type, place_name_fac) %>% 
-  summarise(ndvi_median = median(ndvi_50, na.rm=TRUE) )
+  summarise(ndvi_median = median(ndvi_med, na.rm=TRUE) )
 
 
 ## ggplot - NDVI vs percent native over all dates---------
@@ -200,7 +200,7 @@ native_places_ndvi_day_nogeo %>%
   filter(place_type == "native spectrum") %>% 
   ggplot(aes(
     x=native_percent, 
-    y=ndvi_50 #plot median
+    y=ndvi_med #plot median
   ))+
   geom_point(
     aes(colour=place_name_fac), size = 1.5, 

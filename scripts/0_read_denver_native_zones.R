@@ -4,12 +4,13 @@
 library(here)
 library(sf)
 library(tidyverse)
+library(mapview)
 here()
 
 # Read kml files---------
 
 ## Denver Botanic Gardens 100 % Native Zone-------
-setwd(here("data-input"))
+setwd(here("data-input", "native-zones"))
 den_botanic_native_100  = sf::st_read("den_botanic_native_100.kml") %>% 
   st_transform(4326) %>% 
   st_zm() %>%  #drop z columnn
@@ -24,7 +25,7 @@ den_botanic_native_100  = sf::st_read("den_botanic_native_100.kml") %>%
 den_botanic_native_100 %>% mapview()
 
 ## City Park 0% Native Zone-------
-setwd(here("data-input"))
+setwd(here("data-input", "native-zones"))
 city_park_native_0  = sf::st_read("city_park_native_0.kml") %>% 
   st_transform(4326) %>% 
   st_zm() %>%  #drop z columnn
@@ -39,7 +40,7 @@ city_park_native_0  = sf::st_read("city_park_native_0.kml") %>%
 city_park_native_0 %>% mapview()
 
 ## Suburban Open Space 1 near Chatfield High school-------
-setwd(here("data-input"))
+setwd(here("data-input", "native-zones"))
 suburban_open_space_1_native_50  = sf::st_read("suburban_open_space_1_native_50.kml") %>% 
   st_transform(4326) %>% 
   st_zm() %>%  #drop z columnn
@@ -53,7 +54,7 @@ suburban_open_space_1_native_50  = sf::st_read("suburban_open_space_1_native_50.
 suburban_open_space_1_native_50 %>% mapview()
 
 ## Suburban Open Space 2 near Columbine Hills Church-------
-setwd(here("data-input"))
+setwd(here("data-input", "native-zones"))
 suburban_open_space_2_native_30  = sf::st_read("suburban_open_space_2_native_30.kml") %>% 
   st_transform(4326) %>% 
   st_zm() %>%  #drop z columnn
@@ -68,7 +69,7 @@ suburban_open_space_2_native_30 %>% mapview()
 
 
 ## Plains Conservation Center, 100% Native-------
-setwd(here("data-input"))
+setwd(here("data-input", "native-zones"))
 plains_conservation_center_native_100  = sf::st_read("plains_conservation_center_native_100.kml") %>% 
   st_transform(4326) %>% 
   st_zm() %>%  #drop z columnn
@@ -83,7 +84,7 @@ plains_conservation_center_native_100  = sf::st_read("plains_conservation_center
 plains_conservation_center_native_100 %>% mapview()
 
 ## Hogback along C-470--------
-setwd(here("data-input"))
+setwd(here("data-input", "native-zones"))
 hogback_along_c470_native_75  = sf::st_read("hogback_along_c470_native_75.kml") %>% 
   st_transform(4326) %>% 
   st_zm() %>%  #drop z columnn
@@ -96,7 +97,7 @@ hogback_along_c470_native_75  = sf::st_read("hogback_along_c470_native_75.kml") 
   )
 hogback_along_c470_native_75 %>% mapview()
 
-setwd(here("data-input"))
+setwd(here("data-input", "native-zones"))
 
 ## Denver Botanic Gardens, Chatfiled, 10% Native----------
 den_botanic_chatfield_native_10  = sf::st_read("den_botanic_chatfield_native_10.kml") %>% 
@@ -112,7 +113,7 @@ den_botanic_chatfield_native_10  = sf::st_read("den_botanic_chatfield_native_10.
 den_botanic_chatfield_native_10 %>% mapview()
 
 ## Green Mountain Park---------
-setwd(here("data-input"))
+setwd(here("data-input", "native-zones"))
 green_mtn_park_native_80_90  = sf::st_read("green_mtn_park_native_80_90.kml") %>% 
   st_transform(4326) %>% 
   st_zm() %>%  #drop z columnn

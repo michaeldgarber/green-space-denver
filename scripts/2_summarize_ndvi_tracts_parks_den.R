@@ -240,7 +240,7 @@ den_metro_green_space_ndvi_day_wrangle_nogeo = den_metro_green_space_ndvi_day_wr
   as_tibble()
 save(den_metro_green_space_ndvi_day_wrangle_nogeo, 
      file = "den_metro_green_space_ndvi_day_wrangle_nogeo.RData")
-names(den_me)
+
 
 ## visualize NDVI of parks and green space------------
 load("den_jeff_co_geo.RData")
