@@ -8,22 +8,23 @@ library(sf)
 library(mapview)
 
 # Load parcel-based land-use data (2018)----------
-#/Users/michaeldgarber/Dropbox/CSU/green-space-denver/data-input/city-of-denver-data/existing_landuse
+# Only do this once, as it takes a while. Load it from R instead.
 #source:
-#https://www.denvergov.org/opendata/dataset/city-and-county-of-denver-existing-landuse-2018
+#https://www.denvergov.org/opendata/dataset/
+#city-and-county-of-denver-existing-landuse-2018
 #dsn = #the folder where the shapefile is located
-setwd(here("data-input", "city-of-denver-data"))
-den_landuse_2018 = st_read(dsn ="existing_landuse") %>% 
-  st_transform(4326) %>% 
-  st_make_valid()
-
+# setwd(here("data-input", "city-of-denver-data"))
+# den_landuse_2018 = st_read(dsn ="existing_landuse") %>% 
+#   st_transform(4326) %>% 
+#   st_make_valid()
+# 
 setwd(here("data-processed"))#save
-save(den_landuse_2018, file = "den_landuse_2018.RData")
+# save(den_landuse_2018, file = "den_landuse_2018.RData")
 
 #Examine a subset, since the data are pretty big.
 #NW corner #39.760199, -104.977148
 #SE corner 39.719007, -105.017163
-
+load("den_landuse_2018.RData")
 den_subset = st_bbox(
   c(
   ymin = 39.719007,
@@ -41,9 +42,12 @@ sf::sf_use_s2(FALSE)
 den_landuse_2018_subset = den_landuse_2018 %>% 
   st_intersection(den_subset)
 
-den_landuse_2018_subset %>% mapview(zcol = "CPD_LANDUS")
+den_landuse_2018_subset %>% 
+  mapview(zcol = "CPD_LANDUS")
 
 # Load zoning data----------
+#These data do not have quite the spatial resolution of the parcel-based data, which is fine.
+#They are easier to work with.
 setwd(here("data-input", "city-of-denver-data"))
 den_zoning = st_read(dsn ="zoning") %>% 
   st_transform(4326) %>% 

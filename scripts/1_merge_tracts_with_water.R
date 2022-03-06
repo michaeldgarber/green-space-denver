@@ -1,5 +1,6 @@
 #filename: 1_merge_tracts_with_water
 #began 1/20/22
+#comment 3/6/22 maybe rename to 2
 #The purpose of this script is to remove bodies of water from ACS areas. It will be very short
 #but I want to make sure that it is run in order, so creating a new script
 
