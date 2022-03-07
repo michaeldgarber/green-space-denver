@@ -419,6 +419,7 @@ den_osm_water_poly_inc_waterways_10_ft_union = den_osm_water_poly_inc_waterways_
 
 den_osm_water_poly_inc_waterways_10_ft_union %>% mapview()
 
+#great, continued ~/Dropbox/CSU/green-space-denver/scripts/1_wrangle_water.R
 # Remove bodies of water from parks-----------
 load("den_jeff_co_green_space.RData")
 #use st_difference https://cran.r-project.org/web/packages/sf/vignettes/sf3.html

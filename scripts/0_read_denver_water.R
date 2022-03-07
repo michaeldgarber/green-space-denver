@@ -69,25 +69,14 @@ den_streams_lakes_ponds = den_streams %>%
   #make a small buffer around it so mapview works.
   st_buffer(.1) %>% 
   bind_rows(den_lakes_ponds) 
+setwd(here("data-processed"))
+save(den_streams_lakes_ponds, file = "den_streams_lakes_ponds.RData")
 
+den_streams_lakes_ponds %>% mapview(zcol = "unit_type_broad")
 table(den_streams_lakes_ponds$unit_type)
 den_streams_lakes_ponds %>% 
   filter(unit_type_broad == "streams") %>% 
   mapview(layer.name = "test")
-setwd(here("data-processed"))
-save(den_streams_lakes_ponds, file = "den_streams_lakes_ponds.RData")
-
-
-# Define buffers per policy suggestion---------
-#200 feet ideal, 100 good, 50 feet realistic
-
-load("den_streams_lakes_ponds.RData")
-den_streams_lakes_ponds_200_ft = den_streams_lakes_ponds %>% 
-  st_buffer(200)
-den_streams_lakes_ponds_100_ft = den_streams_lakes_ponds %>% 
-  st_buffer(100)
-den_streams_lakes_ponds_50_ft = den_streams_lakes_ponds %>% 
-  st_buffer(50)
 
 
 
