@@ -25,7 +25,7 @@ mapview(den_area_water_resolved)+mapview(den_metro_co_geo)
 #dsn = #the folder where the shapefile is located
 setwd(here("data-input", "city-of-denver-data", "bodies-of-water"))
 den_lakes_ponds = st_read(dsn ="lakes_and_ponds") %>%
-  st_transform(4326) %>%
+  st_transform(2876) %>% #says it's feet
   st_make_valid() %>% 
   rename(
     object_id = OBJECTID_1,
@@ -46,7 +46,7 @@ den_lakes_ponds %>% mapview()
 ## Load streams--------
 setwd(here("data-input", "city-of-denver-data", "bodies-of-water"))
 den_streams = st_read(dsn ="streams") %>%
-  st_transform(4326) %>%
+  st_transform(2876) %>% #says it's feet
   st_make_valid() %>% 
   rename(
     object_id = OBJECTID_1,
@@ -80,41 +80,14 @@ save(den_streams_lakes_ponds, file = "den_streams_lakes_ponds.RData")
 
 # Define buffers per policy suggestion---------
 #200 feet ideal, 100 good, 50 feet realistic
-#convert to meters since we're in 4326
-#1 meter = 3.28084 feet
-ft_in_m_200 = 200/3.28084 #60.96 meters
-ft_in_m_100 = 100/3.28084
-ft_in_m_50 = 50/3.28084
+
 load("den_streams_lakes_ponds.RData")
 den_streams_lakes_ponds_200_ft = den_streams_lakes_ponds %>% 
-  st_transform(2876) %>% #says it's feet
   st_buffer(200)
 den_streams_lakes_ponds_100_ft = den_streams_lakes_ponds %>% 
-  st_transform(2876) %>% #says it's feet
   st_buffer(100)
 den_streams_lakes_ponds_50_ft = den_streams_lakes_ponds %>% 
-  st_transform(2876) %>% #says it's feet
   st_buffer(50)
-
-# Removies bodies of water from buffers-------
-#Note that the streams are lines, so they won't have an area. We need to remove
-#the bodies of water loaded from OpenStreetMap
-class(den_streams$geometry)
-#To pare it down, since we're just in Denver, limit the OSM water data to
-#Denver proper. This is created here: 
-#~/Dropbox/CSU/green-space-denver/scripts/0_import_manage_denver_acs.R
-setwd(here("data-processed"))
-load("den_area_water_resolved.RData") #created in 0_import_manage_denver_acs.R
-load("den_co_geo.RData")
-
-den_streams_lakes_ponds_50_ft %>% mapview()
-#the OSM data just in Denver County
-den_co_water_osm_resolved = den_area_water_resolved %>% 
-  st_intersection(den_co_geo)
-
-#The difference between the buffers and the bodies of water
-den_water_200_ft_diff = den_streams_lakes_ponds_200_ft %>% 
-  st_difference(den_co_water_osm_resolved)
 
 
 

@@ -139,32 +139,33 @@ save(den_jeff_co_green_space, file = "den_jeff_co_green_space.RData")
 load("den_jeff_co_green_space.RData")
 
 den_jeff_co_green_space %>% mapview(zcol = "osm_value")
+
 # Bodies of water------------
 ## Download bodies of water---------------
 #A few different ways:
 ### key natural value water ----------
 #https://wiki.openstreetmap.org/wiki/Tag:natural%3Dwater
-den_metro_natural_water= opq(bbox = den_metro_bbox_custom) %>%
-  add_osm_feature(key = "natural" , value="water") %>%
-  osmdata_sf()
-setwd(here("data-processed"))
-save(den_metro_natural_water, file = "den_metro_natural_water.RData")
+# den_metro_natural_water= opq(bbox = den_metro_bbox_custom) %>%
+#   add_osm_feature(key = "natural" , value="water") %>%
+#   osmdata_sf()
+# setwd(here("data-processed"))
+# save(den_metro_natural_water, file = "den_metro_natural_water.RData")
 
 
 ### key waterway value river & stream ----------
 #Another way to get waterways:
 #https://wiki.openstreetmap.org/wiki/Key:waterway
-den_metro_waterway_river= opq(bbox = den_metro_bbox_custom) %>%
-  add_osm_feature(key = "waterway" , value="river") %>%
-  osmdata_sf()
-setwd(here("data-processed"))
-save(den_metro_waterway_river, file = "den_metro_waterway_river.RData")
+# den_metro_waterway_river= opq(bbox = den_metro_bbox_custom) %>%
+#   add_osm_feature(key = "waterway" , value="river") %>%
+#   osmdata_sf()
+# setwd(here("data-processed"))
+# save(den_metro_waterway_river, file = "den_metro_waterway_river.RData")
 
 
-den_metro_waterway_stream= opq(bbox = den_metro_bbox_custom) %>%
-  add_osm_feature(key = "waterway" , value="stream") %>%
-  osmdata_sf()
-save(den_metro_waterway_stream, file = "den_metro_waterway_stream.RData")
+# den_metro_waterway_stream= opq(bbox = den_metro_bbox_custom) %>%
+#   add_osm_feature(key = "waterway" , value="stream") %>%
+#   osmdata_sf()
+# save(den_metro_waterway_stream, file = "den_metro_waterway_stream.RData")
 
 ## Load all of the OSM water -----------
 library(tidyverse)
@@ -178,10 +179,10 @@ load("den_metro_waterway_river.RData")
 load("den_metro_waterway_stream.RData")
 
 #Test the different sf feature types
-den_metro_waterway_river$osm_lines %>% mapview() #yes, many
-den_metro_waterway_river$osm_multilines %>% mapview() #yes, many
-den_metro_waterway_river$osm_polygons %>% mapview() #none, ignore
-den_metro_waterway_river$osm_multipolygons #null, ignore
+# den_metro_waterway_river$osm_lines %>% mapview() #yes, many
+# den_metro_waterway_river$osm_multilines %>% mapview() #yes, many
+# den_metro_waterway_river$osm_polygons %>% mapview() #none, ignore
+# den_metro_waterway_river$osm_multipolygons #null, ignore
 #den_metro_waterway_river$osm_points %>% mapview()#there but don't use
 
 ### Mapview all of them together--------
@@ -254,6 +255,17 @@ den_metro_natural_water_polygons = den_metro_natural_water$osm_polygons %>%
     osm_value = "water",
     osm_origin_feature_type = "polygon") %>% 
   keep_these_vars()
+
+#make a dissolved version for below operations
+den_metro_natural_water_polygons_union = den_metro_natural_water_polygons %>% 
+  mutate(dummy=1) %>%
+  group_by(dummy) %>%
+  summarise(n=n()) %>%
+  ungroup() %>% 
+  dplyr::select(geometry)
+
+den_metro_natural_water_polygons_union %>% mapview()
+
 den_metro_natural_water_multipolygons = den_metro_natural_water$osm_multipolygons %>% 
   mutate(
     osm_key = "natural",
@@ -268,21 +280,31 @@ save(den_metro_natural_water_multipolygons,
      file = "den_metro_natural_water_multipolygons.RData")
 
 #find part of multipolygon that is covered by polygon (it should be most)
-#st_difference isn't working for me here, so use st_intersection and keep track of ids
 den_metro_natural_multi_int_poly = den_metro_natural_water_multipolygons %>% 
-  st_intersection(dplyr::select(den_metro_natural_water_polygons, geometry)) %>% 
-  mutate(intersection_multipolygon_polygon = "yes")
+  st_make_valid() %>% 
+  st_difference(den_metro_natural_water_polygons_union) %>% 
+  mutate(  int_multipolygon_polygon="no")
+
+
+den_metro_natural_water_multipolygons %>% mapview()
+den_metro_natural_water_polygons %>% mapview()
+
+den_metro_natural_multi_int_poly %>% mapview()
 
 lookup_den_metro_natural_multi_int_poly = den_metro_natural_multi_int_poly %>% 
-  distinct(osm_id, intersection_multipolygon_polygon)
+  distinct(osm_id, int_multipolygon_polygon)
+nrow(den_metro_natural_water_multipolygons)
+nrow(den_metro_natural_multi_int_poly)
 den_metro_natural_water_multipolygons_linked_w_poly = den_metro_natural_water_multipolygons %>% 
   left_join(lookup_den_metro_natural_multi_int_poly, by = "osm_id") %>% 
-  mutate(intersection_multipolygon_polygon = case_when(
-    is.na(intersection_multipolygon_polygon)==TRUE ~"no",
-    TRUE ~intersection_multipolygon_polygon))
+  mutate(int_multipolygon_polygon = case_when(
+    is.na(int_multipolygon_polygon)==TRUE ~"yes",
+    TRUE ~int_multipolygon_polygon))
 
+table(den_metro_natural_water_multipolygons_linked_w_poly$int_multipolygon_polygon)
 den_metro_natural_multi_no_poly = den_metro_natural_water_multipolygons_linked_w_poly %>% 
-  filter(intersection_multipolygon_polygon=="no") %>% 
+  filter(int_multipolygon_polygon=="no") %>% 
+  st_transform(2876) %>% 
   st_simplify()
 save(den_metro_natural_multi_no_poly, file = "den_metro_natural_multi_no_poly.RData")
 load("den_metro_natural_multi_no_poly.RData")
@@ -294,6 +316,7 @@ mv_natural_water_multipolygons+mv_natural_water_polygons + mv_natural_multi_no_p
 #bind rows the parts that don't overlap
 #call it poly for polygon and multipolygon
 den_metro_natural_water_poly = den_metro_natural_water_polygons %>% 
+  st_transform(2876) %>% 
   bind_rows(den_metro_natural_multi_no_poly) %>% 
   st_as_sf() %>% 
   st_simplify()
@@ -310,6 +333,7 @@ den_metro_natural_water_poly_union = den_metro_natural_water_poly %>%
   summarise(n=n()) %>%
   ungroup() %>% 
   dplyr::select(geometry)
+  #wow, so fast.
 
 save(den_metro_natural_water_poly_union, file = "den_metro_natural_water_poly_union.RData")
 object.size(den_metro_natural_water_poly_union)
@@ -321,11 +345,13 @@ mv_natural_water_poly_union = den_metro_natural_water_poly_union %>%
 
 ### wrangle sf objects for waterways (river and stream) --------
 den_metro_waterway_river_lines = den_metro_waterway_river$osm_lines %>%
+  st_transform(2876) %>% 
   mutate(
     osm_key = "waterway",
     osm_value = "river",
     osm_origin_feature_type = "line")
 den_metro_waterway_river_streams = den_metro_waterway_stream$osm_lines %>%
+  st_transform(2876) %>% 
   mutate(
     osm_key = "waterway",
     osm_value = "streams",
@@ -345,7 +371,7 @@ object.size(den_metro_waterways)
 #a buffer around it.
 den_metro_waterways_no_poly = den_metro_waterways %>% 
   st_difference(den_metro_natural_water_poly_union) %>% #just the geo
-  mutate(intersection_water_poly_waterways = "no")
+  mutate(int_water_poly_waterways = "no")
 save(den_metro_waterways_no_poly, file = "den_metro_waterways_no_poly.RData")
 mv_waterways_no_poly = den_metro_waterways_no_poly %>% 
   mapview(color = "firebrick1", layer.name = "waterways, no poly")
