@@ -9,7 +9,11 @@ setwd(here("data-processed"))
 load("den_area_water_resolved.RData")
 
 #useful to have this so I know where county boundaries are
+<<<<<<< HEAD
 #~/green-space-denver/scripts/0_import_manage_denver_acs.R
+=======
+#~/Dropbox/CSU/green-space-denver/scripts/0_import_manage_denver_acs.R
+>>>>>>> 5f4a136a2cc17e76f936824fca3fa583e9c59517
 load("den_metro_co_geo.RData")
 mapview(den_area_water_resolved)+mapview(den_metro_co_geo)
 
@@ -25,8 +29,11 @@ mapview(den_area_water_resolved)+mapview(den_metro_co_geo)
 setwd(here("data-input", "city-of-denver-data", "bodies-of-water"))
 den_lakes_ponds = st_read(dsn ="lakes_and_ponds") %>%
   st_transform(4326) %>%
+<<<<<<< HEAD
   #actually convert to 
   st_transform(2876) %>% #feet https://epsg.io/2876
+=======
+>>>>>>> 5f4a136a2cc17e76f936824fca3fa583e9c59517
   st_make_valid() %>% 
   rename(
     object_id = OBJECTID_1,
@@ -48,7 +55,10 @@ den_lakes_ponds %>% mapview()
 setwd(here("data-input", "city-of-denver-data", "bodies-of-water"))
 den_streams = st_read(dsn ="streams") %>%
   st_transform(4326) %>%
+<<<<<<< HEAD
   st_transform(2876) %>% #feet https://epsg.io/2876
+=======
+>>>>>>> 5f4a136a2cc17e76f936824fca3fa583e9c59517
   st_make_valid() %>% 
   rename(
     object_id = OBJECTID_1,
@@ -63,6 +73,7 @@ den_streams %>% mapview()
 class(den_streams$geometry)
 class(den_lakes_ponds$geometry)
 
+<<<<<<< HEAD
 ## Combine the two into one--------
 #note this won't work with mapview because it's of type mixed geometry, but still worth
 #creating this so you can use st_buffer on object instead of multiple
@@ -73,6 +84,14 @@ den_streams_lakes_ponds = den_streams %>%
 
 table(den_streams_lakes_ponds$unit_type)
 den_streams_lakes_ponds %>% mapview(zcol = "unit_type_broad")
+=======
+#note this won't work with mapview because it's of type mixed geometry, but still worth
+#creating this so you can use st_buffer on object instead of multiple
+den_streams_lakes_ponds = den_streams %>% 
+  bind_rows(den_lakes_ponds) 
+
+table(den_streams_lakes_ponds$unit_type)
+>>>>>>> 5f4a136a2cc17e76f936824fca3fa583e9c59517
 den_streams_lakes_ponds %>% 
   filter(unit_type_broad == "streams") %>% 
   mapview(layer.name = "test")
@@ -87,6 +106,7 @@ save(den_streams_lakes_ponds, file = "den_streams_lakes_ponds.RData")
 ft_in_m_200 = 200/3.28084 #60.96 meters
 ft_in_m_100 = 100/3.28084
 ft_in_m_50 = 50/3.28084
+<<<<<<< HEAD
 load("den_streams_lakes_ponds.RData")
 den_streams_lakes_ponds_200_ft = den_streams_lakes_ponds %>% 
   st_buffer(200)
@@ -94,6 +114,15 @@ den_streams_lakes_ponds_100_ft = den_streams_lakes_ponds %>%
   st_buffer(100)
 den_streams_lakes_ponds_50_ft = den_streams_lakes_ponds %>% 
   st_buffer(50)
+=======
+
+den_streams_lakes_ponds_200_ft = den_streams_lakes_ponds %>% 
+  st_buffer(ft_in_m_200)
+den_streams_lakes_ponds_100_ft = den_streams_lakes_ponds %>% 
+  st_buffer(ft_in_m_100)
+den_streams_lakes_ponds_50_ft = den_streams_lakes_ponds %>% 
+  st_buffer(ft_in_m_50)
+>>>>>>> 5f4a136a2cc17e76f936824fca3fa583e9c59517
 
 # Removies bodies of water from buffers-------
 #Note that the streams are lines, so they won't have an area. We need to remove

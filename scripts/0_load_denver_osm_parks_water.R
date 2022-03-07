@@ -16,13 +16,20 @@ library(osmdata)
 #https://wiki.openstreetmap.org/wiki/Category:Key_descriptions
 
 #load bounding box for Metro Denver that was created here:
+<<<<<<< HEAD
 #~/CSU/green-space-denver/scripts/1a_get_landsat_ndvi_denver.R
+=======
+#~/Dropbox/CSU/green-space-denver/scripts/1a_get_landsat_ndvi_denver.R
+>>>>>>> 5f4a136a2cc17e76f936824fca3fa583e9c59517
 
 setwd(here("data-processed"))
 load("den_metro_bbox_custom.RData") #doesn't include all of southern JeffCo
 load("den_jeff_co_bbox.RData") #all of Jeff Co
+<<<<<<< HEAD
 #load the sf version too since I'd like to use it below
 load("den_metro_bbox_custom_sf.RData")
+=======
+>>>>>>> 5f4a136a2cc17e76f936824fca3fa583e9c59517
 mapview(den_metro_bbox_custom) + mapview(den_jeff_co_bbox)
 #update 3/6/22 for speed use den_metro_bbox_custom instead
 
@@ -49,13 +56,20 @@ mapview(den_metro_bbox_custom) + mapview(den_jeff_co_bbox)
 # save(den_metro_protected_area, file = "den_metro_protected_area.RData")
 
 #load rather than re-downloading unless the bounding box changes
+<<<<<<< HEAD
 setwd(here("data-processed"))
+=======
+>>>>>>> 5f4a136a2cc17e76f936824fca3fa583e9c59517
 load("den_metro_park.RData")
 load("den_metro_nature_reserve.RData")
 load("den_metro_protected_area.RData")
 
 
 ## wrangle park data before combining-----------
+<<<<<<< HEAD
+=======
+
+>>>>>>> 5f4a136a2cc17e76f936824fca3fa583e9c59517
 #select the polygons nad multipolygons from the OSM object
 den_metro_park_polygons = den_metro_park$osm_polygons %>% 
   mutate(osm_origin_feature_type = "polygon")
@@ -149,6 +163,18 @@ den_metro_natural_water= opq(bbox = den_metro_bbox_custom) %>%
 setwd(here("data-processed"))
 save(den_metro_natural_water, file = "den_metro_natural_water.RData")
 
+<<<<<<< HEAD
+
+### key waterway value river & stream ----------
+#Another way to get waterways:
+#https://wiki.openstreetmap.org/wiki/Key:waterway
+den_metro_waterway_river= opq(bbox = den_metro_bbox_custom) %>%
+  add_osm_feature(key = "waterway" , value="river") %>%
+  osmdata_sf()
+setwd(here("data-processed"))
+save(den_metro_waterway_river, file = "den_metro_waterway_river.RData")
+=======
+>>>>>>> 5f4a136a2cc17e76f936824fca3fa583e9c59517
 
 ### key waterway value river & stream ----------
 #Another way to get waterways:
@@ -159,7 +185,55 @@ den_metro_waterway_river= opq(bbox = den_metro_bbox_custom) %>%
 setwd(here("data-processed"))
 save(den_metro_waterway_river, file = "den_metro_waterway_river.RData")
 
+den_metro_waterway_stream= opq(bbox = den_metro_bbox_custom) %>%
+  add_osm_feature(key = "waterway" , value="stream") %>%
+  osmdata_sf()
+save(den_metro_waterway_stream, file = "den_metro_waterway_stream.RData")
 
+#Test the different sf feature types
+den_metro_waterway_river$osm_lines %>% mapview() #yes, many
+den_metro_waterway_river$osm_multilines %>% mapview() #yes, many
+den_metro_waterway_river$osm_polygons %>% mapview() #none
+den_metro_waterway_river$osm_multipolygons #null
+#den_metro_waterway_river$osm_points %>% mapview()#there but don't use
+
+### Mapview all of them together--------
+#### mapview  natural water-----------
+#I'm curious what's happening with the line-based features. I'd like to avoid using
+#them if possible.
+mv_natural_water_lines = den_metro_natural_water_lines %>% 
+  mapview(layer.name = "lines, natural, water", color = "cadetblue1")
+mv_natural_water_polygons = den_metro_natural_water_polygons %>% 
+  mapview(layer.name = "polygons, natural, water", color = "blue", col.regions = "blue")
+mv_natural_water_multipolygons = den_metro_natural_water_multipolygons %>% 
+  mapview(layer.name = "multipolygons, natural, water", color = "green", col.regions = "green")
+
+mv_natural_water_polygons+mv_natural_water_multipolygons+mv_natural_water_lines
+#Great, all of the line-based features are also polygon-based features, so we can omit
+#these lines. and are the polygons and multipolygons the same?
+#they're almost the same, but there are a few features that are not represented
+#by polygons but are represented by multipolygons. 
+#otherwise, polygons is much more complete.
+
+#### mapview waterway river------------------
+#Do they overlap perfectly? or does one contain information the other does not?
+mv_waterway_river_lines = den_metro_waterway_river$osm_lines %>% 
+  mapview(layer.name = "lines, waterway, river", color = "red")
+mv_waterway_river_multilines = den_metro_waterway_river$osm_multilines %>% 
+  mapview(layer.name = "multilines, waterway, river", color = "green")
+
+mv_waterway_river_multilines+mv_waterway_river_lines
+#osm_lines is more complete. forget multilines
+
+#### mapview waterway stream------
+mv_waterway_stream_lines = den_metro_waterway_stream$osm_lines %>% 
+  mapview(layer.name = "lines, waterway, stream", color = "purple")
+mv_waterway_stream_multilines = den_metro_waterway_stream$osm_multilines %>% 
+  mapview(layer.name = "multilines, waterway, stream", color = "green") #null
+
+mv_waterway_stream_lines+mv_waterway_stream_multilines
+
+<<<<<<< HEAD
 den_metro_waterway_stream= opq(bbox = den_metro_bbox_custom) %>%
   add_osm_feature(key = "waterway" , value="stream") %>%
   osmdata_sf()
@@ -220,12 +294,20 @@ mv_waterway_stream_multilines = den_metro_waterway_stream$osm_multilines %>%
 mv_waterway_stream_lines+mv_waterway_stream_multilines
 
 #------------ all together-------------------------#
+=======
+>>>>>>> 5f4a136a2cc17e76f936824fca3fa583e9c59517
 #natural water
 mv_natural_water_polygons+
   mv_natural_water_multipolygons+
   mv_natural_water_lines +
+<<<<<<< HEAD
   mv_waterway_river_lines +   #waterway river
   mv_waterway_stream_lines #waterway stream
+=======
+  #waterway river
+  mv_waterway_river_lines +
+  mv_waterway_stream_lines
+>>>>>>> 5f4a136a2cc17e76f936824fca3fa583e9c59517
 
 #Summary of mapviews here:
 #There are several streams that are not otherwise noted by polygons.
@@ -237,6 +319,7 @@ mv_natural_water_polygons+
 #For those rivers and streams that are only represented by lines, how should
 #I indicate their area? Maybe say 10 feet?
 
+<<<<<<< HEAD
 ## Create sf objects for each water type with data---------
 keep_these_vars <-function(df){
   df %>% 
@@ -248,6 +331,31 @@ keep_these_vars <-function(df){
 }
 ### wrangle sf objects for natural water-----------
 den_metro_natural_water_polygons = den_metro_natural_water$osm_polygons %>% 
+=======
+
+
+### Create sf objects for each---------
+#### sf objects for natural water-----------
+den_metro_natural_water_polygons = den_metro_natural_water$osm_polygons %>% 
+  mutate(
+    osm_key = "natural",
+    osm_value = "water",
+    osm_origin_feature_type = "polygon")
+den_metro_natural_water_multipolygons = den_metro_natural_water$osm_multipolygons %>% 
+  mutate(
+    osm_key = "natural",
+    osm_value = "water",
+    osm_origin_feature_type = "multipolygon"
+  )
+#don't create an sf object for den_metro_natural_water$osm_lines, per above checks
+
+#
+
+den_metro_natural_water_resolved = den_metro_water_polygons %>% 
+  bind_rows(den_metro_water_multipolygons) %>% 
+  st_as_sf() %>% 
+  #add a couple variables to keep track of source
+>>>>>>> 5f4a136a2cc17e76f936824fca3fa583e9c59517
   mutate(
     osm_key = "natural",
     osm_value = "water",
@@ -392,9 +500,41 @@ den_osm_water_poly_inc_waterways_10_ft_union = den_osm_water_poly_inc_waterways_
 
 den_osm_water_poly_inc_waterways_10_ft_union %>% mapview()
 
+<<<<<<< HEAD
+=======
+#den_metro_water_resolved %>% mapview(zcol = "osm_origin_feature_type")
+save(den_metro_water_resolved, file = "den_metro_water_resolved.RData")
+
+## create a union of all of this for an easy int-----------
+#warning: this takes forever (about 10 minutes)
+# union_method_1_t_start = Sys.time()
+# den_metro_water_resolved_union_method_1 = den_metro_water_resolved %>%
+#   st_union() 
+# union_method_1_t_end = Sys.time()
+# union_method_1_t_elapsed = union_method_1_t_end-union_method_1_t_start #7 minutes
+# save(den_metro_water_resolved_union_method_1 , file = "den_metro_water_resolved_union_method_1.RData")
+# 
+# class(den_metro_water_resolved_union_method_1)
+# union_method_2_t_start = Sys.time()
+# den_metro_water_resolved_union_method_2 = den_metro_water_resolved %>%
+#   mutate(dummy=1) %>% 
+#   group_by(dummy) %>% 
+#   summarise(n=n()) %>% 
+#   ungroup() 
+# union_method_2_t_end = Sys.time()
+# union_method_2_t_elapsed = union_method_2_t_end-union_method_2_t_start #7 min
+# save(den_metro_water_resolved_union_method_2, file = "den_metro_water_resolved_union_method_2.RData")
+# class(den_area)
+load("den_metro_water_resolved_union_method_1.RData")
+load("den_metro_water_resolved_union_method_2.RData")
+den_metro_water_resolved_union_method_2 %>% mapview()
+
+
+>>>>>>> 5f4a136a2cc17e76f936824fca3fa583e9c59517
 # Remove bodies of water from parks-----------
 load("den_jeff_co_green_space.RData")
 #use st_difference https://cran.r-project.org/web/packages/sf/vignettes/sf3.html
+<<<<<<< HEAD
 sf::sf_use_s2(FALSE) #getting invalid spherical geo
 st_crs(den_jeff_co_green_space)
 st_crs(den_metro_natural_water_poly_union)
@@ -403,6 +543,10 @@ den_jeff_co_green_space_no_water = den_jeff_co_green_space %>%
   st_simplify() %>% #makes the file smaller.
   st_make_valid() %>% 
   st_difference(den_osm_water_poly_inc_waterways_10_ft_union) %>% 
+=======
+den_jeff_co_green_space_no_water = den_jeff_co_green_space %>% 
+  st_difference(den_metro_water_resolved_union_method_2) %>% 
+>>>>>>> 5f4a136a2cc17e76f936824fca3fa583e9c59517
   st_make_valid() #this did the trick!
 
 save(den_jeff_co_green_space_no_water, file = "den_jeff_co_green_space_no_water.RData")
