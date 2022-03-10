@@ -121,10 +121,10 @@ n_m_per_pixel = 30#30 is the lowest you can go.
 #note renaming...removing the lsat...was too long.
 ndvi_den_metro_rast_2016 = landsat_8_ndvi_image_coll_2016 %>% 
   ee_as_raster(
-    dsn = "ndvi_den_metro_rast_2016", #very important to specify; 
+    dsn = "ndvi_den_metro_rast_2016", #very important to specify this; 
                                   #otherwise will overwrite and  duplicate info
     region = den_metro_ee, #use metro to ensure coverage throughout region
-    scale = n_m_per_pixel,  #number of meters per pixel. smaller number...slower speed
+    scale = n_m_per_pixel,  #number of meters per pixel. smaller number...slower speed...better resolution
     via = "drive" #worked after I updated the googledrive package.
   )
 

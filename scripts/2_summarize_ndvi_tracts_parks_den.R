@@ -15,7 +15,9 @@ library(sf)
 setwd(here("data-processed"))
 getwd()
 #read raster data. see for additional discussion on the nuances of reading and writing raster data
-#created here: ~green-space-denver/scripts/1a_get_landsat_ndvi_denver.R
+#created and managed in these two scripts: 
+#~/1a_get_landsat_ndvi_denver.R
+#~/1b_wrangle_check_landsat_ndvi_denver.R
 ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
 
 # Read census tract and OSM data 
@@ -175,6 +177,11 @@ den_metro_tracts_ndvi_day_geo %>%
 
 # green space NDVI----
 ## Summarize NDVI of parks and public green space------
+setwd(here("data-processed"))
+load("den_jeff_co_green_space_no_water.RData")
+names(den_jeff_co_green_space_no_water)
+
+
 names(den_jeff_co_green_space_no_water)
 den_metro_green_space_ndvi_long_int =ndvi_den_metro_terr_5_yr %>% 
   terra::extract(terra::vect(den_jeff_co_green_space_no_water)) %>% 
@@ -260,6 +267,11 @@ mv_den_metro_green_space_ndvi_day_geo = den_metro_green_space_ndvi_day_wrangle_g
     zcol = "ndvi_med" 
   )
 mv_den_metro_green_space_ndvi_day_geo+mv_den_jeff_co_geo
+
+# Summarize NDVI on one good day at block-group level in Denver-------
+#update 3/10/22
+#Here, I want to pick one good day and summarize NDVI at the block-group level
+#on that day.
 
 
 

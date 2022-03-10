@@ -10,17 +10,31 @@ library(here)
 library(scales)
 library(lubridate)
 # Read the 5-year terra raster file--------
-# Note this different from the usual way I'd load a file
+# Note this is different from the usual way I'd load a file.
+#You are loading it from disc using terra::rast()
 setwd(here("data-processed"))
 ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
 ndvi_den_metro_terr_5_yr
 
 # visualize dates using the raster version to check-------
 #check on cloud cover, etc.
-ndvi_den_metro_terr_5_yr$`20210805_NDVI` %>% raster::raster() %>% 
+ndvi_den_metro_terr_5_yr$`20210805_NDVI` %>% 
+  raster::raster() %>% 
   mapview()
-ndvi_den_metro_terr_5_yr$`20210704_NDVI` %>% raster::raster() %>% 
+
+ndvi_den_metro_terr_5_yr$`20210704_NDVI` %>% 
+  raster::raster() %>% 
   mapview() #this is a good image and could be used as a guide
+
+#alternate color palette to more easily find zeros
+pal = terrain.colors(100) %>% rev()#reverse the order of the palette
+ndvi_den_metro_terr_5_yr$`20210704_NDVI` %>% 
+  raster::raster() %>% 
+  mapview(layer.name = "NDVI",
+          col.regions = pal, at = seq(-0.4, 1, 0.1)
+          ) 
+
+
 ndvi_den_metro_terr_5_yr$`20210704_NDVI` %>% values()
 ndvi_den_metro_terr_5_yr$`20210626_NDVI` %>% raster::raster() %>% 
   mapview() #mostly cloudy. toss.

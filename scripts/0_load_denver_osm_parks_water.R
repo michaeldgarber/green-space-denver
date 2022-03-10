@@ -398,6 +398,8 @@ den_metro_waterways_no_poly_10_ft %>% mapview()
 load("den_metro_bbox_custom_sf.RData")
 den_metro_bbox_custom_2876 = den_metro_bbox_custom_sf %>% 
   st_transform(2876)
+load("den_metro_natural_water_poly.RData")
+load("den_metro_waterways_no_poly_10_ft.RData")
 den_osm_water_poly_inc_waterways_10_ft = den_metro_natural_water_poly %>% 
   st_transform(2876) %>% 
   st_buffer(.01) %>% #buffer a small amount, so the sf type is more coherent?
@@ -405,6 +407,8 @@ den_osm_water_poly_inc_waterways_10_ft = den_metro_natural_water_poly %>%
   st_simplify() %>% 
   #restrict to the original bounding box
   st_intersection(den_metro_bbox_custom_2876)
+
+save(den_osm_water_poly_inc_waterways_10_ft, file = "den_osm_water_poly_inc_waterways_10_ft.RData")
 
 class(den_osm_water_poly_inc_waterways_10_ft$geometry)
 den_osm_water_poly_inc_waterways_10_ft %>% mapview()
@@ -438,6 +442,7 @@ save(den_jeff_co_green_space_no_water, file = "den_jeff_co_green_space_no_water.
 #I had issues getting mapview to render mixed geometries
 #https://github.com/r-spatial/mapview/issues/342
 #https://github.com/r-spatial/mapview/issues/85
+load("den_jeff_co_green_space_no_water.RData")
 names(den_jeff_co_green_space_no_water)
 den_jeff_co_green_space_no_water %>% 
   mapview(

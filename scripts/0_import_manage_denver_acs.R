@@ -11,14 +11,14 @@ setwd(here("data-processed"))
 
 # Objective-----------
 #This code accomplishes three main thigngs:
-#1. Get geometry files for census tracts and counties in the Denver area.
+#1. Get geometry files for census tract and counties in the Denver area.
 #2. Download sex-by-age population by census tract. I do this long form in
 #a somewhat slick way.
 #3. Get other miscellaneous variables, including hh inc, race, med home value,
 #and others. I do this long mimicking some of my old Atlanta code
 
 # Download geometry only (no other measures)  for denver metro -----------
-#for tracts and counties
+#for tract and counties
 
 #https://data-cdphe.opendata.arcgis.com/datasets/colorado-county-boundaries/
 #FIPS codes
@@ -28,8 +28,8 @@ setwd(here("data-processed"))
 #arapahoe 005
 #adams 001
 #denver FIPS code: 031
-## geometry of tracts-------------
-den_metro_tracts_geo  = tidycensus::get_acs(
+## geometry of tract-------------
+den_metro_tract_geo  = tidycensus::get_acs(
   geography = "tract", 
   year=2019,  
   cache_table = TRUE,
@@ -49,21 +49,21 @@ den_metro_tracts_geo  = tidycensus::get_acs(
   dplyr::select(contains("fips"), geometry)%>% 
   st_transform(4326)
 
-save(den_metro_tracts_geo, file = "den_metro_tracts_geo.RData")
+save(den_metro_tract_geo, file = "den_metro_tract_geo.RData")
 
 #a version restricted to just denver and jefferson counties (but still at tract level)
-load("den_metro_tracts_geo.RData")
-den_metro_tracts_geo %>% mapview()
-den_jeff_co_tracts_geo = den_metro_tracts_geo %>% 
+load("den_metro_tract_geo.RData")
+den_metro_tract_geo %>% mapview()
+den_jeff_co_tract_geo = den_metro_tract_geo %>% 
   filter(county_fips == "031" | county_fips == "059") 
-save(den_jeff_co_tracts_geo, file = "den_jeff_co_tracts_geo.RData")
-den_jeff_co_tracts_geo %>% mapview(zcol = "county_fips")  
+save(den_jeff_co_tract_geo, file = "den_jeff_co_tract_geo.RData")
+den_jeff_co_tract_geo %>% mapview(zcol = "county_fips")  
 
 #and a no-geo version
-den_jeff_co_tracts_nogeo = den_jeff_co_tracts_geo %>% 
+den_jeff_co_tract_nogeo = den_jeff_co_tract_geo %>% 
   st_set_geometry(NULL) %>% 
   as_tibble()
-save(den_jeff_co_tracts_nogeo, file = "den_jeff_co_tracts_nogeo.RData")
+save(den_jeff_co_tract_nogeo, file = "den_jeff_co_tract_nogeo.RData")
 
 ## geometry of block groups--------
 den_metro_bg_geo  = tidycensus::get_acs( #bg for block group
@@ -130,7 +130,7 @@ den_metro_co_nogeo = den_metro_co_geo %>%
 save(den_metro_co_nogeo, file = "den_metro_co_nogeo.RData")
 
 
-# look-up tables for tracts, counties, and county names--------
+# look-up tables for tract, counties, and county names--------
 #a geo lookup
 lookup_den_metro_co_fips_geo = den_metro_co_geo %>% 
   distinct(county_fips, geometry)
@@ -141,7 +141,7 @@ lookup_county_name_den_metro = den_metro_co_geo %>%
   distinct(county_fips, county_name, county_name_short)
 
 #tract-county lookup
-lookup_den_metro_tract_county = den_metro_tracts_geo %>% 
+lookup_den_metro_tract_county = den_metro_tract_geo %>% 
   st_set_geometry(NULL) %>% 
   distinct(tract_fips, county_fips)
 
@@ -170,27 +170,31 @@ den_jeff_co_geo %>% mapview(zcol = "county_fips")
 
 
 # Download ACS variables (not just geometry)------
-## census-tract-level ACS variables----------------
 
 ## wrangle the ACS sex-by-age variables in prep for the long-form data-----------
+#note this should work regardless of geometry (i.e., tract or block group)
 options(tigris_use_cache = TRUE)
 acs_2019_vars <- load_variables(2019, "acs5", cache = TRUE)
 save(acs_2019_vars, file = "acs_2019_vars.RData") #takes a while so save.
-
+View(acs_2019_vars)
 #make it a tibble so you can select just the vars that begin with B01001
-acs_2019_vars_tib = acs_2019_vars %>% 
+acs_2019_vars_tib_sex_by_age = acs_2019_vars %>% 
   as_tibble() %>%
   #could also do the grepl framework but this is more straightforward
-  mutate(sex_by_age = case_when(
-    concept == "SEX BY AGE" ~ 1,
-    TRUE ~ 0
+  mutate(
+    sex_by_age = case_when(
+      concept == "SEX BY AGE" ~ 1,
+      TRUE ~ 0
   )) %>% 
   filter(sex_by_age==1)
 
-#now grab the vars as a vector
-acs_2019_vars_sex_by_age = acs_2019_vars_tib %>% dplyr::select(name) %>% pull()
+#now grab the vars as a vector for use in the get_acs() function
+acs_2019_vars_sex_by_age = acs_2019_vars_tib_sex_by_age %>% 
+  dplyr::select(name) %>% 
+  pull()
 
-lookup_acs_2019_var_label = acs_2019_vars_tib %>% 
+#s_by_a = sex by age
+lookup_acs_2019_var_s_by_a_label = acs_2019_vars_tib_sex_by_age %>% 
   #rename first so it's var_name and var_label. 
   #less ambiguous with, e.g., census tract name
   rename(
@@ -234,11 +238,11 @@ lookup_acs_2019_var_label = acs_2019_vars_tib %>%
 table(lookup_acs_2019_var_label$age_group_acs) #good
 table(lookup_acs_2019_var_label$var_label)
 
-lookup_acs_2019_var_label
+lookup_acs_2019_var_s_by_a_label
 
-## download sex by age vars long form----------
+## download sex by age vars by census tract long form----------
 #this will be long form. easier to link with health information.
-den_metro_tracts_vars_s_by_a_long  = tidycensus::get_acs( #s by a = sex by age
+den_metro_tract_vars_s_by_a_long  = tidycensus::get_acs( #s by a = sex by age
   geography = "tract", 
   year=2019, 
 #  cache_table = TRUE, #this may have been throwing an error. leave this as default.
@@ -250,12 +254,12 @@ den_metro_tracts_vars_s_by_a_long  = tidycensus::get_acs( #s by a = sex by age
   variables = acs_2019_vars_sex_by_age,
   geometry = FALSE
 ) 
-den_metro_tracts_vars_s_by_a_long
+den_metro_tract_vars_s_by_a_long
 
-save(den_metro_tracts_vars_s_by_a_long, file = "den_metro_tracts_vars_s_by_a_long.RData")
+save(den_metro_tract_vars_s_by_a_long, file = "den_metro_tract_vars_s_by_a_long.RData")
 
-#specify that it's long form to distinguish from the _geo version above
-den_metro_tracts_long_s_by_a_wrangle = den_metro_tracts_vars_s_by_a_long %>% 
+#in the object name, specify that it's long form to distinguish from the _geo version above
+den_metro_tract_vars_s_by_a_long_wrangle = den_metro_tract_vars_s_by_a_long %>% 
   #rename per above
   rename( var_name = variable) %>% #note because it's long form, it's called variable here
   left_join(lookup_acs_2019_var_label, by = "var_name") %>% 
@@ -265,10 +269,44 @@ den_metro_tracts_long_s_by_a_wrangle = den_metro_tracts_vars_s_by_a_long %>%
   )  %>% 
   dplyr::select(-GEOID)   #drop geoid
 
-den_metro_tracts_long_s_by_a_wrangle
+den_metro_tract_vars_s_by_a_long_wrangle 
 setwd(here("data-processed"))
-save(den_metro_tracts_long_s_by_a_wrangle, 
-     file = "den_metro_tracts_long_s_by_a_wrangle.RData")
+save(den_metro_tract_vars_s_by_a_long_wrangle , 
+     file = "den_metro_tract_vars_s_by_a_long_wrangle .RData")
+
+## download sex by age vars by block group long form----------
+#this will be long form. easier to link with health information.
+den_metro_bg_vars_s_by_a_long  = tidycensus::get_acs( #s by a = sex by age
+  geography = "block group", 
+  year=2019, 
+  #  cache_table = TRUE, #this may have been throwing an error. leave this as default.
+  state = "CO",
+  county =  c("031", "059", "035", "005", "001"), 
+  keep_geo_vars = FALSE, 
+  #  output = "long", #keep it long form. easier to link with GBD data
+  survey = "acs5", 
+  variables = acs_2019_vars_sex_by_age,
+  geometry = FALSE
+) 
+den_metro_bg_vars_s_by_a_long
+
+save(den_metro_bg_vars_s_by_a_long, file = "den_metro_bg_vars_s_by_a_long.RData")
+
+#in the object name, specify that it's long form to distinguish from the _geo version above
+den_metro_bg_vars_s_by_a_long_wrangle = den_metro_bg_vars_s_by_a_long %>% 
+  #rename per above
+  rename( var_name = variable) %>% #note because it's long form, it's called variable here
+  left_join(lookup_acs_2019_var_label, by = "var_name") %>% 
+  mutate(
+    bg_fips = GEOID, #we're at the bg level
+    county_fips = str_sub(GEOID, 3,5)
+  )  %>% 
+  dplyr::select(-GEOID)   #drop geoid
+
+den_metro_bg_vars_s_by_a_long_wrangle 
+setwd(here("data-processed"))
+save(den_metro_bg_vars_s_by_a_long_wrangle , 
+     file = "den_metro_bg_vars_s_by_a_long_wrangle .RData")
 
 ## By tract, download other socio-demographic variables (wide form) -------
 #race, income, etc.
@@ -293,7 +331,7 @@ acs_vars_sociodem = c(
   #median age
   age_med_ = "B01002_001")
 
-den_tracts_acs5_20152019_nogeo  = get_acs(
+den_tract_acs5_2019_nogeo  = get_acs(
   geography = "tract", 
   year=2019,  
   cache_table = TRUE,
@@ -305,10 +343,11 @@ den_tracts_acs5_20152019_nogeo  = get_acs(
   geometry = FALSE, #you already have them saved
   variables = acs_vars_sociodem 
   ) 
-
+setwd(here("data-processed"))
+save(den_tract_acs5_2019_nogeo, file = "den_tract_acs5_2019_nogeo.RData")
 #wrangle these wide-form data
-den_metro_tracts_geo %>% mapview()
-st_crs(den_metro_tracts_geo)
+den_metro_tract_geo %>% mapview()
+st_crs(den_metro_tract_geo)
 #some operations that I perform to both the tract-level and the block-group-level
 #data, so make a function 
 tract_and_bg_wrangle <-function(df){
@@ -322,6 +361,7 @@ tract_and_bg_wrangle <-function(df){
       #I had called these, e.g., tract_area, but this way I can leave it more 
       #general. you know the unit from other clues.
       area_ft2 = as.numeric(st_area(geometry)),
+      area_m2 = area_ft2/10.764, #meters squared, for informational purposes.
       area_mi2 = area_ft2*3.58701e-8  ,
       pop_dens_mi2 = pop_tot/area_mi2 ,
       #prop for proportion
@@ -332,25 +372,25 @@ tract_and_bg_wrangle <-function(df){
       ) 
 }
     
-
-den_tracts_acs5_20152019_wrangle_geo = den_tracts_acs5_20152019_nogeo %>%
+den_tract_acs5_2019_wrangle_geo = den_tract_acs5_2019_nogeo %>%
   mutate(
     tract_fips = GEOID  #we're at the tract level
   )  %>% 
   dplyr::select(-GEOID) %>%    #drop geoid
-  left_join(den_metro_tracts_geo, by = "tract_fips") %>%   #add geometry
+  left_join(den_metro_tract_geo, by = "tract_fips") %>%   #add geometry
   st_as_sf() %>% 
   st_transform(2876) %>%   #convert to feet, as we've been doing elsewhere
   left_join(lookup_county_name_den_metro, by = "county_fips") %>% 
   tract_and_bg_wrangle()
 
-
-den_tracts_acs5_20152019_wrangle_geo %>% 
+save(den_tract_acs5_2019_wrangle_geo, 
+     file = "den_tract_acs5_2019_wrangle_geo.RData")
+den_tract_acs5_2019_wrangle_geo %>% 
   filter(county_name_short=="Denver") %>% 
   mapview(zcol = "hh_inc_med")
 
 ## By block group, download other socio-demographic variables (wide form) -------
-den_bg_acs5_20152019_nogeo  = get_acs(
+den_bg_acs5_2019_nogeo  = get_acs(
   geography = "block group", 
   year=2019,  
   cache_table = TRUE,
@@ -363,7 +403,9 @@ den_bg_acs5_20152019_nogeo  = get_acs(
   variables = acs_vars_sociodem 
 ) 
 
-den_bg_acs5_20152019_wrangle_geo = den_bg_acs5_20152019_nogeo %>%
+save(den_bg_acs5_2019_nogeo, file = "den_bg_acs5_2019_nogeo.RData")
+
+den_bg_acs5_2019_wrangle_geo = den_bg_acs5_2019_nogeo %>%
   mutate(
     bg_fips = GEOID  #we're at the tract level
     #don't need county information because we can link it in with the geo file
@@ -375,9 +417,12 @@ den_bg_acs5_20152019_wrangle_geo = den_bg_acs5_20152019_nogeo %>%
   left_join(lookup_county_name_den_metro, by = "county_fips") %>% 
   tract_and_bg_wrangle()
 
-save(den_bg_acs5_20152019_wrangle_geo, 
-     file = "den_bg_acs5_20152019_wrangle_geo.RData")
+save(den_bg_acs5_2019_wrangle_geo, 
+     file = "den_bg_acs5_2019_wrangle_geo.RData")
   
-View(den_bg_acs5_20152019_wrangle_geo)
-den_bg_acs5_20152019_wrangle_geo %>% mapview(zcol = "hh_inc_med")
-den_bg_acs5_20152019_wrangle_geo %>% mapview(zcol = "race_nw_prop")
+
+den_bg_acs5_2019_wrangle_geo %>% mapview(zcol = "hh_inc_med")
+den_bg_acs5_2019_wrangle_geo %>% mapview(zcol = "race_nw_prop")
+den_bg_acs5_2019_wrangle_geo %>% 
+  filter(  county_name_short == "Denver") %>% 
+  mapview(zcol = "pop_dens_mi2")
