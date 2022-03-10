@@ -38,21 +38,22 @@ st_crs(den_osm_water_poly_inc_waterways_10_ft)
 load(file = "den_co_geo.RData")
 den_co_geo_2876 = den_co_geo %>% 
   st_transform(2876) #co for county 
+den_co_geo_2876 %>% mapview()
 den_co_osm_water = den_osm_water_poly_inc_waterways_10_ft %>% 
   st_intersection(den_co_geo_2876)
 save(den_co_osm_water, file = "den_co_osm_water.RData")
-den_metro_osm_water_200ft = den_co_osm_water %>% 
+den_co_osm_water_200ft = den_co_osm_water %>% 
   st_buffer(200)
-save(den_metro_osm_water_200ft, file = "den_metro_osm_water_200ft.RData")
-den_metro_osm_water_100ft = den_co_osm_water %>% 
+save(den_co_osm_water_200ft, file = "den_co_osm_water_200ft.RData")
+den_co_osm_water_100ft = den_co_osm_water %>% 
   st_buffer(100)
-save(den_metro_osm_water_100ft, file = "den_metro_osm_water_100ft.RData")
+save(den_co_osm_water_100ft, file = "den_co_osm_water_100ft.RData")
 
-den_metro_osm_water_50ft = den_co_osm_water %>% 
+den_co_osm_water_50ft = den_co_osm_water %>% 
   st_buffer(50)
-save(den_metro_osm_water_50ft, file = "den_metro_osm_water_50ft.RData")
+save(den_co_osm_water_50ft, file = "den_co_osm_water_50ft.RData")
 
-den_metro_osm_water_200ft %>% mapview()
+den_co_osm_water_200ft %>% mapview()
 #Create a 500 m buffer for residential exposure--------
 500*3.28084
 den_co_osm_water_500m = den_co_osm_water %>% 

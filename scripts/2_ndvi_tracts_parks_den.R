@@ -11,6 +11,52 @@ library(raster)
 library(mapview)
 library(sf)
 
+# First, remove bodies of water from tracts and parks--------
+#Note, I previously had this in its own script, but I think it makes more sense here
+#as part of this script
+
+## Remove bodies of water from parks-----------
+#from ~/scripts/0_load_denver_osm_parks_water.R
+load("den_jeff_co_green_space.RData")  
+#and this, which includes 10-foot buffers around rivers and streams if they are not
+#originally represented as polygons
+
+#use st_difference https://cran.r-project.org/web/packages/sf/vignettes/sf3.html
+sf::sf_use_s2(FALSE) #getting invalid spherical geo
+st_crs(den_jeff_co_green_space)
+st_crs(den_metro_natural_water_poly_union)
+den_jeff_co_green_space_no_water = den_jeff_co_green_space %>% 
+  st_transform(2876) %>% 
+  st_simplify() %>% #makes the file smaller.
+  st_make_valid() %>% 
+  st_difference(den_osm_water_poly_inc_waterways_10_ft_union) %>% 
+  st_make_valid() #this did the trick!
+
+save(den_jeff_co_green_space_no_water, file = "den_jeff_co_green_space_no_water.RData")
+#I was going to use tmap because mapview was failing silently but all good after st_make_valid()
+#I had issues getting mapview to render mixed geometries
+#https://github.com/r-spatial/mapview/issues/342
+#https://github.com/r-spatial/mapview/issues/85
+load("den_jeff_co_green_space_no_water.RData")
+names(den_jeff_co_green_space_no_water)
+den_jeff_co_green_space_no_water %>% 
+  mapview(
+    zcol = "osm_value",
+    layer.name = "Green space by type")
+
+## Remove bodies of water from tracts and block groups----------
+load("den_jeff_co_geo.RData") 
+load("den_jeff_co_tracts_geo.RData")
+load("den_area_water_resolved_union_method_2.RData")#note this is just den and jeff co. should note that.
+den_jeff_co_tracts_no_water_geo = den_jeff_co_tracts_geo %>% 
+  st_difference(den_area_water_resolved_union_method_2) %>% 
+  st_make_valid()  %>% 
+  dplyr::select(contains("fips"), geometry)
+
+setwd(here("data-processed"))
+save(den_jeff_co_tracts_no_water_geo, file = "den_jeff_co_tracts_no_water_geo.RData")
+
+
 # Read in (load) data-------
 setwd(here("data-processed"))
 getwd()

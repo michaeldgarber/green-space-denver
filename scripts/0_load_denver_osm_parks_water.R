@@ -424,27 +424,3 @@ den_osm_water_poly_inc_waterways_10_ft_union = den_osm_water_poly_inc_waterways_
 den_osm_water_poly_inc_waterways_10_ft_union %>% mapview()
 
 #great, continued ~/Dropbox/CSU/green-space-denver/scripts/1_wrangle_water.R
-# Remove bodies of water from parks-----------
-load("den_jeff_co_green_space.RData")
-#use st_difference https://cran.r-project.org/web/packages/sf/vignettes/sf3.html
-sf::sf_use_s2(FALSE) #getting invalid spherical geo
-st_crs(den_jeff_co_green_space)
-st_crs(den_metro_natural_water_poly_union)
-den_jeff_co_green_space_no_water = den_jeff_co_green_space %>% 
-  st_transform(2876) %>% 
-  st_simplify() %>% #makes the file smaller.
-  st_make_valid() %>% 
-  st_difference(den_osm_water_poly_inc_waterways_10_ft_union) %>% 
-  st_make_valid() #this did the trick!
-
-save(den_jeff_co_green_space_no_water, file = "den_jeff_co_green_space_no_water.RData")
-#I was going to use tmap because mapview was failing silently but all good after st_make_valid()
-#I had issues getting mapview to render mixed geometries
-#https://github.com/r-spatial/mapview/issues/342
-#https://github.com/r-spatial/mapview/issues/85
-load("den_jeff_co_green_space_no_water.RData")
-names(den_jeff_co_green_space_no_water)
-den_jeff_co_green_space_no_water %>% 
-  mapview(
-    zcol = "osm_value",
-    layer.name = "Green space by type")
