@@ -420,6 +420,8 @@ den_osm_water_poly_inc_waterways_10_ft_union = den_osm_water_poly_inc_waterways_
   summarise(n=n()) %>%
   ungroup() %>% 
   dplyr::select(geometry)
+save(den_osm_water_poly_inc_waterways_10_ft_union, 
+     file = "den_osm_water_poly_inc_waterways_10_ft_union.RData")
 
 den_osm_water_poly_inc_waterways_10_ft_union %>% mapview()
 
