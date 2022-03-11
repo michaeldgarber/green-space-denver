@@ -328,6 +328,7 @@ mv_den_metro_green_space_ndvi_day_geo = den_metro_green_space_ndvi_day_wrangle_g
   )
 mv_den_metro_green_space_ndvi_day_geo+mv_den_jeff_co_geo
 
+
 # Summarize NDVI on one good day at block-group level in Denver-------
 #update 3/10/22
 library(here)
@@ -349,16 +350,22 @@ lookup_date_is_valid_all %>% filter(date_is_valid_all==1)
 ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
 ndvi_den_metro_terr_5_yr$`20210704_NDVI`
 ndvi_den_co_20210704 = ndvi_den_metro_terr_5_yr$`20210704_NDVI` %>% 
+  terra::trim() %>% #remove NAs
   terra::crop(den_co_geo) #I think it auto converts to a bbox so it's a rectangle.
                           #for some reason, this band is not getting the NE area (airport)
 
-pal = terrain.colors(100) %>% rev()#reverse the order of the palette
-ndvi_den_co_20210704 %>% 
+ndvi_den_co_20210704_convhull = ndvi_den_metro_terr_5_yr$`20210704_NDVI` %>% 
+  terra::convHull()
+pal_terrain = terrain.colors(100) %>% rev()#reverse the order of the palette
+mv_ndvi_den_co_20210704= ndvi_den_co_20210704 %>% 
   raster::raster() %>% 
   mapview(
     layer.name = "NDVI",
-          col.regions = pal, at = seq(-0.4, 1, 0.1)
+          col.regions = pal_terrain, 
+    at = seq(-0.4, 1, 0.1)
     )
+
+mv_ndvi_den_co_20210704
 
 #Limit vector data to the Denver area only
 #This can be done aspatially using the county field :)
@@ -384,55 +391,52 @@ den_co_bg_no_water_4326 = den_co_bg_no_water_geo %>%
 lookup_bg_id_row_number = den_co_bg_no_water_4326 %>% 
   distinct(bg_id_row_number, bg_fips)
 
-## Extract NDVI in those areas on that day
+## Extract NDVI in those areas on that day--------
 den_co_bg_ndvi_20210704 = ndvi_den_co_20210704 %>% 
-  terra::extract(terra::vect(den_co_bg_no_water_4326)) %>% 
+  #see documentation. we need to take a weighted average based on area
+  terra::extract(
+    weights = TRUE, #approximate proportion of cell covered by polygon
+#    exact=TRUE, #exact proportion covered. very slow code. don't use.
+    y = terra::vect(den_co_bg_no_water_4326)) %>% 
   as_tibble() %>% 
   rename(
     ndvi = `20210704_NDVI`,
-    bg_id_row_number = ID
+    bg_id_row_number = ID,
+    wt_area = weight #the area weight
     ) %>% 
   mutate(
+    ndvi_wt_int = ndvi*wt_area, #for use in the weighted average
     date = lubridate::as_date("20210704")
   ) %>% 
   left_join(den_co_bg_no_water_4326, by = "bg_id_row_number") %>% 
   group_by(date, bg_fips) %>% #date is redundant but it generalizes
   summarise(
-    ndvi_min = min(ndvi, na.rm=TRUE),
-    ndvi_max = max(ndvi, na.rm=TRUE),
-    ndvi_25 = quantile(ndvi, probs = c(0.25), na.rm=TRUE),
-    ndvi_75 = quantile(ndvi, probs = c(0.75), na.rm=TRUE),
-    ndvi_med = median(ndvi, na.rm=TRUE),
-    ndvi_mean = mean(ndvi, na.rm=TRUE)) %>% 
+    sum_of_wts = sum(wt_area, na.rm=TRUE),
+    wt_area_mean = mean(wt_area, na.rm=TRUE),#curious
+    ndvi_mean = mean(ndvi, na.rm=TRUE), #as a check to make sure different.
+    ndvi_wt_int = sum(ndvi_wt_int, na.rm=TRUE)
+  ) %>% 
   ungroup() %>% 
+  mutate(ndvi_mean_wt =ndvi_wt_int /sum_of_wts) %>%  #weighted mean
   left_join(den_co_bg_no_water_geo, by = "bg_fips") %>% 
+  left_join(lookup_den_metro_bg_tract, by = "bg_fips") %>% #link tract ID
   st_as_sf() 
 
-den_co_bg_ndvi_20210704 %>% mapview(zcol = "ndvi_mean")
 den_co_bg_ndvi_20210704
+
+pal_terrain = terrain.colors(100) %>% rev()#reverse the order of the palette
+mv_den_co_bg_ndvi_20210704  = den_co_bg_ndvi_20210704 %>% 
+  mapview(
+    layer.name = "ndvi (weighted)",
+    zcol = "ndvi_mean_wt",
+    col.regions = pal_terrain, 
+    at = seq(-0.1, 1, 0.1)
+  )
+mv_den_co_bg_ndvi_20210704 + mv_ndvi_den_co_20210704
+
 n_distinct(den_co_bg_ndvi_20210704$bg_id_row_number)
 nrow(den_co_bg_no_water_geo) #very good. so it's not dividing up the bgs further.
 
-## Census tract NDVI by day------------
-den_metro_tract_ndvi_day_geo = den_metro_tract_ndvi_long %>% 
-  #naming is difficult, but let's call this _day to indicate a daily summary.
-  group_by(tract_id_row_number, date) %>% 
-  summarise(
-    ndvi_min = min(ndvi, na.rm=TRUE),
-    ndvi_max = max(ndvi, na.rm=TRUE),
-    ndvi_25 = quantile(ndvi, probs = c(0.25), na.rm=TRUE),
-    ndvi_75 = quantile(ndvi, probs = c(0.75), na.rm=TRUE),
-    ndvi_med = median(ndvi, na.rm=TRUE),
-    ndvi_mean = mean(ndvi, na.rm=TRUE)) %>% 
-  ungroup() %>% 
-  #link the fips code. this also has tract-level geometry
-  left_join(den_jeff_co_tract_geo_w_extract_id, by = "tract_id_row_number") %>% 
-  #link the county information
-  left_join(den_jeff_co_nogeo, by = "county_fips") %>% 
-  st_as_sf() #it has geometry. just make it so.
-
-den_co_bg_ndvi_20210704
-View(den_co_bg_ndvi_20210704)
 
 
 

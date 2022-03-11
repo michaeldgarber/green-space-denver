@@ -80,7 +80,8 @@ den_metro_bg_geo  = tidycensus::get_acs( #bg for block group
 ) %>% 
   #some light renaming, etc.
   mutate(
-    bg_fips = GEOID ,
+    bg_fips = str_sub(GEOID, 1,12),
+    tract_fips = str_sub(GEOID, 1,11),#this always works
     county_fips = str_sub(GEOID, 3,5)
   ) %>% 
   dplyr::select(contains("fips"), geometry)%>% 
@@ -88,6 +89,9 @@ den_metro_bg_geo  = tidycensus::get_acs( #bg for block group
 
 
 save(den_metro_bg_geo, file = "den_metro_bg_geo.RData")
+den_metro_bg_geo %>% mapview()
+load("den_metro_bg_geo.RData")
+nchar(den_metro_bg_geo$bg_fips)#12 characters
 den_metro_bg_geo %>% mapview()
 
 ##  geometry of counties--------------
@@ -131,7 +135,9 @@ save(den_metro_co_nogeo, file = "den_metro_co_nogeo.RData")
 
 
 # look-up tables for tract, counties, and county names--------
+setwd(here("data-processed"))
 #a geo lookup
+load("den_metro_co_geo")
 lookup_den_metro_co_fips_geo = den_metro_co_geo %>% 
   distinct(county_fips, geometry)
 save(lookup_den_metro_co_fips_geo, file = "lookup_den_metro_co_fips_geo.RData")
@@ -141,6 +147,7 @@ lookup_county_name_den_metro = den_metro_co_geo %>%
   distinct(county_fips, county_name, county_name_short)
 
 #tract-county lookup
+load("den_metro_tract_geo.RData")
 lookup_den_metro_tract_county = den_metro_tract_geo %>% 
   st_set_geometry(NULL) %>% 
   distinct(tract_fips, county_fips)
@@ -149,6 +156,13 @@ lookup_den_metro_tract_county = den_metro_tract_geo %>%
 lookup_den_metro_bg_county = den_metro_bg_geo %>% 
   st_set_geometry(NULL) %>% 
   distinct(bg_fips, county_fips)
+save(lookup_den_metro_bg_county, file = "lookup_den_metro_bg_county.RData")
+
+lookup_den_metro_bg_tract = den_metro_bg_geo %>% 
+  st_set_geometry(NULL) %>% 
+  distinct(bg_fips, tract_fips)
+save(lookup_den_metro_bg_tract, file = "lookup_den_metro_bg_tract.RData")
+  
 
 ## geometry for denver county and jefferson county--------
 den_co_geo= den_metro_co_geo %>% 
@@ -174,9 +188,10 @@ den_jeff_co_geo %>% mapview(zcol = "county_fips")
 ## wrangle the ACS sex-by-age variables in prep for the long-form data-----------
 #note this should work regardless of geometry (i.e., tract or block group)
 options(tigris_use_cache = TRUE)
+library(tidycensus)
 acs_2019_vars <- load_variables(2019, "acs5", cache = TRUE)
 save(acs_2019_vars, file = "acs_2019_vars.RData") #takes a while so save.
-View(acs_2019_vars)
+
 #make it a tibble so you can select just the vars that begin with B01001
 acs_2019_vars_tib_sex_by_age = acs_2019_vars %>% 
   as_tibble() %>%
@@ -235,9 +250,12 @@ lookup_acs_2019_var_s_by_a_label = acs_2019_vars_tib_sex_by_age %>%
     )
   )
 
-table(lookup_acs_2019_var_label$age_group_acs) #good
-table(lookup_acs_2019_var_label$var_label)
+table(lookup_acs_2019_var_s_by_a_label$age_group_acs) #good
+table(lookup_acs_2019_var_s_by_a_label$var_label)
 
+setwd(here("data-processed"))
+save(lookup_acs_2019_var_s_by_a_label, 
+     file = "lookup_acs_2019_var_s_by_a_label.RData")
 lookup_acs_2019_var_s_by_a_label
 
 ## download sex by age vars by census tract long form----------
