@@ -6,6 +6,7 @@ library(tidyverse)
 library(here)
 library(sf)
 library(mapview)
+library(shades)
 
 # Load parcel-based land-use data (2018)----------
 # Only do this once, as it takes a while. Load it from R instead.
@@ -53,6 +54,14 @@ den_zoning = st_read(dsn ="zoning") %>%
   st_transform(4326) %>% 
   st_make_valid()
 
+#how many categories? I want to visualize using rainbow
+#21
+den_zoning %>% 
+  st_set_geometry(NULL) %>% 
+  group_by(ZONE_DESCR) %>% 
+  summarise(n=n())
+pal_rainbow_21 = rainbow(21)
+pal_rainbow_21 %>% swatch()
 setwd(here("data-processed"))#save
 save(den_zoning, file = "den_zoning.RData")
 den_zoning %>% 
@@ -60,7 +69,10 @@ den_zoning %>%
   group_by(ZONE_DESCR) %>% 
   summarise(n=n())
 
-den_zoning %>% mapview(zcol = "ZONE_DESCR")
+den_zoning %>% 
+  mapview(
+  zcol = "ZONE_DESCR",
+  col.regions = pal_rainbow_21 )
 
 #measure the area
 den_zoning_wrangle = den_zoning %>% 
@@ -74,4 +86,12 @@ zoning_area = den_zoning_wrangle %>%
   group_by(ZONE_DESCR) %>% 
   summarise(area_m2 = sum(area_m2))
 
-View(zoning_area)
+# Group and summarise geometry by zone code---------
+nrow(den_zoning)
+table(den_zoning$ZONE_DESCR)
+den_zoning_no_airport_union = den_zoning %>% 
+  #convert to the foot-based CRS we've been using
+  filter(ZONE_DESCR != "Airport  (DIA)") %>% #note the weird spacing
+  group_by(ZONE_DESCR) %>% 
+  summarise(area_m2 = sum(area_m2))
+

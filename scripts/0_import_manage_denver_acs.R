@@ -137,7 +137,7 @@ save(den_metro_co_nogeo, file = "den_metro_co_nogeo.RData")
 # look-up tables for tract, counties, and county names--------
 setwd(here("data-processed"))
 #a geo lookup
-load("den_metro_co_geo")
+load("den_metro_co_geo.RData")
 lookup_den_metro_co_fips_geo = den_metro_co_geo %>% 
   distinct(county_fips, geometry)
 save(lookup_den_metro_co_fips_geo, file = "lookup_den_metro_co_fips_geo.RData")
@@ -183,7 +183,7 @@ save(den_jeff_co_nogeo, file = "den_jeff_co_nogeo.RData")
 den_jeff_co_geo %>% mapview(zcol = "county_fips")
 
 
-# Download ACS variables (not just geometry)------
+# Download & manage ACS variables (not just geometry)------
 
 ## wrangle the ACS sex-by-age variables in prep for the long-form data-----------
 #note this should work regardless of geometry (i.e., tract or block group)
@@ -191,7 +191,7 @@ options(tigris_use_cache = TRUE)
 library(tidycensus)
 acs_2019_vars <- load_variables(2019, "acs5", cache = TRUE)
 save(acs_2019_vars, file = "acs_2019_vars.RData") #takes a while so save.
-
+View(acs_2019_vars)
 #make it a tibble so you can select just the vars that begin with B01001
 acs_2019_vars_tib_sex_by_age = acs_2019_vars %>% 
   as_tibble() %>%
@@ -241,24 +241,72 @@ lookup_acs_2019_var_s_by_a_label = acs_2019_vars_tib_sex_by_age %>%
       grepl("55 to", var_label) ~ "55-59",
       grepl("60 and", var_label) ~ "60-61",
       grepl("62 to", var_label) ~ "62-64",
-      grepl("65 to", var_label) ~ "65-66",
+      grepl("65 and", var_label) ~ "65-66",
       grepl("67 to", var_label) ~ "67-69",
       grepl("70 to", var_label) ~ "70-74",
       grepl("75 to", var_label) ~ "75-79",
       grepl("80 to", var_label) ~ "80-84",
       grepl("85 years", var_label) ~ "85+"
+    ),
+    
+    #this is the same grouping as above, but I want to make it numeric for easier
+    #categorization later, so:
+    #lb for lower bound
+    age_group_acs_lb = case_when(
+      grepl("Under 5", var_label) ~ 0,
+      grepl("5 to 9", var_label) ~ 5,
+      grepl("10 to 14", var_label) ~ 10,
+      grepl("15 to 17", var_label) ~ 15,
+      grepl("18 and", var_label) ~ 18,
+      grepl("20 y", var_label) ~ 20,
+      grepl("21 y", var_label) ~ 21,
+      grepl("22 to", var_label) ~ 22,
+      grepl("25 to", var_label) ~ 25,
+      grepl("30 to", var_label) ~ 30,
+      grepl("35 to", var_label) ~ 35,
+      grepl("40 to", var_label) ~ 40,
+      grepl("45 to", var_label) ~ 45,
+      grepl("50 to", var_label) ~ 50,
+      grepl("55 to", var_label) ~ 55,
+      grepl("60 and", var_label) ~ 60,
+      grepl("62 to", var_label) ~ 62,
+      grepl("65 a", var_label) ~ 65,
+      grepl("67 to", var_label) ~ 67,
+      grepl("70 to", var_label) ~ 70,
+      grepl("75 to", var_label) ~ 75,
+      grepl("80 to", var_label) ~ 80,
+      grepl("85 years", var_label) ~ 85
+    ),
+    
+    #Many of the GBD rates are in bigger groups.
+    #Create a few options for collapsed adult age groups
+    age_group_acs_18_plus = case_when(
+      age_group_acs_lb>=18 ~1,
+      TRUE ~0),
+    age_group_acs_20_plus = case_when(
+      age_group_acs_lb>=20 ~1,
+      TRUE ~0),
+    age_group_acs_25_plus = case_when(
+      age_group_acs_lb>=25 ~1,
+      TRUE ~0),
+    age_group_acs_30_plus = case_when(
+      age_group_acs_lb>=30 ~1,
+      TRUE ~0)
     )
-  )
 
-table(lookup_acs_2019_var_s_by_a_label$age_group_acs) #good
-table(lookup_acs_2019_var_s_by_a_label$var_label)
 
 setwd(here("data-processed"))
 save(lookup_acs_2019_var_s_by_a_label, 
      file = "lookup_acs_2019_var_s_by_a_label.RData")
+
+table(lookup_acs_2019_var_s_by_a_label$age_group_acs) #good
+table(lookup_acs_2019_var_s_by_a_label$var_label)
+table(lookup_acs_2019_var_s_by_a_label$age_group_acs,
+ lookup_acs_2019_var_s_by_a_label$age_group_acs_18_plus) 
+
 lookup_acs_2019_var_s_by_a_label
 
-## download sex by age vars by census tract long form----------
+### download sex by age vars by census tract long form----------
 #this will be long form. easier to link with health information.
 den_metro_tract_vars_s_by_a_long  = tidycensus::get_acs( #s by a = sex by age
   geography = "tract", 
@@ -280,19 +328,52 @@ save(den_metro_tract_vars_s_by_a_long, file = "den_metro_tract_vars_s_by_a_long.
 den_metro_tract_vars_s_by_a_long_wrangle = den_metro_tract_vars_s_by_a_long %>% 
   #rename per above
   rename( var_name = variable) %>% #note because it's long form, it's called variable here
-  left_join(lookup_acs_2019_var_label, by = "var_name") %>% 
+  left_join(lookup_acs_2019_var_s_by_a_label, by = "var_name") %>% 
   mutate(
-    tract_fips = GEOID, #we're at the tract level
+    tract_fips = str_sub(GEOID, 1,11),#this always works
     county_fips = str_sub(GEOID, 3,5)
   )  %>% 
-  dplyr::select(-GEOID)   #drop geoid
+  dplyr::select(-GEOID, -NAME)   #drop geoid and name. we have it via the fips codes
 
 den_metro_tract_vars_s_by_a_long_wrangle 
+View(den_metro_tract_vars_s_by_a_long_wrangle)
 setwd(here("data-processed"))
 save(den_metro_tract_vars_s_by_a_long_wrangle , 
      file = "den_metro_tract_vars_s_by_a_long_wrangle .RData")
 
-## download sex by age vars by block group long form----------
+### tracts: summarize age group categories for later linking------
+#note eventually we should probably consider the moe here
+names(den_metro_tract_vars_s_by_a_long_wrangle)
+
+den_metro_tract_18_plus  = den_metro_tract_vars_s_by_a_long_wrangle %>% 
+  group_by(tract_fips, age_group_acs_18_plus) %>% 
+  summarise(pop_age_18_plus = sum(estimate, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  filter(age_group_acs_18_plus==1) %>% 
+  dplyr::select(-starts_with("age_group")) #remove so it doesn't link in.
+
+den_metro_tract_20_plus  = den_metro_tract_vars_s_by_a_long_wrangle %>% 
+  group_by(tract_fips, age_group_acs_20_plus) %>% 
+  summarise(pop_age_20_plus = sum(estimate, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  filter(age_group_acs_20_plus==1) %>% 
+  dplyr::select(-starts_with("age_group")) #remove so it doesn't link in.
+
+den_metro_tract_25_plus  = den_metro_tract_vars_s_by_a_long_wrangle %>% 
+  group_by(tract_fips, age_group_acs_25_plus) %>% 
+  summarise(pop_age_25_plus = sum(estimate, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  filter(age_group_acs_25_plus==1) %>% 
+  dplyr::select(-starts_with("age_group")) #remove so it doesn't link in.
+
+den_metro_tract_30_plus  = den_metro_tract_vars_s_by_a_long_wrangle %>% 
+  group_by(tract_fips, age_group_acs_30_plus) %>% 
+  summarise(pop_age_30_plus = sum(estimate, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  filter(age_group_acs_30_plus==1) %>% 
+  dplyr::select(-starts_with("age_group")) #remove so it doesn't link in.
+
+### download sex by age vars by block group long form----------
 #this will be long form. easier to link with health information.
 den_metro_bg_vars_s_by_a_long  = tidycensus::get_acs( #s by a = sex by age
   geography = "block group", 
@@ -314,17 +395,52 @@ save(den_metro_bg_vars_s_by_a_long, file = "den_metro_bg_vars_s_by_a_long.RData"
 den_metro_bg_vars_s_by_a_long_wrangle = den_metro_bg_vars_s_by_a_long %>% 
   #rename per above
   rename( var_name = variable) %>% #note because it's long form, it's called variable here
-  left_join(lookup_acs_2019_var_label, by = "var_name") %>% 
+  left_join(lookup_acs_2019_var_s_by_a_label, by = "var_name") %>% 
   mutate(
-    bg_fips = GEOID, #we're at the bg level
+    bg_fips = str_sub(GEOID, 1,12),
+    tract_fips = str_sub(GEOID, 1,11), 
     county_fips = str_sub(GEOID, 3,5)
   )  %>% 
-  dplyr::select(-GEOID)   #drop geoid
+  dplyr::select(-GEOID, -NAME)   #drop geoid and name. we have it via the fips codes
 
 den_metro_bg_vars_s_by_a_long_wrangle 
 setwd(here("data-processed"))
 save(den_metro_bg_vars_s_by_a_long_wrangle , 
      file = "den_metro_bg_vars_s_by_a_long_wrangle .RData")
+View(den_metro_bg_vars_s_by_a_long_wrangle)
+
+### block group: summarize age group categories for later linking------
+#note eventually we should probably consider the moe here
+names(den_metro_tract_vars_s_by_a_long_wrangle)
+
+den_metro_bg_18_plus  = den_metro_bg_vars_s_by_a_long_wrangle %>% 
+  group_by(bg_fips, age_group_acs_18_plus) %>% 
+  summarise(pop_age_18_plus = sum(estimate, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  filter(age_group_acs_18_plus==1) %>% 
+  dplyr::select(-starts_with("age_group")) #remove so it doesn't link in.
+
+den_metro_bg_20_plus  = den_metro_bg_vars_s_by_a_long_wrangle %>% 
+  group_by(bg_fips, age_group_acs_20_plus) %>% 
+  summarise(pop_age_20_plus = sum(estimate, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  filter(age_group_acs_20_plus==1) %>% 
+  dplyr::select(-starts_with("age_group")) #remove so it doesn't link in.
+
+den_metro_bg_25_plus  = den_metro_bg_vars_s_by_a_long_wrangle %>% 
+  group_by(bg_fips, age_group_acs_25_plus) %>% 
+  summarise(pop_age_25_plus = sum(estimate, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  filter(age_group_acs_25_plus==1) %>% 
+  dplyr::select(-starts_with("age_group")) #remove so it doesn't link in.
+
+den_metro_bg_30_plus  = den_metro_bg_vars_s_by_a_long_wrangle %>% 
+  group_by(bg_fips, age_group_acs_30_plus) %>% 
+  summarise(pop_age_30_plus = sum(estimate, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  filter(age_group_acs_30_plus==1)%>% 
+  dplyr::select(-starts_with("age_group")) #remove so it doesn't link in.
+
 
 ## By tract, download other socio-demographic variables (wide form) -------
 #race, income, etc.
@@ -381,15 +497,25 @@ tract_and_bg_wrangle <-function(df){
       area_ft2 = as.numeric(st_area(geometry)),
       area_m2 = area_ft2/10.764, #meters squared, for informational purposes.
       area_mi2 = area_ft2*3.58701e-8  ,
+      
+      #population density for each age category
       pop_dens_mi2 = pop_tot/area_mi2 ,
+      pop_dens_mi2_age_18_plus =   pop_age_18_plus/area_mi2 ,
+      pop_dens_mi2_age_20_plus =   pop_age_20_plus/area_mi2 ,
+      pop_dens_mi2_age_25_plus =   pop_age_25_plus/area_mi2 ,
+      pop_dens_mi2_age_30_plus =   pop_age_30_plus/area_mi2 ,
+
       #prop for proportion
       race_w_prop = race_w/race_tot,  
       race_b_prop = race_b/race_tot,
       race_nw_prop = 1-race_w_prop, #nw for nonwhite (i.e, 1-white)
       race_o_prop = 1-race_b_prop - race_w_prop
-      ) 
+      ) %>% 
+    #reorder the variables for convenient mapviewing
+    dplyr::select(contains("fips"), starts_with("pop"), starts_with("age"), everything())
 }
-    
+
+load("den_tract_acs5_2019_nogeo.RData")
 den_tract_acs5_2019_wrangle_geo = den_tract_acs5_2019_nogeo %>%
   mutate(
     tract_fips = GEOID  #we're at the tract level
@@ -399,6 +525,11 @@ den_tract_acs5_2019_wrangle_geo = den_tract_acs5_2019_nogeo %>%
   st_as_sf() %>% 
   st_transform(2876) %>%   #convert to feet, as we've been doing elsewhere
   left_join(lookup_county_name_den_metro, by = "county_fips") %>% 
+  #link in the age-group totals
+  left_join(den_metro_tract_18_plus, by = "tract_fips") %>% 
+  left_join(den_metro_tract_20_plus, by = "tract_fips") %>% 
+  left_join(den_metro_tract_25_plus, by = "tract_fips") %>% 
+  left_join(den_metro_tract_30_plus, by = "tract_fips") %>% 
   tract_and_bg_wrangle()
 
 save(den_tract_acs5_2019_wrangle_geo, 
