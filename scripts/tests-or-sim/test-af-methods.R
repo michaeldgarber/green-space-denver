@@ -9,6 +9,6 @@ test = 1:10 %>%
     )
 test
 
-#hmm, they're the same.
+#they're identical. interesting.
 test$RR_result_way1==test$RR_result_way2
 
