@@ -49,8 +49,9 @@ den_metro_tract_geo  = tidycensus::get_acs(
   dplyr::select(contains("fips"), geometry)%>% 
   st_transform(4326)
 
+setwd(here("data-processed"))
 save(den_metro_tract_geo, file = "den_metro_tract_geo.RData")
-
+load(file = "den_metro_tract_geo.RData")
 #a version restricted to just denver and jefferson counties (but still at tract level)
 load("den_metro_tract_geo.RData")
 den_metro_tract_geo %>% mapview()
@@ -64,6 +65,13 @@ den_jeff_co_tract_nogeo = den_jeff_co_tract_geo %>%
   st_set_geometry(NULL) %>% 
   as_tibble()
 save(den_jeff_co_tract_nogeo, file = "den_jeff_co_tract_nogeo.RData")
+
+#restricted to Denver only
+den_co_tract_geo = den_metro_tract_geo %>% 
+  filter(county_fips == "031" )
+setwd(here("data-processed"))
+save(den_co_tract_geo, file = "den_co_tract_geo.RData")
+
 
 ## geometry of block groups--------
 den_metro_bg_geo  = tidycensus::get_acs( #bg for block group
@@ -336,7 +344,7 @@ den_metro_tract_vars_s_by_a_long_wrangle = den_metro_tract_vars_s_by_a_long %>%
   dplyr::select(-GEOID, -NAME)   #drop geoid and name. we have it via the fips codes
 
 den_metro_tract_vars_s_by_a_long_wrangle 
-View(den_metro_tract_vars_s_by_a_long_wrangle)
+# View(den_metro_tract_vars_s_by_a_long_wrangle)
 setwd(here("data-processed"))
 save(den_metro_tract_vars_s_by_a_long_wrangle , 
      file = "den_metro_tract_vars_s_by_a_long_wrangle .RData")
@@ -407,7 +415,7 @@ den_metro_bg_vars_s_by_a_long_wrangle
 setwd(here("data-processed"))
 save(den_metro_bg_vars_s_by_a_long_wrangle , 
      file = "den_metro_bg_vars_s_by_a_long_wrangle .RData")
-View(den_metro_bg_vars_s_by_a_long_wrangle)
+# View(den_metro_bg_vars_s_by_a_long_wrangle)
 
 ### block group: summarize age group categories for later linking------
 #note eventually we should probably consider the moe here
@@ -443,6 +451,7 @@ den_metro_bg_30_plus  = den_metro_bg_vars_s_by_a_long_wrangle %>%
 
 
 ## By tract, download other socio-demographic variables (wide form) -------
+### Define variables to be pulled--------
 #race, income, etc.
 #define wide-form variables here because I'm using this twice
 acs_vars_sociodem = c(
@@ -450,18 +459,29 @@ acs_vars_sociodem = c(
   #race (dichotomizing as white or else)
   #add an underscore to all of these, because the package automatically adds E and M
   #to the end of each var
+  #note I updated this to include hispanic/latino categories
   pop_tot_ = "B01003_001",
-  race_tot_ = "B02001_001",
-  race_w_ = "B02001_002",
-  race_b_ = "B02001_003",
+  #I was using B02001_001 but use this instead, as it includes hispanic/latino  
+  race_tot_ = "B03002_001", 
+  race_w_ = "B03002_003", #white and not hispanic or latino
+  race_h_ = "B03002_012",#hispanic or latino total
+  race_b_ = "B03002_004", #black, not hispanic or latino
   
   #median home value (use h_val to shorten)
+  #and poverty in last 12 months
   h_val_med_ = "B25077_001",
+  pov_last_12_ = "B17001_002",
+  pov_last_12_tot_ = "B17001_001",
   
   #median household income (take the continuous value instead of categories)
   #12/11/21 changing from hh_inc_ to hh_inc. shorten words...
   hh_inc_med_ = "B19013_001",
   
+  #edu for education. high school graduate or more. this column should work.
+  edu_hs_tot_  = "B16010_001",    # total in this column (at least high school)
+  edu_lt_hs_ = "B16010_002", #less than (not including) high school,
+  edu_hs_ = "B16010_015", # high school graduate (includes equivalency)
+
   #median age
   age_med_ = "B01002_001")
 
@@ -479,6 +499,7 @@ den_tract_acs5_2019_nogeo  = get_acs(
   ) 
 setwd(here("data-processed"))
 save(den_tract_acs5_2019_nogeo, file = "den_tract_acs5_2019_nogeo.RData")
+View(den_tract_acs5_2019_nogeo)
 #wrangle these wide-form data
 den_metro_tract_geo %>% mapview()
 st_crs(den_metro_tract_geo)
@@ -496,8 +517,8 @@ tract_and_bg_wrangle <-function(df){
       #general. you know the unit from other clues.
       area_ft2 = as.numeric(st_area(geometry)),
       area_m2 = area_ft2/10.764, #meters squared, for informational purposes.
-      area_mi2 = area_ft2*3.58701e-8  ,
-      
+      area_mi2 = area_ft2/(5280**2) ,#miles squared
+
       #population density for each age category
       pop_dens_mi2 = pop_tot/area_mi2 ,
       pop_dens_mi2_age_18_plus =   pop_age_18_plus/area_mi2 ,
@@ -508,14 +529,48 @@ tract_and_bg_wrangle <-function(df){
       #prop for proportion
       race_w_prop = race_w/race_tot,  
       race_b_prop = race_b/race_tot,
+      race_h_prop = race_h/race_tot, 
       race_nw_prop = 1-race_w_prop, #nw for nonwhite (i.e, 1-white)
-      race_o_prop = 1-race_b_prop - race_w_prop
+      race_o_prop = 1-race_b_prop - race_w_prop,
+      
+      pov_last_12_prop = pov_last_12/pov_last_12_tot, #percent poverty
+      
+      edu_hs_or_less = edu_lt_hs + edu_lt_hs, #add these up
+      edu_hs_or_less_prop = edu_hs_or_less/edu_hs_tot, #percent high school edu or less
+      edu_lt_hs_prop = edu_lt_hs/edu_hs_tot, #proportion less than hs.
+      #per the definition of disproportionately impacted in
+      #https://leg.colorado.gov/sites/default/files/2021a_1266_signed.pdf
+      #at least 40% in poverty or at least 40% non-white
+      pov_last_12_prop_40plus = case_when(
+        pov_last_12_prop > 0.4 ~ 1,
+        pov_last_12_prop <= 0.4 ~ 0 #hopefully creates NAs as appropriate
+      ),
+      
+      race_nw_prop_40plus = case_when(
+        race_nw_prop > 0.4 ~ 1,
+        race_nw_prop <= 0.4 ~ 0
+      ),
+      pov_or_race_nw_40plus = case_when(
+        is.na(race_nw_prop_40plus) ~ NA_real_,
+        is.na(pov_last_12_prop_40plus) ~ NA_real_,
+        pov_last_12_prop_40plus==1 |
+          race_nw_prop_40plus == 1 ~ 1,
+        TRUE ~0
+      )
       ) %>% 
     #reorder the variables for convenient mapviewing
-    dplyr::select(contains("fips"), starts_with("pop"), starts_with("age"), everything())
+    dplyr::select(contains("fips"), 
+                  starts_with("pop"), 
+                  starts_with("age"),
+                  starts_with("pov"),
+                  starts_with("hh_inc"), 
+                  starts_with("edu"), 
+                  starts_with("race"), 
+                  starts_with("h_val"), 
+                  starts_with("area"), 
+                  everything())
 }
 
-load("den_tract_acs5_2019_nogeo.RData")
 den_tract_acs5_2019_wrangle_geo = den_tract_acs5_2019_nogeo %>%
   mutate(
     tract_fips = GEOID  #we're at the tract level
@@ -534,9 +589,34 @@ den_tract_acs5_2019_wrangle_geo = den_tract_acs5_2019_nogeo %>%
 
 save(den_tract_acs5_2019_wrangle_geo, 
      file = "den_tract_acs5_2019_wrangle_geo.RData")
+names(den_tract_acs5_2019_wrangle_geo)
+
+#checks
 den_tract_acs5_2019_wrangle_geo %>% 
   filter(county_name_short=="Denver") %>% 
   mapview(zcol = "hh_inc_med")
+den_tract_acs5_2019_wrangle_geo %>% 
+  filter(county_name_short=="Denver") %>% 
+  mapview(zcol = "pov_last_12_prop")
+den_tract_acs5_2019_wrangle_geo %>% 
+  filter(county_name_short=="Denver") %>% 
+  mapview(zcol = "race_nw_prop")
+den_tract_acs5_2019_wrangle_geo %>% 
+  filter(county_name_short=="Denver") %>% 
+  mapview(zcol = "pov_or_race_nw_40plus")
+den_tract_acs5_2019_wrangle_geo %>% 
+  filter(county_name_short=="Denver") %>% 
+  mapview(zcol = "edu_hs_or_less_prop")
+den_tract_acs5_2019_wrangle_geo %>% 
+  filter(county_name_short=="Denver") %>% 
+  mapview(zcol = "edu_lt_hs_prop")
+
+
+den_tract_acs5_2019_wrangle_geo %>% 
+  ggplot(aes(edu_hs_or_less_prop)) + geom_histogram()
+den_tract_acs5_2019_wrangle_geo %>% 
+  ggplot(aes(edu_lt_hs_prop)) + geom_histogram()
+
 
 ## By block group, download other socio-demographic variables (wide form) -------
 den_bg_acs5_2019_nogeo  = get_acs(
@@ -564,6 +644,11 @@ den_bg_acs5_2019_wrangle_geo = den_bg_acs5_2019_nogeo %>%
   st_as_sf() %>% 
   st_transform(2876) %>%   #convert to feet, as we've been doing elsewhere
   left_join(lookup_county_name_den_metro, by = "county_fips") %>% 
+  #link in the age-group totals
+  left_join(den_metro_bg_18_plus, by = "bg_fips") %>% 
+  left_join(den_metro_bg_20_plus, by = "bg_fips") %>% 
+  left_join(den_metro_bg_25_plus, by = "bg_fips") %>% 
+  left_join(den_metro_bg_30_plus, by = "bg_fips") %>% 
   tract_and_bg_wrangle()
 
 save(den_bg_acs5_2019_wrangle_geo, 
@@ -572,6 +657,7 @@ save(den_bg_acs5_2019_wrangle_geo,
 
 den_bg_acs5_2019_wrangle_geo %>% mapview(zcol = "hh_inc_med")
 den_bg_acs5_2019_wrangle_geo %>% mapview(zcol = "race_nw_prop")
+den_bg_acs5_2019_wrangle_geo %>% mapview(zcol = "pov_last_12_prop")
 den_bg_acs5_2019_wrangle_geo %>% 
   filter(  county_name_short == "Denver") %>% 
   mapview(zcol = "pop_dens_mi2")

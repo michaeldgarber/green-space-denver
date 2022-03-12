@@ -15,6 +15,7 @@ library(tidyverse)
 here()
 
 #data downloaded from http://ghdx.healthdata.org/gbd-results-tool and saved locally
+#consider getting county-level data from https://hdpulse.nimhd.nih.gov/data/deathrates/index.php
 setwd(here("data-input", "GBD data-CO"))
 ihme_co <- read_csv("IHME-GBD_2019_DATA-96be8737-1.csv") %>% 
   #restrict to rates only

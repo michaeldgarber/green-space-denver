@@ -69,29 +69,72 @@ den_zoning %>%
   group_by(ZONE_DESCR) %>% 
   summarise(n=n())
 
+# visualize  zoning using rainbow palette -----
 den_zoning %>% 
   mapview(
   zcol = "ZONE_DESCR",
   col.regions = pal_rainbow_21 )
 
-#measure the area
-den_zoning_wrangle = den_zoning %>% 
+
+# Group by and summarise by zone code--------
+den_zoning_grouped = den_zoning %>% 
+  st_transform(2876) %>%  #convert to the foot-based CRS we've been using
   mutate(
-    area_m2 = as.numeric(st_area(geometry))
+    area_ft2 = as.numeric(st_area(geometry)),
+    area_mi2 = area_ft2/(5280**2) 
+  )%>% 
+  group_by(ZONE_DESCR) %>% 
+  summarise(
+    area_ft2 = sum(area_ft2),
+    area_mi2 = sum(area_mi2)
+    ) %>% 
+  ungroup() %>% 
+  st_simplify()
+
+setwd(here("data-processed"))#save
+save(den_zoning_grouped, file = "den_zoning_grouped.RData")
+object.size(den_zoning_grouped)
+
+#visualize
+den_zoning_grouped %>%   
+  mapview(
+    zcol = "ZONE_DESCR",
+    col.regions = pal_rainbow_21 
   )
 
-summary(den_zoning_wrangle$area_m2)
-zoning_area = den_zoning_wrangle %>% 
+#check to be sure your sum is correct. Denver should be about 155 square miles
+den_zoning_grouped %>% 
   st_set_geometry(NULL) %>% 
-  group_by(ZONE_DESCR) %>% 
-  summarise(area_m2 = sum(area_m2))
+  mutate(all = 1) %>% 
+  group_by(all) %>% 
+  summarise(
+    area_mi2 = sum(area_mi2)
+  )
+#yup, great.
 
-# Group and summarise geometry by zone code---------
-nrow(den_zoning)
-table(den_zoning$ZONE_DESCR)
-den_zoning_no_airport_union = den_zoning %>% 
-  #convert to the foot-based CRS we've been using
-  filter(ZONE_DESCR != "Airport  (DIA)") %>% #note the weird spacing
-  group_by(ZONE_DESCR) %>% 
-  summarise(area_m2 = sum(area_m2))
+  
+den_zoning_grouped_no_airport = den_zoning_grouped %>% 
+  filter(ZONE_DESCR != "Airport  (DIA)")  #note the weird spacing
+
+setwd(here("data-processed"))#save
+save(den_zoning_grouped_no_airport, file = "den_zoning_grouped_no_airport.RData")
+
+den_zoning_grouped_no_airport %>%   
+  mapview(
+    zcol = "ZONE_DESCR",
+    col.regions = pal_rainbow_21 
+  )
+
+
+den_zoning_grouped_no_airport_union = den_zoning_grouped_no_airport %>%
+  mutate(all = 1) %>% 
+  group_by(all) %>% 
+  summarise(
+    area_mi2 = sum(area_mi2)
+  )
+
+save(den_zoning_grouped_no_airport_union, 
+     file = "den_zoning_grouped_no_airport_union.RData")
+den_zoning_grouped_no_airport_union %>% mapview()
+  
 
