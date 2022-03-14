@@ -8,7 +8,6 @@
 #note rates are per 100k
 #stratified by sex and by age group
 
-
 library(here)
 library(sf)
 library(tidyverse)
