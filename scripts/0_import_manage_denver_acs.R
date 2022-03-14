@@ -274,9 +274,10 @@ lookup_acs_2019_var_s_by_a_label = acs_2019_var_tib_sex_by_age %>%
   mutate(
     var_sex = case_when(   #sex indicator
       #(grepl("needle", haystack))
-      grepl("Male", var_label) ~ "Male",
-      grepl("Female", var_label) ~ "Female",
-      var_label == "Estimate!!Total:" ~"Both"
+      #changing to lowercase. personal preference.
+      grepl("Male", var_label) ~ "male",
+      grepl("Female", var_label) ~ "female",
+      var_label == "Estimate!!Total:" ~"both"
     ),
     age_group_acs = case_when(
       grepl("Under 5", var_label) ~ "0-4",
@@ -412,8 +413,6 @@ den_metro_tract_s_by_a_long_wrangle = den_metro_tract_s_by_a_long %>%
   left_join(lookup_tract_area, by = "tract_fips") %>% 
   mutate( pop_dens_mi2 = pop/area_mi2 )
 
-View(den_metro_tract_s_by_a_long_wrangle)
-
 setwd(here("data-processed"))
 save(den_metro_tract_s_by_a_long_wrangle , 
      file = "den_metro_tract_s_by_a_long_wrangle .RData")
@@ -480,16 +479,21 @@ den_metro_bg_s_by_a_long_wrangle = den_metro_bg_s_by_a_long %>%
     county_fips = str_sub(GEOID, 3,5)
   )  %>% 
   #drop geoid and name. we have it via the fips codes
-  dplyr::select(-GEOID, -NAME) %>% 
+  dplyr::select(-GEOID, -NAME) %>%  
+  #rename the estimate to explicitly be population,
+  rename(pop = estimate, #this is the population estimate in that age-sex group
+         pop_moe = moe) %>% 
+  dplyr::select(contains("fips"), everything()) %>% 
   #link area measurements to calculate population density
-  left_join(lookup_bg_area, by = "bg_fips")   
+  left_join(lookup_bg_area, by = "bg_fips") %>% 
+  mutate( pop_dens_mi2 = pop/area_mi2 )
   
   
 den_metro_bg_s_by_a_long_wrangle 
 setwd(here("data-processed"))
 save(den_metro_bg_s_by_a_long_wrangle , 
      file = "den_metro_bg_s_by_a_long_wrangle .RData")
- View(den_metro_bg_s_by_a_long_wrangle)
+View(den_metro_bg_s_by_a_long_wrangle)
 
 ### block group: summarize age group categories for later linking------
 #note eventually we should probably consider the moe here

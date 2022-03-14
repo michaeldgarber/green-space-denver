@@ -26,8 +26,19 @@ ihme_co <- read_csv("IHME-GBD_2019_DATA-96be8737-1.csv") %>%
   #Update 3/10/22 I thought about renaming the age groups to correspond better with
   #ACS, but I don't think that's necessary. Just pick the few age groups that you want.
   rename(age_group_gbd = age)  %>% 
-  #make it wide-form by measure &
-    
+  mutate(
+    cause_short = case_when(
+      cause == "All causes" ~ "all",
+      cause == "Alzheimer's disease and other dementias" ~ "alzheimers-dementia",
+      cause == "Stroke" ~ "stroke"
+  ),
+  #make sex lowercase for linking with ACS data
+  sex_gbd = case_when(
+    sex == "Both" ~ "both",
+    sex == "Female" ~ "female",
+    sex == "Male" ~ "male"
+  )
+  )   
 
 setwd(here("data-processed"))
 save(ihme_co, file = "ihme_co.RData")
@@ -35,6 +46,9 @@ table(ihme_co$measure,
       ihme_co$cause
       )
 #looks good
+table(ihme_co$sex_gbd)
+table(ihme_co$metric)
+table(ihme_co$cause_short)
 table(ihme_co$age_group_gbd)
 class(ihme_co$age_group_gbd)
 View(ihme_co)
