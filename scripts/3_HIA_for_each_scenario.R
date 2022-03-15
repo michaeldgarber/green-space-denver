@@ -327,6 +327,13 @@ sc_1_deaths_prev_by_age_group = den_co_bg_long_w_ndvi_gbd_rates %>%
     attrib_o_alt_100 = sum(attrib_o_alt_100, na.rm=TRUE))
   
 sc_1_deaths_prev_by_age_group
+#save this to Excel for easier copy/paste
+setwd(here("results"))
+writexl::write_xlsx(
+  sc_1_deaths_prev_by_age_group,
+  "sc_1_deaths_prev_by_age_group.xlsx"
+)
+
 
 ### deaths prevented by block group----------
 sc_1_deaths_prev_by_BG = den_co_bg_long_w_ndvi_gbd_rates %>% 
@@ -337,12 +344,18 @@ sc_1_deaths_prev_by_BG = den_co_bg_long_w_ndvi_gbd_rates %>%
     attrib_o_alt_20 = sum(attrib_o_alt_20, na.rm=TRUE),
     attrib_o_alt_100 = sum(attrib_o_alt_100, na.rm=TRUE))
 
+sc_1_deaths_prev_by_BG
 #visualize this
+library(viridis)
 sc_1_deaths_prev_by_BG %>% 
   ungroup() %>% 
   left_join(den_metro_bg_geo, by = "bg_fips") %>% 
   st_as_sf() %>% 
-  mapview(zcol = "attrib_o_alt_20")
+  mapview(
+    layer.name = "Attributable deaths, all-cause",
+    zcol = "attrib_o_alt_20",
+    col.regions = viridis_pal(direction=-1)
+  )
 
 ### deaths prevented, overall----------
 sc_1_deaths_prev_overall = den_co_bg_long_w_ndvi_gbd_rates %>% 
