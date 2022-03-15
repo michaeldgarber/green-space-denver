@@ -24,7 +24,8 @@ ihme_co <- read_csv("IHME-GBD_2019_DATA-96be8737-1.csv") %>%
   dplyr::select(-location) %>% 
   #re-name age group to begin corresponding with ACS
   #Update 3/10/22 I thought about renaming the age groups to correspond better with
-  #ACS, but I don't think that's necessary. Just pick the few age groups that you want.
+  #ACS, but I don't think that's necessary.
+  #Use a look-up table insted later on.
   rename(age_group_gbd = age)  %>% 
   mutate(
     cause_short = case_when(
@@ -33,27 +34,32 @@ ihme_co <- read_csv("IHME-GBD_2019_DATA-96be8737-1.csv") %>%
       cause == "Stroke" ~ "stroke"
   ),
   #make sex lowercase for linking with ACS data
-  sex_gbd = case_when(
-    sex == "Both" ~ "both",
+  sex = case_when(
+    sex == "Both" ~ "all", #just use all across the board for age/sex
     sex == "Female" ~ "female",
     sex == "Male" ~ "male"
-  )
-  )   
+  ),
+  measure = tolower(measure)#make lowercase
+  ) %>% 
+  #also lowercase
+  #these are all rates, so rename the val and upper and lower to be more explicit
+  rename(
+    rate_per_100k_est = val,
+    rate_per_100k_ul = upper, #upper limit
+    rate_per_100k_ll = lower  #upper limit
+  ) %>% 
+  #drop a few
+  #again, we know they're rates, and we have a shorter cause
+  dplyr::select(-metric, -cause) 
 
 setwd(here("data-processed"))
 save(ihme_co, file = "ihme_co.RData")
-table(ihme_co$measure,
-      ihme_co$cause
-      )
 #looks good
-table(ihme_co$sex_gbd)
-table(ihme_co$metric)
+table(ihme_co$cause_short)
 table(ihme_co$cause_short)
 table(ihme_co$age_group_gbd)
+table(ihme_co$measure)
+summary(ihme_co$rate_per_100k_est)
 class(ihme_co$age_group_gbd)
-View(ihme_co)
-
-#make them match these categories
-load("lookup_acs_2019_var_s_by_a_label.RData")
-table(lookup_acs_2019_var_s_by_a_label$age_group_acs) #good
+ihme_co
 

@@ -1,7 +1,7 @@
 #filename: 0_import_manage_denver_acs
 #Purpose: download demographics data for Denver area (county, metro, to be defined)
 #Date began 12/12/21
-#Date revised: March 6 2022
+#Date revised: March 14 2022
 library(tidyverse)
 library(sf)
 library(mapview)
@@ -10,7 +10,7 @@ library(here)
 setwd(here("data-processed"))
 
 # Objective-----------
-#This code accomplishes three main thigngs:
+#This code accomplishes three main things:
 #1. Get geometry files for census tract and counties in the Denver area.
 #2. Download sex-by-age population by census tract. I do this long form in
 #a somewhat slick way.
@@ -272,12 +272,12 @@ lookup_acs_2019_var_s_by_a_label = acs_2019_var_tib_sex_by_age %>%
   ) %>% 
   distinct(var_name, var_label) %>% 
   mutate(
-    var_sex = case_when(   #sex indicator
+    sex = case_when(   #sex indicator
       #(grepl("needle", haystack))
       #changing to lowercase. personal preference.
       grepl("Male", var_label) ~ "male",
       grepl("Female", var_label) ~ "female",
-      var_label == "Estimate!!Total:" ~"both"
+      var_label == "Estimate!!Total:" ~"all"
     ),
     age_group_acs = case_when(
       grepl("Under 5", var_label) ~ "0-4",
@@ -303,9 +303,9 @@ lookup_acs_2019_var_s_by_a_label = acs_2019_var_tib_sex_by_age %>%
       grepl("75 to", var_label) ~ "75-79",
       grepl("80 to", var_label) ~ "80-84",
       grepl("85 years", var_label) ~ "85+",
-      var_label == "Estimate!!Total:" ~ "All",
-      var_label == "Estimate!!Total:!!Female:" ~ "All", #all ages
-      var_label == "Estimate!!Total:!!Male:" ~ "All"  #all ages
+      var_label == "Estimate!!Total:" ~ "all",
+      var_label == "Estimate!!Total:!!Female:" ~ "all", #all ages
+      var_label == "Estimate!!Total:!!Male:" ~ "all"  #all ages
     ),
     
     #this is the same grouping as above, but I want to make it numeric for easier
@@ -466,9 +466,10 @@ den_metro_bg_s_by_a_long  = tidycensus::get_acs( #s by a = sex by age
 ) 
 den_metro_bg_s_by_a_long
 
-save(den_metro_bg_s_by_a_long, file = "den_metro_bg_s_by_a_long.RData")
+save(den_metro_bg_s_by_a_long, 
+     file = "den_metro_bg_s_by_a_long.RData")
 
-### wrangle long-form (age/sex) tracts---------
+### wrangle long-form (age/sex) bg---------
 den_metro_bg_s_by_a_long_wrangle = den_metro_bg_s_by_a_long %>% 
   #note because it's long form, it's called variable here
   rename( var_name = variable) %>% 
@@ -492,8 +493,7 @@ den_metro_bg_s_by_a_long_wrangle = den_metro_bg_s_by_a_long %>%
 den_metro_bg_s_by_a_long_wrangle 
 setwd(here("data-processed"))
 save(den_metro_bg_s_by_a_long_wrangle , 
-     file = "den_metro_bg_s_by_a_long_wrangle .RData")
-View(den_metro_bg_s_by_a_long_wrangle)
+     file = "den_metro_bg_s_by_a_long_wrangle.RData")
 
 ### block group: summarize age group categories for later linking------
 #note eventually we should probably consider the moe here
