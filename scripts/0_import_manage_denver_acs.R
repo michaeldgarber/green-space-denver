@@ -207,16 +207,21 @@ lookup_den_metro_bg_tract = den_metro_bg_geo %>%
   as_tibble()
 save(lookup_den_metro_bg_tract, file = "lookup_den_metro_bg_tract.RData")
 
-## area measurements by tract and block group--------
+## area measurements for tracts and block groups--------
 lookup_tract_area = den_metro_tract_geo %>% 
   st_set_geometry(NULL) %>% 
   distinct(tract_fips, area_ft2, area_m2, area_mi2)
+save(lookup_tract_area, file = "lookup_tract_area.RData")
 nrow(lookup_tract_area)
 nrow(den_metro_tract_geo)
 
 lookup_bg_area = den_metro_bg_geo %>% 
   st_set_geometry(NULL) %>% 
   distinct(bg_fips, area_ft2, area_m2, area_mi2)
+save(lookup_bg_area, file = "lookup_bg_area.RData")
+#the same for those without water are located in
+#the script that creates them:
+#~/2_ndvi_tract_bg_park_den.R
 
 ## geometry for denver county and jefferson county--------
 den_co_geo= den_metro_co_geo %>% 

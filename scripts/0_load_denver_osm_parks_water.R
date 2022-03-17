@@ -240,13 +240,15 @@ mv_natural_water_polygons+
 #I indicate their area? Maybe say 10 feet?
 
 ## Create sf objects for each water type with data---------
+#and rename name to osm_name
 keep_these_vars <-function(df){
   df %>% 
     dplyr::select(
       starts_with("osm_"), starts_with("name"),  
       starts_with("water"), starts_with("natural"),
       starts_with("width") #keep this just in case but probably wont' use
-    )
+    ) %>% 
+    rename(osm_name = name)
 }
 ### wrangle sf objects for natural water-----------
 den_metro_natural_water_polygons = den_metro_natural_water$osm_polygons %>% 
@@ -349,7 +351,7 @@ den_metro_waterway_river_lines = den_metro_waterway_river$osm_lines %>%
   mutate(
     osm_key = "waterway",
     osm_value = "river",
-    osm_origin_feature_type = "line")
+    osm_origin_feature_type = "line") 
 den_metro_waterway_river_streams = den_metro_waterway_stream$osm_lines %>%
   st_transform(2876) %>% 
   mutate(
@@ -387,11 +389,17 @@ st_crs(den_metro_waterways_no_poly)
 #before the buffer, transform to a foot-based crs that's based in colorado
 #https://spatialreference.org/ref/epsg/2876/
 
-den_metro_waterways_no_poly_10_ft = den_metro_waterways_no_poly %>% 
+load("den_metro_waterways_no_poly.RData")
+#if there are lines, we're drawing a small buffer around them to convert them to polygons
+buff_ft_around_lines=15
+den_metro_waterways_buff_lines = den_metro_waterways_no_poly %>% 
   st_transform(2876) %>% #says it's feet
-  st_buffer(10)
-save(den_metro_waterways_no_poly_10_ft, file = "den_metro_waterways_no_poly_10_ft.RData")
-den_metro_waterways_no_poly_10_ft %>% mapview()
+  st_buffer(buff_ft_around_lines) %>% 
+  #keep track of how large the buffer is around the line-based polygons#
+  mutate(buffer_around_line_ft = buff_ft_around_lines)
+
+save(den_metro_waterways_buff_lines, file = "den_metro_waterways_buff_lines.RData")
+den_metro_waterways_buff_lines %>% mapview()
 
 ### Create an object entirely comprised of polygons ---------
 #so the original polygons and then the 10-foot buffers around the rivers
@@ -399,30 +407,95 @@ load("den_metro_bbox_custom_sf.RData")
 den_metro_bbox_custom_2876 = den_metro_bbox_custom_sf %>% 
   st_transform(2876)
 load("den_metro_natural_water_poly.RData")
-load("den_metro_waterways_no_poly_10_ft.RData")
-den_osm_water_poly_inc_waterways_10_ft = den_metro_natural_water_poly %>% 
+load("den_metro_waterways_buff_lines.RData")
+#calling it both because it includse both the original polygons and the polygons
+#that used to be lines but are now polygons because of the buffer
+
+#how many are called reflecting pool or fountain. we should exclude
+table(den_metro_natural_water_poly$osm_name)
+test = den_metro_natural_water_poly %>% 
+  mutate(osm_name_pool_fountain = case_when(
+    grepl("Pool", osm_name) ~ 1,
+    grepl("pool", osm_name) ~ 1,
+    grepl("fountain", osm_name) ~ 1,
+    grepl("Fountain", osm_name) ~ 1,
+  ),
+  TRUE ~0
+  ) %>% 
+  filter(osm_name_pool_fountain==1)
+test %>% mapview()
+table(test$osm_name_pool_fountain)
+test %>% mapview(
+  layer.name = "pool or fountain",
+  zcol = "osm_name_pool_fountain")
+den_osm_water_poly_both = den_metro_natural_water_poly %>% 
   st_transform(2876) %>% 
   st_buffer(.01) %>% #buffer a small amount, so the sf type is more coherent?
-  bind_rows(den_metro_waterways_no_poly_10_ft) %>% 
+  bind_rows(den_metro_waterways_buff_lines) %>% 
   st_simplify() %>% 
   #restrict to the original bounding box
-  st_intersection(den_metro_bbox_custom_2876)
+  st_intersection(den_metro_bbox_custom_2876) %>% 
+  #measure the area of each feature. important to remove very small ponds.
+  mutate(
+    area_ft2 = as.numeric(st_area(geometry)),
+    #based on my general intuition, ponds that are smaller than 1500 square feet
+    #should probably be removed from the analysis, as they appear to be small manmade ponds
+    #or fountains in parks and are substantively different from a natural riparian area
+    #that the stakeholder was referring to
+    area_ft2_lt_1500 = case_when(
+      area_ft2 < 1500 ~ 1,
+      TRUE ~0
+    ),
+    
+    #exclude anything with pool or fountain in the name
+    osm_name_pool_fountain = case_when(
+      grepl("Pool", osm_name) ~ 1,
+      grepl("pool", osm_name) ~ 1,
+      grepl("fountain", osm_name) ~ 1,
+      grepl("Fountain", osm_name) ~ 1,
+      TRUE ~0),
+    water_type_pool_fountain = case_when(
+      water == "fountains" ~1,
+      water == "Pool" ~ 1,
+      water == "pool" ~ 1,
+      TRUE ~0
+    )
+  )
 
-save(den_osm_water_poly_inc_waterways_10_ft, file = "den_osm_water_poly_inc_waterways_10_ft.RData")
+#checks
+den_osm_water_poly_both
+table(den_osm_water_poly_both$osm_name_pool_fountain)
+table(den_osm_water_poly_both$water_type_pool_fountain)
+table(den_osm_water_poly_both$water_type_pool_fountain,
+      den_osm_water_poly_both$osm_name_pool_fountain
+      )
+table(den_osm_water_poly_both$water)
+den_osm_water_poly_both %>% mapview(zcol = "area_ft2")
+den_osm_water_poly_both %>% mapview(zcol = "osm_name_pool_fountain")
+den_osm_water_poly_both %>% mapview(zcol = "water_type_pool_fountain")
+den_osm_water_poly_both %>% 
+  filter(area_ft2 <2000) %>% 
+  mapview(zcol = "area_ft2")
+den_osm_water_poly_both %>% 
+  mapview(
+    col.regions = rainbow(n_distinct(den_osm_water_poly_both$water)),
+    zcol = "water")
+summary(den_osm_water_poly_both$area_ft2)
+save(den_osm_water_poly_both, file = "den_osm_water_poly_both.RData")
 
-class(den_osm_water_poly_inc_waterways_10_ft$geometry)
-den_osm_water_poly_inc_waterways_10_ft %>% mapview()
+class(den_osm_water_poly_both$geometry)
+
 
 #union it
-den_osm_water_poly_inc_waterways_10_ft_union = den_osm_water_poly_inc_waterways_10_ft %>% 
+den_osm_water_poly_both_union = den_osm_water_poly_both %>% 
   mutate(dummy=1) %>%
   group_by(dummy) %>%
   summarise(n=n()) %>%
   ungroup() %>% 
   dplyr::select(geometry)
-save(den_osm_water_poly_inc_waterways_10_ft_union, 
-     file = "den_osm_water_poly_inc_waterways_10_ft_union.RData")
+save(den_osm_water_poly_both_union, 
+     file = "den_osm_water_poly_both_union.RData")
 
-den_osm_water_poly_inc_waterways_10_ft_union %>% mapview()
+den_osm_water_poly_both_union %>% mapview()
 
 #great, continued ~/Dropbox/CSU/green-space-denver/scripts/1_wrangle_water.R

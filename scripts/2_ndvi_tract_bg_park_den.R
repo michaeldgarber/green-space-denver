@@ -19,9 +19,10 @@ library(sf)
 #from ~/scripts/0_load_denver_osm_parks_water.R
 setwd(here("data-processed"))
 load("den_jeff_co_green_space.RData")  
-#and this, which includes 10-foot buffers around rivers and streams if they are not
-#originally represented as polygons. Load the unioned version
-load("den_osm_water_poly_inc_waterways_10_ft_union.RData")
+#and this, which includes 10-foot buffers around rivers and streams 
+#if they are not originally represented as polygons. Load the unioned version
+load("den_osm_water_poly_both.RData")
+load("den_osm_water_poly_both_union.RData")
 #use st_difference https://cran.r-project.org/web/packages/sf/vignettes/sf3.html
 sf::sf_use_s2(FALSE) #getting invalid spherical geo
 st_crs(den_jeff_co_green_space)
@@ -30,7 +31,7 @@ den_jeff_co_green_space_no_water = den_jeff_co_green_space %>%
   st_transform(2876) %>% 
   st_simplify() %>% #makes the file smaller.
   st_make_valid() %>% 
-  st_difference(den_osm_water_poly_inc_waterways_10_ft_union) %>% 
+  st_difference(den_osm_water_poly_both_union) %>% 
   st_make_valid() #this did the trick! I was having issues with mapviwe before 
 
 save(den_jeff_co_green_space_no_water, file = "den_jeff_co_green_space_no_water.RData")
@@ -48,13 +49,13 @@ den_jeff_co_green_space_no_water %>%
 ## Remove bodies of water from tracts and block groups----------
 load("den_jeff_co_geo.RData") 
 load("den_metro_tract_geo.RData") #census tracts in metro area
-load("den_metro_bg_geo.RData") #block groups in the metro area (defind via my custom bb)
+load("den_metro_bg_geo.RData") #block groups in the metro area (defined via my custom bb)
 den_metro_bg_geo %>% mapview()
 
 ### from census tracts----------
 den_metro_tract_no_water_geo = den_metro_tract_geo %>% 
   st_transform(2876) %>% #convert to central colorado foot-based crs
-  st_difference(den_osm_water_poly_inc_waterways_10_ft_union) %>% 
+  st_difference(den_osm_water_poly_both_union) %>% 
   st_make_valid()  %>% 
   dplyr::select(contains("fips"), geometry)
 
@@ -65,11 +66,44 @@ den_metro_tract_no_water_geo %>% mapview(zcol = "county_fips")
 ### from block groups-------------
 den_metro_bg_no_water_geo = den_metro_bg_geo %>% 
   st_transform(2876) %>% #convert to central colorado foot-based crs
-  st_difference(den_osm_water_poly_inc_waterways_10_ft_union) %>% 
+  st_difference(den_osm_water_poly_both_union) %>% 
   st_make_valid()  %>% 
   dplyr::select(contains("fips"), geometry)
 save(den_metro_bg_no_water_geo, file = "den_metro_bg_no_water_geo.RData")
 den_metro_bg_no_water_geo %>% mapview(zcol = "county_fips")
+
+## area lookups for tracts and block groups without water--------
+lookup_tract_no_water_area = den_metro_tract_no_water_geo %>% 
+  mutate(
+    area_ft2_no_water  = as.numeric(st_area(geometry)),
+    area_m2_no_water = area_ft2_no_water/10.764, #meters squared, for informational purposes.
+    area_mi2_no_water = area_ft2_no_water/(5280**2) #miles squared
+  ) %>% 
+  st_set_geometry(NULL) %>% 
+  distinct(tract_fips, area_ft2_no_water ,area_m2_no_water, area_mi2_no_water )%>% 
+  as_tibble()
+save(lookup_tract_no_water_area, file = "lookup_tract_no_water_area.RData")
+nrow(lookup_tract_no_water_area)
+nrow(den_metro_tract_no_water_geo)
+nrow(den_metro_tract_geo)
+
+lookup_bg_no_water_area = den_metro_bg_no_water_geo %>% 
+  mutate(
+    area_ft2_no_water  = as.numeric(st_area(geometry)),
+    area_m2_no_water = area_ft2_no_water/10.764, #meters squared, for informational purposes.
+    area_mi2_no_water = area_ft2_no_water/(5280**2) #miles squared
+  ) %>% 
+  st_set_geometry(NULL) %>% 
+  distinct(bg_fips, area_ft2_no_water ,area_m2_no_water, area_mi2_no_water ) %>% 
+  as_tibble()
+
+save(lookup_bg_no_water_area, file = "lookup_bg_no_water_area.RData")
+
+#check to make sure it works around the lake, etc.
+den_metro_bg_geo %>% 
+  filter(county_fips == "031") %>% 
+  left_join(lookup_bg_no_water_area, by = "bg_fips") %>% 
+  mapview() #working as expected in 08031012010
 
 # Read in (load) data raster-------
 setwd(here("data-processed"))
@@ -80,48 +114,39 @@ getwd()
 #~/1b_wrangle_check_landsat_ndvi_denver.R
 ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
 
-# Read census tract and OSM data 
-#created here: ~/green-space-denver/scripts/1_merge_tract_with_water.R
-#limit to the bounding box used to gather the NDVI data
-#defined in 1a_get_landsat_ndvi_denver
+# Compare raster bounding box with administrative boundaries
 load("den_jeff_co_tract_no_water_geo.RData")
 load("den_metro_bbox_custom_sf.RData") #load bounding box
-mv_den_jeff_co_tract_no_water_geo = den_jeff_co_tract_no_water_geo  %>% 
-  mapview(col.regions = "cadetblue1", layer.name = "tracts")
+names(den_metro_tract_no_water_geo)
+mv_den_metro_tract_no_water_geo  = den_metro_tract_no_water_geo   %>% 
+  mapview(zcol = "county_fips", layer.name = "tracts")
 
 #check coverage of these census tracts compared with the bounding box
 mv_den_metro_bbox_custom = den_metro_bbox_custom_sf %>% 
   mapview(col.regions = "coral", layer.name = "bbox")
-mv_den_jeff_co_tract_no_water_geo + mv_den_metro_bbox_custom
-#okay so it just excludes census tract 08059012058
+mv_den_metro_tract_no_water_geo + mv_den_metro_bbox_custom
+
 
 #from other code (1b_wrangle_check_landsat_ndvi_..)
 load("lookup_date_is_valid_all.RData") #valid dates
 lookup_date_is_valid_all
 
-load("den_jeff_co_green_space_no_water.RData") #green space, no water
-den_jeff_co_green_space_no_water
 
 
 # Summarize NDVI by census tract for 5 years
 ## Extract NDVI from census tracts
-den_metro_ndvi_long_int =ndvi_den_metro_terr_5_yr %>% 
+#convert to 4326 because the raster is in 4326
+st_crs(ndvi_den_metro_terr_5_yr)
+st_crs(den_metro_tract_no_water_geo)
+den_metro_tract_no_water_4326 = den_metro_tract_no_water_geo %>% 
+  st_transform(4326)
+den_metro_tract_ndvi_long =ndvi_den_metro_terr_5_yr %>% 
   #this creates a data frame with a row id for each intersecting polygon, 
   #presumably sorted by their order of appearance
   #note have to convert to vector first
-  #note I am using the den and jeff co county version only and I removed water
-  #must convert to vector first
-  terra::extract(terra::vect(den_jeff_co_tract_no_water_geo)) %>% 
-  as_tibble() 
-
-#takes a while (about 10 mins) so might as well save
-#saving also takes about 5 mins.
-save(den_metro_ndvi_long_int, file = "den_metro_ndvi_long_int.RData") 
-object.size(den_metro_ndvi_long_int)
-
-#for interactive coding, separate because the first step takes so long. eventually combine
-#load("den_metro_ndvi_long_int.RData")
-den_metro_tract_ndvi_long = den_metro_ndvi_long_int %>% 
+  #must convert to the terra package's version of vector first
+  terra::extract(terra::vect(den_metro_tract_no_water_4326)) %>% 
+  as_tibble() %>% 
   pivot_longer( #make long form
     cols = contains("20"),#contains a year that begins with 20..flexible
     names_to = "date_ndvi",
@@ -143,12 +168,12 @@ nrow(den_metro_tract_ndvi_long)# wow. almost a billion observations!
 nrow(den_metro_tract_ndvi_long)
 
 #create an ID that will link to the extracted values (row number)
-den_jeff_co_tract_geo_w_extract_id = den_jeff_co_tract_no_water_geo %>% 
+den_metro_tract_geo_w_extract_id = den_metro_tract_no_water_geo %>% 
   st_transform(4326) %>% 
   mutate( tract_id_row_number=row_number()) 
 
-den_jeff_co_tract_geo_w_extract_id 
-load("den_jeff_co_nogeo.RData")
+den_metro_tract_geo_w_extract_id 
+load("den_metro_co_nogeo.RData")
 
 ## Census tract NDVI by day------------
 den_metro_tract_ndvi_day_geo = den_metro_tract_ndvi_long %>% 
@@ -163,9 +188,9 @@ den_metro_tract_ndvi_day_geo = den_metro_tract_ndvi_long %>%
     ndvi_mean = mean(ndvi, na.rm=TRUE)) %>% 
   ungroup() %>% 
   #link the fips code. this also has tract-level geometry
-  left_join(den_jeff_co_tract_geo_w_extract_id, by = "tract_id_row_number") %>% 
+  left_join(den_metro_tract_geo_w_extract_id , by = "tract_id_row_number") %>% 
   #link the county information
-  left_join(den_jeff_co_nogeo, by = "county_fips") %>% 
+  left_join(den_metro_co_nogeo, by = "county_fips") %>% 
   st_as_sf() #it has geometry. just make it so.
 
 save(den_metro_tract_ndvi_day_geo, file = "den_metro_tract_ndvi_day_geo.RData")
@@ -237,6 +262,7 @@ den_metro_tract_ndvi_day_geo %>%
 
 # green space NDVI over 5 years----
 ## Summarize NDVI of parks and public green space------
+# COmment March 16 2022: leave this restricted to Denver and Jefferson counties
 setwd(here("data-processed"))
 load("den_jeff_co_green_space_no_water.RData")
 names(den_jeff_co_green_space_no_water)

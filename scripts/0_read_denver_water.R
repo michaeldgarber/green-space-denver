@@ -62,8 +62,8 @@ class(den_streams$geometry)
 class(den_lakes_ponds$geometry)
 
 ## Combine the two into one--------
-#note this won't work with mapview because it's of type mixed geometry, but still worth
-#creating this so you can use st_buffer on object instead of multiple
+#will work with mapview as long as you make a small buffer around
+#den_streams
 den_streams_lakes_ponds = den_streams %>% 
   st_transform(2876) %>% #feet https://epsg.io/2876
   #make a small buffer around it so mapview works.
@@ -73,10 +73,6 @@ setwd(here("data-processed"))
 save(den_streams_lakes_ponds, file = "den_streams_lakes_ponds.RData")
 
 den_streams_lakes_ponds %>% mapview(zcol = "unit_type_broad")
-table(den_streams_lakes_ponds$unit_type)
-den_streams_lakes_ponds %>% 
-  filter(unit_type_broad == "streams") %>% 
-  mapview(layer.name = "test")
 
 
 
