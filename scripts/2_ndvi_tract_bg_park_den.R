@@ -52,6 +52,7 @@ load("den_metro_tract_geo.RData") #census tracts in metro area
 load("den_metro_bg_geo.RData") #block groups in the metro area (defined via my custom bb)
 den_metro_bg_geo %>% mapview()
 
+load("den_osm_water_poly_both_union.RData") #from 0_load_denver_osm_parks_water.R
 ### from census tracts----------
 den_metro_tract_no_water_geo = den_metro_tract_geo %>% 
   st_transform(2876) %>% #convert to central colorado foot-based crs
@@ -97,6 +98,7 @@ lookup_bg_no_water_area = den_metro_bg_no_water_geo %>%
   distinct(bg_fips, area_ft2_no_water ,area_m2_no_water, area_mi2_no_water ) %>% 
   as_tibble()
 
+setwd(here("data-processed"))
 save(lookup_bg_no_water_area, file = "lookup_bg_no_water_area.RData")
 
 #check to make sure it works around the lake, etc.

@@ -1,9 +1,5 @@
 ---
-title: "Home"
+title: "Updates on green-space Denver project"
 ---
 
-Test landing page
-
-# Header 1
-## Subheader 1.1
-## Subheader 1.2
+test

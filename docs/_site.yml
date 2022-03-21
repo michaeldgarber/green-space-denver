@@ -3,10 +3,8 @@ output_dir: "."
 navbar:
   title: "green-space-denver"
   left:
-    - text: "Home"
+    - text: "green-space-denver"
       href: index.html
-    - text: "About"
-      href: about.html
     - text: "Analyses"
       href: analyses_prelim_ndvi.html
 output:

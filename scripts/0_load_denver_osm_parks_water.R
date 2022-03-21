@@ -459,10 +459,33 @@ den_osm_water_poly_both = den_metro_natural_water_poly %>%
       water == "Pool" ~ 1,
       water == "pool" ~ 1,
       TRUE ~0
+    ),
+    #a water type, cleaned up a bit
+    water_type = case_when(
+      water == "Baehr_Reservoir" ~ "reservoir",
+      water == "Crystal_Lake" ~ "lake",
+      water == "Pool" ~ "pool",
+      water == "pool" ~ "pool",
+      water == "lake;pond" ~ "pond",
+      water == "oxbow" ~ "pond",
+      osm_id == "128944605" ~ "river", #the platte river
+      osm_id == "25673621" ~ "lake", #sloan's lake,
+      grepl("lake", osm_name) ~ "lake",
+      grepl("Lake", osm_name) ~ "lake",
+      TRUE ~ water #this will include missing.
     )
   )
+save(den_osm_water_poly_both, file = "den_osm_water_poly_both.RData")
+class(den_osm_water_poly_both$osm_id)
 
 #checks
+table(den_osm_water_poly_both$water)
+table(den_osm_water_poly_both$water_type)
+den_osm_water_poly_both %>% 
+  mapview(
+    col.regions = rainbow(n_distinct(den_osm_water_poly_both$water_type)),
+    zcol = "water_type")
+
 den_osm_water_poly_both
 table(den_osm_water_poly_both$osm_name_pool_fountain)
 table(den_osm_water_poly_both$water_type_pool_fountain)
@@ -476,12 +499,7 @@ den_osm_water_poly_both %>% mapview(zcol = "water_type_pool_fountain")
 den_osm_water_poly_both %>% 
   filter(area_ft2 <2000) %>% 
   mapview(zcol = "area_ft2")
-den_osm_water_poly_both %>% 
-  mapview(
-    col.regions = rainbow(n_distinct(den_osm_water_poly_both$water)),
-    zcol = "water")
 summary(den_osm_water_poly_both$area_ft2)
-save(den_osm_water_poly_both, file = "den_osm_water_poly_both.RData")
 
 class(den_osm_water_poly_both$geometry)
 
