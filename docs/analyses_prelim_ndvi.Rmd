@@ -156,7 +156,7 @@ native_places_ndvi_day_nogeo %>%
   filter(place_type == "native spectrum") %>% 
   ggplot(aes(
     x=date, 
-    y=ndvi_50 # median
+    y=ndvi_med # median
   ))+
   geom_ribbon( #ribbon around 25th and 75th percentile
     aes(ymin =ndvi_25, ymax = ndvi_75 ),
@@ -190,7 +190,7 @@ native_places_ndvi_day_nogeo %>%
   filter(place_type == "high diversity") %>% 
   ggplot(aes(
     x=date, 
-    y=ndvi_50 # median
+    y=ndvi_med # median
   ))+
   geom_ribbon( 
     aes(ymin =ndvi_25, ymax = ndvi_75 ),
@@ -223,7 +223,7 @@ native_places_ndvi_day_nogeo %>%
   filter(place_type == "native spectrum") %>% 
   ggplot(aes(
     x=native_percent, 
-    y=ndvi_50 # median
+    y=ndvi_med # median
   ))+
   geom_point(
     aes(colour=place_name_fac), size = 1.5, 
@@ -245,7 +245,7 @@ native_places_ndvi_day_nogeo %>%
 native_places_ndvi_day_nogeo %>% 
   filter(date_is_valid_all==1) %>% 
   group_by(place_type, place_name_fac) %>% 
-  summarise(ndvi_median = median(ndvi_50, na.rm=TRUE) ) %>% 
+  summarise(ndvi_med = median(ndvi_med, na.rm=TRUE) ) %>% 
   ungroup() %>% 
   kable()
 ```
@@ -276,7 +276,7 @@ den_metro_tracts_ndvi_day_wrangle_geo %>%
   mapview(
     layer.name = "NDVI, Median",
      col.regions = pal_viridis_trunc,
-    zcol = "ndvi_median" 
+    zcol = "ndvi_med" 
     )
 ```
 
@@ -288,7 +288,7 @@ den_metro_tracts_ndvi_day_wrangle_geo %>%
   mapview(
     layer.name = "NDVI, Median",
      col.regions = pal_viridis_trunc,
-    zcol = "ndvi_median" 
+    zcol = "ndvi_med" 
     )
 ```
 
@@ -298,7 +298,7 @@ setwd(here("data-processed"))
 load("den_metro_tracts_ndvi_day_wrangle_nogeo.RData")
 den_metro_tracts_ndvi_day_wrangle_nogeo %>% 
   filter(date == "2021-06-10") %>% 
-  ggplot(aes(ndvi_median))+
+  ggplot(aes(ndvi_med))+
   geom_histogram()
 ```
 
@@ -337,7 +337,7 @@ mv_den_metro_green_space_ndvi_day_geo = den_metro_green_space_ndvi_day_wrangle_g
   mapview(
     layer.name = "NDVI, Median",
     col.regions = pal_viridis_trunc,
-    zcol = "ndvi_median" 
+    zcol = "ndvi_med" 
   )
 mv_den_metro_green_space_ndvi_day_geo+mv_den_jeff_co_geo
 ```
@@ -349,7 +349,7 @@ load("den_metro_green_space_ndvi_day_wrangle_nogeo.RData")
 den_metro_green_space_ndvi_day_wrangle_nogeo %>% 
   filter(date_is_valid_all==1) %>% 
   group_by(osm_value) %>% 
-  summarise(ndvi_median = median(ndvi_median, na.rm=TRUE) ) %>% 
+  summarise(ndvi_med = median(ndvi_med, na.rm=TRUE) ) %>% 
   ungroup() %>% 
   kable()
 ```

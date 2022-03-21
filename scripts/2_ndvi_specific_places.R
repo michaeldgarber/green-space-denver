@@ -81,7 +81,7 @@ native_places_ndvi_day_geo = native_places_ndvi %>%
     ndvi_max = max(ndvi, na.rm=TRUE),
     ndvi_25 = quantile(ndvi, probs = c(0.25), na.rm=TRUE),
     ndvi_75 = quantile(ndvi, probs = c(0.75), na.rm=TRUE),
-    ndvi_med = median(ndvi, na.rm=TRUE),
+    ndvi_med = median(ndvi, na.rm=TRUE), #note median,
     ndvi_mean = mean(ndvi, na.rm=TRUE)) %>% 
   ungroup() %>% 
   #recreate month and year columns
@@ -190,7 +190,7 @@ native_places_ndvi_day_nogeo %>%
 native_places_ndvi_day_nogeo %>% 
   filter(date_is_valid_all==1) %>% 
   group_by(place_type, place_name_fac) %>% 
-  summarise(ndvi_median = median(ndvi_med, na.rm=TRUE) )
+  summarise(ndvi_med = median(ndvi_med, na.rm=TRUE) )
 
 
 ## ggplot - NDVI vs percent native over all dates---------
