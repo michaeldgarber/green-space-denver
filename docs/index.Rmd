@@ -2,4 +2,8 @@
 title: "Updates on green-space Denver project"
 ---
 
-test
+Preliminary HIA results for four scenarios - March 2022:
+[insert-link-when-done]
+
+A summary of NDVI of places and tracts - February 2022:
+https://michaeldgarber.github.io/green-space-denver/ndvi-of-places-tracts.html

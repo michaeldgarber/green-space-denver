@@ -3,10 +3,8 @@ output_dir: "."
 navbar:
   title: "green-space-denver"
   left:
-    - text: "green-space-denver"
+    - text: "Project Updates"
       href: index.html
-    - text: "Analyses"
-      href: analyses_prelim_ndvi.html
 output:
   html_document:
     toc: true
