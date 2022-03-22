@@ -2,8 +2,10 @@
 title: "Updates on green-space Denver project"
 ---
 
-Preliminary HIA results for four scenarios - March 2022:
-[insert-link-when-done]
+The purpose of this website is to present some updates related to the Denver green-space HIA. The source repository for this site is here: https://github.com/michaeldgarber/green-space-denver
 
-A summary of NDVI of places and tracts - February 2022:
-https://michaeldgarber.github.io/green-space-denver/ndvi-of-places-tracts.html
+**Project Updates**
+
+* March 2022: Preliminary HIA results for four scenarios: [insert-link-when-done]
+
+* February 2022: A summary of NDVI of places and tracts: https://michaeldgarber.github.io/green-space-denver/ndvi-of-places-tracts.html
