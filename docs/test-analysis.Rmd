@@ -23,11 +23,26 @@ library(leaflet.extras)
 ```{r full-screen-test, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 load("den_co_tract_geo.RData") 
-mv_den_co_tract_geo = den_co_tract_geo %>% 
+mv  = den_co_tract_geo %>% 
   mapview(zcol = "tract_fips", layer.name = "Census Tract") 
 
-mv_den_co_tract_geo@map %>% 
+mv@map %>% 
   addFullscreenControl()
+```
+
+```{r}
+#Add full screen control to a combo mapview...multiple layers at once
+mv_1 = den_co_tract_geo %>% 
+  mapview(zcol = "area_mi2", layer.name = "area")
+mv_2 = den_co_tract_geo %>% 
+  mapview(zcol = "county_fips", layer.name = "county")
+
+mv_combo = mv_1+mv_2
+mv_combo@map %>% 
+  addFullscreenControl()
+```
+
+  
 ```
 
 
