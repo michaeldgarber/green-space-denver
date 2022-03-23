@@ -6,7 +6,7 @@ library(here)
 library(terra)
 library(raster)
 setwd(here("data-processed"))
-#Revised 3/16/22
+#Revised 3/22/22
 
 #This code should
 #-extract baseline NDVI for each polygon
@@ -31,6 +31,7 @@ lookup_date_is_valid_all %>% filter(date_is_valid_all==1)
 #Let's use July 4, 2021 and also limit to Denver County
 ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
 ndvi_den_metro_terr_5_yr$`20210704_NDVI`
+
 #note this is is in 4326, and den_co_might be in something else
 ndvi_den_co_20210704 = ndvi_den_metro_terr_5_yr$`20210704_NDVI` %>% 
   terra::trim() %>%    #remove NAs
@@ -60,9 +61,9 @@ mv_ndvi_den_co_20210704 + mv_den_co_tract_geo
 #This can be done aspatially using the county field :)
 #these files excluding water are created here:
 # ~/green-space-denver/scripts/2_ndvi_tract_bg_park_den.R
-load("den_metro_tract_no_water_geo.RData")
-names(den_metro_tract_no_water_geo)
-den_co_tract_no_water_geo = den_metro_tract_no_water_geo %>% 
+load("den_metro_tract_no_wtr_geo.RData")
+names(den_metro_tract_no_wtr_geo)
+den_co_tract_no_wtr_geo = den_metro_tract_no_wtr_geo %>% 
   filter(county_fips == "031") %>% 
   #per above, there are a few on this july 4 2021 
   #where the data are not complete. create a filter so you
@@ -82,9 +83,9 @@ den_co_tract_no_water_geo = den_metro_tract_no_water_geo %>%
   )  %>% 
   filter(tracts_north_east_no_ls8==0)
 
-den_co_tract_no_water_geo %>% mapview(zcol = "tracts_north_east_no_ls8")
+den_co_tract_no_wtr_geo %>% mapview(zcol = "tracts_north_east_no_ls8")
 
-den_co_tract_no_water_geo %>% mapview(zcol = "county_fips")
+den_co_tract_no_wtr_geo %>% mapview(zcol = "county_fips")
 
 lookup_tracts_to_exclude = den_co_tract_geo %>% 
   mutate(
@@ -98,6 +99,10 @@ lookup_tracts_to_exclude = den_co_tract_geo %>%
     )
   )  %>% 
   distinct(tract_fips, tracts_north_east_no_ls8)
+
+#save this, as it's used below
+save(lookup_tracts_to_exclude, file = "lookup_tracts_to_exclude.RData")
+
 
 #make a unioned version of this without the holes and call it
 #the study area for use in subsequent scenarios
@@ -124,10 +129,12 @@ save(study_area, file = "study_area.RData")
 st_crs(study_area)
 study_area_2876 = study_area %>% 
   st_transform(2876)
+save(study_area_2876, file = "study_area_2876.RData")
+study_area_2876 %>% mapview()
 #created 
-load("den_metro_bg_no_water_geo.RData") 
+load("den_metro_bg_no_wtr_geo.RData") 
 #note this excludes northeast tracts.
-den_co_bg_no_water_geo = den_metro_bg_no_water_geo %>% 
+den_co_bg_no_wtr_geo = den_metro_bg_no_wtr_geo %>% 
   filter(county_fips == "031") %>% 
   #this already has tract-id
   mutate(
@@ -143,17 +150,17 @@ den_co_bg_no_water_geo = den_metro_bg_no_water_geo %>%
   #remove tract here since I add it down there
   dplyr::select(-tract_fips) %>% 
   filter(tracts_north_east_no_ls8==0)
-save(den_co_bg_no_water_geo, file = "den_co_bg_no_water_geo.RData")
-den_co_bg_no_water_geo %>% mapview(zcol = "tracts_north_east_no_ls8")
+save(den_co_bg_no_wtr_geo, file = "den_co_bg_no_wtr_geo.RData")
+den_co_bg_no_wtr_geo %>% mapview(zcol = "tracts_north_east_no_ls8")
 #convert to 4326 because the raster is 4326.
 #It failed silently when the crs wasn't the same.
-den_co_bg_no_water_4326 = den_co_bg_no_water_geo %>% 
+den_co_bg_no_wtr_4326 = den_co_bg_no_wtr_geo %>% 
   st_transform(4326) %>% 
   #also create a row-number ID since extract automatically creates
   #an ID based on the row-number
   mutate(bg_id_row_number=row_number())
 
-lookup_bg_id_row_number = den_co_bg_no_water_4326 %>% 
+lookup_bg_id_row_number = den_co_bg_no_wtr_4326 %>% 
   distinct(bg_id_row_number, bg_fips)
 
 ### Load zoning data, because we will also exclude the airport zone and
@@ -234,7 +241,7 @@ den_co_bg_ndvi = ndvi_den_co_20210704 %>%
   terra::extract(
     weights = TRUE, #approximate proportion of cell covered by polygon
     #    exact=TRUE, #exact proportion covered. very slow code. don't use.
-    y = terra::vect(den_co_bg_no_water_4326)) %>% 
+    y = terra::vect(den_co_bg_no_wtr_4326)) %>% 
   as_tibble() %>% 
   rename(
     ndvi = `20210704_NDVI`,
@@ -245,7 +252,7 @@ den_co_bg_ndvi = ndvi_den_co_20210704 %>%
     ndvi_wt_int = ndvi*wt_area, #for use in the weighted average
     date = lubridate::as_date("20210704")
   ) %>% 
-  left_join(den_co_bg_no_water_4326, by = "bg_id_row_number") %>% 
+  left_join(den_co_bg_no_wtr_4326, by = "bg_id_row_number") %>% 
   group_by(date, bg_fips) %>% #date is redundant but it generalizes
   summarise(
     sum_of_wts = sum(wt_area, na.rm=TRUE),
@@ -268,7 +275,7 @@ den_co_bg_ndvi = ndvi_den_co_20210704 %>%
       ndvi_diff_100 = ndvi_alt_100-ndvi_mean_wt, #alternative minus baseline
       ndvi_diff_20 = ndvi_alt_20-ndvi_mean_wt
     ) %>%  
-  left_join(den_co_bg_no_water_geo, by = "bg_fips") %>% 
+  left_join(den_co_bg_no_wtr_geo, by = "bg_fips") %>% 
   left_join(lookup_den_metro_bg_tract, by = "bg_fips") %>% #link tract ID
   st_as_sf() %>% 
   dplyr::select(contains("fips"), contains("ndvi"), everything())
@@ -291,7 +298,7 @@ mv_den_co_bg_ndvi  = den_co_bg_ndvi %>%
 mv_den_co_bg_ndvi + mv_ndvi_den_co_20210704
 
 n_distinct(den_co_bg_ndvi$bg_id_row_number)
-nrow(den_co_bg_no_water_geo) #very good. so it's not dividing up the bgs further.
+nrow(den_co_bg_no_wtr_geo) #very good. so it's not dividing up the bgs further.
 
 #Examine block groups above/below native threshold
 den_co_bg_ndvi %>% 
@@ -323,7 +330,7 @@ nrow(lookup_bg_ndvi)
 nrow(den_co_bg_ndvi)
 names(lookup_bg_ndvi)
 
-## Link NDVI and estimate number of deaths prevented---------
+## Link NDVI with GBD/age data and estimate number of deaths prevented---------
 table(ihme_co_w_drf$drf_increment)
 
 den_co_bg_s_by_a_gbd_ndvi_long_wrangle = den_co_bg_s_by_a_gbd_long_wrangle %>% 
@@ -352,7 +359,7 @@ den_co_bg_s_by_a_gbd_ndvi_long_wrangle = den_co_bg_s_by_a_gbd_long_wrangle %>%
 
 ## summarize long-form estimates----------
 ### deaths prevented by age----------
-sc_1_deaths_prev_by_age_group = den_co_bg_long_w_ndvi_gbd_rates %>% 
+sc_1_deaths_prev_by_age_group = den_co_bg_s_by_a_gbd_ndvi_long_wrangle %>% 
   #limit to areas with baseline NDVI below the native threshold.
   filter(ndvi_below_native_threshold==1) %>% 
   group_by(age_group_acs) %>% 
@@ -367,10 +374,11 @@ writexl::write_xlsx(
   sc_1_deaths_prev_by_age_group,
   "sc_1_deaths_prev_by_age_group.xlsx"
 )
+setwd(here("data-processed"))
 
 
 ### deaths prevented by block group----------
-sc_1_deaths_prev_by_BG = den_co_bg_long_w_ndvi_gbd_rates %>% 
+sc_1_deaths_prev_by_BG = den_co_bg_s_by_a_gbd_ndvi_long_wrangle %>% 
   #limit to areas with baseline NDVI below the native threshold.
   filter(ndvi_below_native_threshold==1) %>% 
   group_by(bg_fips) %>% 
@@ -381,6 +389,8 @@ sc_1_deaths_prev_by_BG = den_co_bg_long_w_ndvi_gbd_rates %>%
 sc_1_deaths_prev_by_BG
 #visualize this
 library(viridis)
+setwd(here("data-processed"))
+load("den_metro_bg_geo.RData")
 sc_1_deaths_prev_by_BG %>% 
   ungroup() %>% 
   left_join(den_metro_bg_geo, by = "bg_fips") %>% 
@@ -392,7 +402,7 @@ sc_1_deaths_prev_by_BG %>%
   )
 
 ### deaths prevented, overall----------
-sc_1_deaths_prev_overall = den_co_bg_long_w_ndvi_gbd_rates %>% 
+sc_1_deaths_prev_overall = den_co_bg_s_by_a_gbd_ndvi_long_wrangle %>% 
   #limit to areas with baseline NDVI below the native threshold.
   filter(ndvi_below_native_threshold==1) %>% 
   group_by(ndvi_below_native_threshold) %>% 
@@ -400,7 +410,7 @@ sc_1_deaths_prev_overall = den_co_bg_long_w_ndvi_gbd_rates %>%
     attrib_o_alt_20 = sum(attrib_o_alt_20, na.rm=TRUE),
     attrib_o_alt_100 = sum(attrib_o_alt_100, na.rm=TRUE))
 
-sc_1_deaths_prev_overall 
+sc_1_deaths_prev_overall
 
 # 2. Scenaro 2: waterways--------
 
@@ -600,7 +610,7 @@ save(den_co_osm_water_50ft_500m_union,
 #Best to start with the block-group geometry without water
 #and intersect it with the full buffer (including the water; it will go away)
 load("den_metro_bg_geo.RData") #from 0_import_manage_denver_acs.R
-load("den_metro_bg_no_water_geo.RData")
+load("den_metro_bg_no_wtr_geo.RData")
 st_crs(den_metro_bg_geo)
 
 ### Intersect block groups with buffers-------------
@@ -608,6 +618,7 @@ st_crs(den_metro_bg_geo)
 #what proportion of the block group is covered by the intersection?
 #multiply the resulting area covered by the pop. density 
 #(assume uniform pop dens. in block group)
+load("den_bg_acs5_2019_wrangle_geo.RData")
 st_crs(den_co_osm_water_500m)
 st_crs(den_bg_acs5_2019_wrangle_geo)
 names(den_bg_acs5_2019_wrangle_geo)
@@ -630,7 +641,7 @@ bg_int_wrangle_last_steps = function(df){
 #### The 500 m residential buffer-------
 #We may not use this but good to have for reference
 
-den_bg_int_water_500m = den_metro_bg_no_water_geo %>% 
+den_bg_int_water_500m = den_metro_bg_no_wtr_geo %>% 
   st_intersection(den_co_osm_water_500m_union) %>% #use union version
   mutate(
     #the piece of the block group overlapping the buffer
@@ -646,7 +657,7 @@ den_bg_int_water_500m %>% mapview(
 
 #### Then the complement of the intervention areas within the 500 m buffer-----
 #These will be used to calculate the weighted average NDVI where no intervention occurred
-den_bg_int_water_500m_diff_200ft = den_metro_bg_no_water_geo %>% 
+den_bg_int_water_500m_diff_200ft = den_metro_bg_no_wtr_geo %>% 
   st_intersection(den_co_osm_water_500m_diff_200ft) %>% 
   mutate(
     area_ft2_500m_diff_200ft = as.numeric(st_area(geometry)),
@@ -654,7 +665,7 @@ den_bg_int_water_500m_diff_200ft = den_metro_bg_no_water_geo %>%
   ) %>% 
   bg_int_wrangle_last_steps() 
 
-den_bg_int_water_500m_diff_100ft = den_metro_bg_no_water_geo %>% 
+den_bg_int_water_500m_diff_100ft = den_metro_bg_no_wtr_geo %>% 
   st_intersection(den_co_osm_water_500m_diff_100ft) %>% #unioned version
   mutate(
     area_ft2_500m_diff_100ft = as.numeric(st_area(geometry)),
@@ -662,7 +673,7 @@ den_bg_int_water_500m_diff_100ft = den_metro_bg_no_water_geo %>%
   ) %>% 
   bg_int_wrangle_last_steps()
 
-den_bg_int_water_500m_diff_50ft = den_metro_bg_no_water_geo %>% 
+den_bg_int_water_500m_diff_50ft = den_metro_bg_no_wtr_geo %>% 
   st_intersection(den_co_osm_water_500m_diff_50ft) %>% #unioned version
   mutate(
     area_ft2_500m_diff_50ft = as.numeric(st_area(geometry)),
@@ -671,7 +682,7 @@ den_bg_int_water_500m_diff_50ft = den_metro_bg_no_water_geo %>%
   bg_int_wrangle_last_steps()
 
 #### Then the intervention areas themselves---------
-den_bg_int_water_200ft = den_metro_bg_no_water_geo %>% 
+den_bg_int_water_200ft = den_metro_bg_no_wtr_geo %>% 
   st_intersection(den_co_osm_water_200ft_union) %>% #unioned version
   mutate(
     area_ft2_200ft = as.numeric(st_area(geometry)),
@@ -679,7 +690,7 @@ den_bg_int_water_200ft = den_metro_bg_no_water_geo %>%
   ) %>% 
   bg_int_wrangle_last_steps()
 
-den_bg_int_water_100ft = den_metro_bg_no_water_geo %>% 
+den_bg_int_water_100ft = den_metro_bg_no_wtr_geo %>% 
   #use the unary unioned version so you don't create overlapping pieces
   st_intersection(den_co_osm_water_100ft_union) %>% 
   mutate(
@@ -688,7 +699,7 @@ den_bg_int_water_100ft = den_metro_bg_no_water_geo %>%
   ) %>% 
   bg_int_wrangle_last_steps()
 
-den_bg_int_water_50ft = den_metro_bg_no_water_geo %>% 
+den_bg_int_water_50ft = den_metro_bg_no_wtr_geo %>% 
   st_intersection(den_co_osm_water_50ft_union) %>% #unioned version
   mutate(
     area_ft2_50ft = as.numeric(st_area(geometry)),
@@ -744,16 +755,16 @@ den_bg_int_water_500m_ndvi = ndvi_den_co_20210704 %>%
   wrangle_ndvi_bg_2() %>% 
   left_join(den_bg_int_water_500m, by = "bg_fips") %>% #link in geo and area
   st_as_sf() %>% 
+  mutate(
+    #create an indicator for whether it's baseline was above the threshold
+    ndvi_below_native_threshold = case_when(
+      ndvi_mean_wt   < ndvi_native_threshold ~1,
+      TRUE ~0)
+  ) %>% 
   rename(   #rename ndvi values in prep for a wide-form dataset by block group
     ndvi_mean_no_wt_500m = ndvi_mean_no_wt, #mean agnostic to pixels covering water
     ndvi_mean_wt_500m = ndvi_mean_wt, #weighted to account for pixels over water
     wt_area_500m = wt_area
-  ) %>% 
-  mutate(
-    #create an indicator for whether it's baseline was above the threshold
-    ndvi_below_native_threshold = case_when(
-      ndvi_mean_wt_500m  < ndvi_native_threshold ~1,
-      TRUE ~0)
   ) %>% 
   #select only what is unique about this dataset. everything else can be linked.
   dplyr::select(
@@ -981,6 +992,7 @@ mv_den_bg_int_water_200ft_ndvi+
 
 
 #Summarizing, we have the following objects which can be linked together
+### Remove geometry from NDVI datasets-----------
 #Note: we need no-geo versions of all of them so they can be linked together.
 
 #The full 500 m residential bufer
@@ -1014,9 +1026,10 @@ den_bg_int_water_50ft_ndvi_nogeo = den_bg_int_water_50ft_ndvi %>%
 
 ### Link them together and set alternate NDVI values------------
 #Begin with this, which is created above. Recall it has those NE restrictions.
-load("lookup_bg_no_water_area.RData") #created 2_ndvi_tract_bg_park_den.R
-den_co_bg_no_water_ndvi_geo = den_co_bg_no_water_geo %>% 
-  left_join(lookup_bg_no_water_area, by = "bg_fips") %>% #link no-water area
+load("lookup_bg_no_wtr_area.RData") #created 2_ndvi_tract_bg_park_den.R
+#ripar for riparian; no_wtr to keep track that we've removed water from the geometry
+den_co_bg_no_wtr_rip_geo = den_co_bg_no_wtr_geo %>% 
+  left_join(lookup_bg_no_wtr_area, by = "bg_fips") %>% #link no-water area
   left_join(den_bg_int_water_500m_ndvi_nogeo, by = "bg_fips") %>% 
   #the complement buffer areas
   left_join(den_bg_int_water_500m_diff_200ft_ndvi_nogeo, by = "bg_fips") %>% 
@@ -1037,9 +1050,9 @@ den_co_bg_no_water_ndvi_geo = den_co_bg_no_water_geo %>%
     prop_area_50ft = area_mi2_50ft/area_mi2_500m,
     
     #the proportion of the complement. just do 1 minus.
-    prop_area_comp_200ft=1-prop_area_200ft,
-    prop_area_comp_100ft=1-prop_area_100ft,
-    prop_area_comp_50ft=1-prop_area_50ft,
+    prop_area_200ft_comp=1-prop_area_200ft,
+    prop_area_100ft_comp=1-prop_area_100ft,
+    prop_area_50ft_comp=1-prop_area_50ft,
   ) %>% 
   #also note that we will be using the NDVI values weighted to account for the proportion
   #the pixel overlapped the area, so omit the unweighted means:
@@ -1055,41 +1068,43 @@ den_co_bg_no_water_ndvi_geo = den_co_bg_no_water_geo %>%
     #to the specific buffers, we can just use one alternate NDVI value
     ndvi_value_alt = ndvi_native_threshold, #currently set at 0.5
     #and then calculate a weighted average using this value,
-    #the sym_diff NDVI values, and the areal proportions
-    #above
+    #the sym_diff NDVI values, and the areal proportions above
     #this naming convention is...here's the weighted average NDVI for the whole
     #500 m area under the alternate
     #scenario where we green the 200 ft buffer 
-    ndvi_mean_alt_500m_200ft = ndvi_mean_wt_500m_diff_200ft*prop_area_comp_200ft+
+    #Update 3/22/22 for parsimony, I'm removing the word "mean". We know it's a weighted mean.
+    #I'm also removing the "500m" as we know it's within the 500 m buffer
+    #3/22 update: set missings to status quo? no.
+    ndvi_alt_200ft = ndvi_mean_wt_500m_diff_200ft*prop_area_200ft_comp+
       prop_area_200ft*ndvi_value_alt,
-    ndvi_mean_alt_500m_100ft = ndvi_mean_wt_500m_diff_100ft*prop_area_comp_100ft+
+    ndvi_alt_100ft = ndvi_mean_wt_500m_diff_100ft*prop_area_100ft_comp+
       prop_area_100ft*ndvi_value_alt,
-    ndvi_mean_alt_500m_50ft = ndvi_mean_wt_500m_diff_50ft*prop_area_comp_50ft+
+    ndvi_alt_50ft = ndvi_mean_wt_500m_diff_50ft*prop_area_50ft_comp+
       prop_area_50ft*ndvi_value_alt,
     
     #now we can calculate the linear exposure difference between those values
     #and the baseline mean NDVI in the 500 m buffer. use ndvi_diff as done above
     ##alternative minus baseline
-    ndvi_diff_200ft= ndvi_mean_alt_500m_200ft-ndvi_mean_wt_500m,
-    ndvi_diff_100ft= ndvi_mean_alt_500m_100ft-ndvi_mean_wt_500m,
-    ndvi_diff_50ft= ndvi_mean_alt_500m_50ft-ndvi_mean_wt_500m
+    ndvi_diff_200ft= ndvi_alt_200ft-ndvi_mean_wt_500m,
+    ndvi_diff_100ft= ndvi_alt_100ft-ndvi_mean_wt_500m,
+    ndvi_diff_50ft= ndvi_alt_50ft-ndvi_mean_wt_500m
   )
 
-save(den_co_bg_no_water_ndvi_geo, file = "den_co_bg_no_water_ndvi_geo.RData")
-names(den_co_bg_no_water_ndvi_geo)
-den_co_bg_no_water_ndvi_geo %>% mapview(zcol = "ndvi_diff_200ft")
-summary(den_co_bg_no_water_ndvi_geo$ndvi_diff_200ft)
-summary(den_co_bg_no_water_ndvi_geo$ndvi_diff_100ft)
-summary(den_co_bg_no_water_ndvi_geo$ndvi_diff_50ft)
+save(den_co_bg_no_wtr_rip_geo, file = "den_co_bg_no_wtr_rip_geo.RData")
+names(den_co_bg_no_wtr_rip_geo)
+den_co_bg_no_wtr_rip_geo %>% mapview(zcol = "ndvi_diff_200ft")
+summary(den_co_bg_no_wtr_rip_geo$ndvi_diff_200ft)
+summary(den_co_bg_no_wtr_rip_geo$ndvi_diff_100ft)
+summary(den_co_bg_no_wtr_rip_geo$ndvi_diff_50ft)
 
 #a look up for just the NDVI vars
-lookup_bg_ndvi_riparian_buffs = den_co_bg_no_water_ndvi_geo %>% 
+lookup_bg_ndvi_rip_buff = den_co_bg_no_wtr_rip_geo %>% 
   st_set_geometry(NULL) %>% 
   dplyr::select(bg_fips, contains("ndvi")) %>% 
   distinct() %>% 
   as_tibble()
 
-lookup_bg_ndvi_riparian_buffs
+lookup_bg_ndvi_rip_buff
 
 ### Link with population data and estimate AF (sex by age)----------
 #calculation population in each age group in each small area
@@ -1106,11 +1121,11 @@ lookup_bg_500m_area = den_bg_int_water_500m %>%
 lookup_bg_500m_area
 #Begin with this, which we created above
 names(den_co_bg_s_by_a_gbd_long_wrangle)
-names(lookup_bg_ndvi_riparian_buffs)
+names(lookup_bg_ndvi_rip_buff)
 #rip for riparian. this is the final long-form dataset for scenario 2.
 den_co_bg_long_rip = den_co_bg_s_by_a_gbd_long_wrangle %>% 
   left_join(lookup_bg_500m_area, by = "bg_fips") %>% #link area of 500 m buffer
-  left_join(lookup_bg_ndvi_riparian_buffs, by = "bg_fips") %>% #link NDVI data
+  left_join(lookup_bg_ndvi_rip_buff, by = "bg_fips") %>% #link NDVI data
   #because this is long form a simple multiplication will do to estimate
   #pop in each of these pieces in each age-sex group. recall, these areas
   #are estimated without the bodies of water there.
@@ -1156,7 +1171,7 @@ writexl::write_xlsx(
   sc_1_deaths_prev_by_age_group,
   "sc_1_deaths_prev_by_age_group.xlsx"
 )
-
+setwd(here("data-processed"))
 
 ### deaths prevented by block group----------
 sc_2_deaths_prev_by_BG = den_co_bg_long_rip %>% 
@@ -1172,6 +1187,7 @@ sc_2_deaths_prev_by_BG = den_co_bg_long_rip %>%
 sc_2_deaths_prev_by_BG
 #visualize this
 library(viridis)
+load("den_metro_bg_geo.RData")
 sc_2_deaths_prev_by_BG %>% 
   ungroup() %>% 
   left_join(den_metro_bg_geo, by = "bg_fips") %>% 
@@ -1200,94 +1216,104 @@ sc_2_deaths_prev_overall
 
 # Scenario 4: Parking -----------
 ## Prep parking buffers--------
-#Parking data managd here: 0_read_denver_parking.R
+#Parking data managd here: 0_read_denver_prkng.R
 setwd(here("data-processed"))
-load("den_parking_500m.RData")
+load("den_parking_500m.RData") #I'm leaving this as parking and not prkng
+den_prkng_500m = den_parking_500m #for redundancy to be sure find + replace works.
 load("den_co_osm_water_union.RData")
+load("den_metro_bg_no_wtr_geo.RData")
+load("lookup_tracts_to_exclude.RData")
+load("lookup_tracts_to_exclude.RData")
 den_parking_500m %>% mapview()
 #Remove water from that buffer
-den_parking_500m_no_water = den_parking_500m %>% 
+den_prkng_500m_no_wtr = den_prkng_500m %>%  #prkng=parking; trying to reduce chars in object names
   st_difference(den_co_osm_water_union)
-den_parking_500m_no_water %>% mapview()
+den_prkng_500m_no_wtr %>% mapview()
 
 ## Symmetric difference between parking lots and 500 m buffer
 #Remove parking lots themselves from the buffer to compute the
 #weighted average as we did for scenario 2
-load("den_parking_sum_overall.RData")
-#remove parking from the parking buffer
-den_parking_500m_no_parking = den_parking_500m  %>% 
+load("den_parking_sum_overall.RData") #ok as parking since it's loaded elsewhere
+den_prkng_sum_overall = den_parking_sum_overall
+#remove parking from the parking buffer (i.e., the complement (comp))
+den_prkng_500m_comp = den_parking_500m  %>% 
   st_difference(den_parking_sum_overall)
-
+den_prkng_500m_comp %>% mapview()
 
 #remove water and parking from the parking buffer
-den_parking_500m_no_water_no_parking = den_parking_500m_no_water %>% 
+den_prkng_500m_no_wtr_prkng_comp = den_prkng_500m_no_wtr %>% 
   st_difference(den_parking_sum_overall)
 
-den_parking_500m_no_water_no_parking %>% mapview()
+den_prkng_500m_no_wtr_prkng_comp %>% mapview()
 
 ## Intersect these parking polygons with tracts--------
 ### With the full 500 m buffer, including the parking lots--------
-den_bg_int_parking_500m = den_metro_bg_no_water_geo %>% #we already dropped water
-  st_intersection(den_parking_500m) %>% 
+#These polygons will serve as the baseline measurement.
+den_bg_int_prkng_500m = den_metro_bg_no_wtr_geo %>% #we already dropped water
+  st_intersection(den_prkng_500m) %>% 
   mutate(
-    area_ft2_full_buff = as.numeric(st_area(geometry)),
-    area_mi2_full_buff = area_ft2_full_buff /(5280**2) #miles squared
+    #the full 500 m buffer, similar to the riparian interventions
+    area_ft2_500m = as.numeric(st_area(geometry)),
+    area_mi2_500m = area_ft2_500m /(5280**2) #miles squared
   ) %>% 
   bg_int_wrangle_last_steps()
 
-den_bg_int_parking_500m %>% mapview()
+den_bg_int_prkng_500m %>% mapview()
 
 ### Complement within the parking buffer---------
-load("den_metro_bg_no_water_geo.RData")
-den_metro_bg_no_water_geo
+load("den_metro_bg_no_wtr_geo.RData")
+den_metro_bg_no_wtr_geo
 
-den_bg_int_parking_500m_no_parking = den_metro_bg_no_water_geo %>% #we already dropped water
-  st_intersection(den_parking_500m_no_parking) %>% #use union version
+#This polygon will be used to create a weighted average of the alternative scenario
+den_bg_int_prkng_500m_comp = den_metro_bg_no_wtr_geo %>% #we already dropped water
+  st_intersection(den_prkng_500m_comp) %>% #use union version
   mutate(
     #the piece of the block group overlapping the buffer
-    area_ft2_no_park = as.numeric(st_area(geometry)),
-    area_mi2_no_park = area_ft2_no_park/(5280**2) #miles squared
+    area_ft2_prkng_comp = as.numeric(st_area(geometry)),
+    area_mi2_prkng_comp = area_ft2_prkng_comp/(5280**2) #miles squared
   ) %>% 
   bg_int_wrangle_last_steps()
 
-save(den_bg_int_parking_500m_no_parking, file = "den_bg_int_parking_500m_no_parking.RData")
-den_bg_int_parking_500m_no_parking %>% mapview()
+save(den_bg_int_prkng_500m_comp, file = "den_bg_int_prkng_500m_comp.RData")
+den_bg_int_prkng_500m_comp %>% mapview()
 
-### With just the parking lots themselves----------
-den_bg_int_parking_only = den_metro_bg_no_water_geo %>% #we already dropped water
-  st_intersection(den_parking_sum_overall) %>% #use union version
+### Only the parking lots themselves----------
+#Again, for the weighted average
+den_bg_int_prkng_only = den_metro_bg_no_wtr_geo %>% #we already dropped water
+  st_intersection(den_prkng_sum_overall) %>% #use union version
   mutate(
-    area_ft2_park_only = as.numeric(st_area(geometry)),
-    area_mi2_park_only = area_ft2_park_only/(5280**2) #miles squared
+    area_ft2_prkng_only = as.numeric(st_area(geometry)),
+    area_mi2_prkng_only = area_ft2_prkng_only/(5280**2) #miles squared
   ) %>% 
   bg_int_wrangle_last_steps()
-save(den_bg_int_parking_only, file = "den_bg_int_parking_only.RData")
-den_bg_int_parking_only %>% mapview()
+save(den_bg_int_prkng_only, file = "den_bg_int_prkng_only.RData")
+den_bg_int_prkng_only %>% mapview()
 
 ## Measure NDVI on those intersected polygons--------
-###  Measure NDVI on the full 500 m buffer around the parking lots,
+###  Measure NDVI on the full 500 m buffer around the parking lots----------
 #including the parking lots, but without water.
-
-den_bg_int_parking_500m_ndvi = ndvi_den_co_20210704 %>% 
+names(den_bg_int_prkng_500m)
+den_bg_int_prkng_500m_ndvi = ndvi_den_co_20210704 %>% 
   terra::extract(
     weights = TRUE, #approximate proportion of cell covered by polygon
-    y = terra::vect(den_bg_int_water_500m)) %>% 
+    y = terra::vect(den_bg_int_prkng_500m)) %>% 
   as_tibble() %>%  #code is slow so break it up here if needed.
   wrangle_ndvi_bg_1() %>% 
-  left_join(den_bg_int_water_500m, by = "row_id_int") %>% #link once
+  left_join(den_bg_int_prkng_500m, by = "row_id_int") %>% #link once
   wrangle_ndvi_bg_2() %>% 
-  left_join(den_bg_int_water_500m, by = "bg_fips") %>% #link in geo and area
+  left_join(den_bg_int_prkng_500m, by = "bg_fips") %>% #link in geo and area
   st_as_sf() %>% 
+  mutate(
+    #create an indicator for whether the weighted overall NDVI at baseline was above the threshold
+    #do this first so that the it generalizes to each code chunk
+    ndvi_below_native_threshold = case_when(
+      ndvi_mean_wt  < ndvi_native_threshold ~1,
+      TRUE ~0)
+  ) %>% 
   rename(   #rename ndvi values in prep for a wide-form dataset by block group
     ndvi_mean_no_wt_500m = ndvi_mean_no_wt, #mean agnostic to pixels covering water
     ndvi_mean_wt_500m = ndvi_mean_wt, #weighted to account for pixels over water
     wt_area_500m = wt_area
-  ) %>% 
-  mutate(
-    #create an indicator for whether it's baseline was above the threshold
-    ndvi_below_native_threshold = case_when(
-      ndvi_mean_wt_500m  < ndvi_native_threshold ~1,
-      TRUE ~0)
   ) %>% 
   #select only what is unique about this dataset. everything else can be linked.
   dplyr::select(
@@ -1295,4 +1321,179 @@ den_bg_int_parking_500m_ndvi = ndvi_den_co_20210704 %>%
   )
 
 
-  
+save(den_bg_int_prkng_500m_ndvi, 
+     file = "den_bg_int_prkng_500m_ndvi.RData")
+den_bg_int_prkng_500m_ndvi %>% 
+  mapview(
+    zcol = "ndvi_mean_wt_500m",
+    col.regions = pal_terrain)
+
+### Measure NDVI on the 500 m buffer excluding the parking lots-----------
+#and excluding water.
+den_bg_int_prkng_500m_comp
+den_bg_int_prkng_500m_comp_ndvi = ndvi_den_co_20210704 %>% 
+  terra::extract(
+    weights = TRUE, #approximate proportion of cell covered by polygon
+    y = terra::vect(den_bg_int_prkng_500m_comp)) %>% 
+  as_tibble() %>%  #code is slow so break it up here if needed.
+  wrangle_ndvi_bg_1() %>% 
+  left_join(den_bg_int_prkng_500m_comp, by = "row_id_int") %>% #link once
+  wrangle_ndvi_bg_2() %>% 
+  left_join(den_bg_int_prkng_500m_comp, by = "bg_fips") %>% #link in geo and area
+  st_as_sf() %>% 
+  rename(   #rename ndvi values in prep for a wide-form dataset by block group
+    ndvi_mean_no_wt_500m_prkng_comp = ndvi_mean_no_wt, #mean agnostic to pixels covering water
+    ndvi_mean_wt_500m_prkng_comp = ndvi_mean_wt, #weighted to account for pixels over water
+    wt_area_500m_prkng_comp = wt_area
+  ) %>% 
+  #select only what is unique about this dataset. everything else can be linked.
+  dplyr::select(
+    bg_fips, starts_with("ndvi_mean"), contains("ndvi_below"), contains("area")
+  )
+
+save(den_bg_int_prkng_500m_comp_ndvi, 
+     file = "den_bg_int_prkng_500m_comp_ndvi.RData")
+den_bg_int_prkng_500m_comp_ndvi %>% 
+  mapview(
+    zcol = "ndvi_mean_wt_500m_prkng_comp",
+    col.regions = pal_terrain)
+
+### Measure NDVI on just the parking lots---------
+den_bg_int_prkng_only %>% mapview()
+den_bg_int_prkng_only_ndvi = ndvi_den_co_20210704 %>% 
+  terra::extract(
+    weights = TRUE, #approximate proportion of cell covered by polygon
+    y = terra::vect(den_bg_int_prkng_only)) %>% 
+  as_tibble() %>%  #code is slow so break it up here if needed.
+  wrangle_ndvi_bg_1() %>% 
+  left_join(den_bg_int_prkng_only, by = "row_id_int") %>% #link once
+  wrangle_ndvi_bg_2() %>% 
+  left_join(den_bg_int_prkng_only, by = "bg_fips") %>% #link in geo and area
+  st_as_sf() %>% 
+  rename(   #rename ndvi values in prep for a wide-form dataset by block group
+    ndvi_mean_no_wt_prkng_only = ndvi_mean_no_wt, #mean agnostic to pixels covering water
+    ndvi_mean_wt_prkng_only = ndvi_mean_wt, #weighted to account for pixels over water
+    wt_area_prkng_only = wt_area
+  ) %>% 
+  #select only what is unique about this dataset. everything else can be linked.
+  dplyr::select(
+    bg_fips, starts_with("ndvi_mean"), contains("ndvi_below"), contains("area")
+  )
+
+save(den_bg_int_prkng_only_ndvi, 
+     file = "den_bg_int_prkng_only_ndvi.RData")
+den_bg_int_prkng_only_ndvi %>% 
+  mapview(
+    zcol = "ndvi_mean_wt_prkng_only",
+    col.regions = pal_terrain)
+
+##  Compute weighted average NDVI under each scenario--------
+### Visualize the elements that will be averaged-----
+
+#### Buffer excluding the parking---------
+names(den_bg_int_prkng_500m_comp_ndvi)
+mv_den_bg_int_prkng_500m_comp_ndvi= den_bg_int_prkng_500m_comp_ndvi %>% 
+  mapview(
+    col.regions = pal_terrain_col,
+    at = seq(-.1, 1, 0.1), #0 to 1 by .1; define the breaks so consistent between layers
+    layer.name = "ndvi_mean_wt_500m_prkng_comp",
+    zcol = "ndvi_mean_wt_500m_prkng_comp")
+
+#### The parking only----------
+names(den_bg_int_prkng_only_ndvi)
+mv_den_bg_int_prkng_only_ndvi= den_bg_int_prkng_only_ndvi %>% 
+  mapview(
+    col.regions = pal_terrain_col,
+    at = seq(-.1, 1, 0.1), #0 to 1 by .1; define the breaks so consistent between layers
+    layer.name = "ndvi_mean_wt_prkng_only",
+    zcol = "ndvi_mean_wt_prkng_only")
+
+mv_den_bg_int_prkng_only_ndvi
+#### Bodies of water--------
+load("den_co_osm_water_union.RData")
+load("den_co_osm_water.RData")
+mv_den_co_osm_water = den_co_osm_water %>% 
+  st_intersection(study_area_2876) %>% 
+  mapview(
+    layer.name = "Water type",
+    col.regions = rainbow(n_distinct(den_co_osm_water$water_type)),
+    zcol = "water_type")
+mv_den_bg_int_prkng_500m_comp_ndvi+
+  mv_den_bg_int_prkng_only_ndvi +
+  mv_den_co_osm_water
+
+### Remove geometry from NDVI datasets-----------
+den_bg_int_prkng_500m_ndvi_nogeo = den_bg_int_prkng_500m_ndvi %>% 
+  st_set_geometry(NULL) %>%
+  as_tibble()
+den_bg_int_prkng_500m_comp_ndvi_nogeo = den_bg_int_prkng_500m_comp_ndvi %>% 
+  st_set_geometry(NULL) %>%
+  as_tibble()
+
+den_bg_int_prkng_only_ndvi_nogeo = den_bg_int_prkng_only_ndvi %>% 
+  st_set_geometry(NULL) %>%
+  as_tibble()
+
+### Link them together and set alternate NDVI values------------
+#Begin with this, which is created above. Recall it has those NE restrictions.
+load("den_co_bg_no_wtr_geo.RData")
+load("lookup_bg_no_wtr_area.RData") #created 2_ndvi_tract_bg_park_den.R
+names(den_bg_int_prkng_500m_ndvi_nogeo)
+names(den_bg_int_prkng_500m_comp_ndvi)
+names(den_bg_int_prkng_only_ndvi_nogeo)
+den_co_bg_no_wtr_geo %>% mapview()
+den_co_bg_no_wtr_prkng_geo = den_co_bg_no_wtr_geo %>% 
+  left_join(lookup_bg_no_wtr_area, by = "bg_fips") %>% #link no-water area
+  left_join(den_bg_int_prkng_500m_ndvi_nogeo, by = "bg_fips") %>%  #full 500 m buffer around parking
+  left_join(den_bg_int_prkng_500m_comp_ndvi_nogeo, by = "bg_fips") %>% #buffer minus parking
+  left_join(den_bg_int_prkng_only_ndvi_nogeo, by = "bg_fips") %>% #parking only 
+  #drop the wt_area_ variables, as it will get confusing. they are the average
+  dplyr::select(-contains("wt_area_")) %>% 
+  mutate(
+    # the proportion of the area covered by parking by census block group
+    prop_area_prkng = area_mi2_prkng_only/area_mi2_500m,
+    prop_area_prkng_comp=1-prop_area_prkng  #proportion of complement. 1 minus
+  ) %>% 
+  #also note that we will be using the NDVI values weighted to account for the proportion
+  #the pixel overlapped the area, so omit the unweighted means:
+  dplyr::select(-contains("no_wt")) %>% #omit the mean without weight
+  #intermediates
+  #sort them so easier to see in mapview
+  dplyr::select(contains("fips"), contains("area"), contains("ndvi"), everything()) %>% 
+  ### Compute alternative NDVI under each scenario--------
+  #what proportion of the 500 m buffer is in the riparian area buffers? we need
+  #this to calculate a weighted average.
+  mutate(
+    
+    #What if we convert 100% of parking lots to native green levels?
+    #50%?
+    #20%?
+    ndvi_value_alt_100 = ndvi_native_threshold*1+ndvi_mean_wt_prkng_only*0,
+    ndvi_value_alt_50 = ndvi_native_threshold*.5+ndvi_mean_wt_prkng_only*.5,
+    ndvi_value_alt_20 = ndvi_native_threshold*.2+ndvi_mean_wt_prkng_only*.8,
+    
+    #as in scenario 2, this is a weighted average, assuming we converted x%
+    #of parking to green.
+      #use case-when syntax to set missings to their original value
+    ndvi_alt_prkng_100 = ndvi_mean_wt_500m_prkng_comp*prop_area_prkng_comp+
+      prop_area_prkng*ndvi_value_alt_100,
+    
+    ndvi_alt_prkng_50 = ndvi_mean_wt_500m_prkng_comp*prop_area_prkng_comp+
+      prop_area_prkng*ndvi_value_alt_50,
+    
+    ndvi_alt_prkng_20 = ndvi_mean_wt_500m_prkng_comp*prop_area_prkng_comp+
+      prop_area_prkng*ndvi_value_alt_20,
+
+    #now we can calculate the linear exposure difference between those values
+    #and the baseline mean NDVI in the 500 m buffer. use ndvi_diff as done above
+    ##alternative minus baseline
+    ndvi_diff_prkng_100= ndvi_value_alt_100-ndvi_mean_wt_500m,
+    ndvi_diff_prkng_50= ndvi_value_alt_50-ndvi_mean_wt_500m,
+    ndvi_diff_prkng_20= ndvi_value_alt_20-ndvi_mean_wt_500m
+  )
+
+
+save(den_co_bg_no_wtr_prkng_geo, file = "den_co_bg_prkng_geo.RData")
+den_co_bg_no_wtr_prkng_geo %>% mapview(zcol = "ndvi_diff_prkng_100")
+den_co_bg_no_wtr_prkng_geo %>% mapview(zcol = "ndvi_diff_prkng_50")
+den_co_bg_no_wtr_prkng_geo %>% mapview(zcol = "ndvi_diff_prkng_20")

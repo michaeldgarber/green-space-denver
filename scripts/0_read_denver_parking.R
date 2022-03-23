@@ -49,11 +49,14 @@ den_parking_sum_by_type =  den_parking %>%
 save(den_parking_sum_by_type,  file = "den_parking_sum_by_type.RData")
 den_parking_sum_by_type %>% mapview(zcol = "TYPE")
 
-
+table(den_parking_sum_by_type$TYPE)
 den_parking_sum_impervious_only = den_parking_sum_by_type %>% 
   filter(TYPE == "Impervious")
 save(den_parking_sum_impervious_only, file = "den_parking_sum_impervious_only.RData")
-
+den_parking_sum_impervious_only %>% mapview()
+den_parking_sum_pervious_only  = den_parking_sum_by_type %>% 
+  filter(TYPE == "Pervious")
+den_parking_sum_pervious_only %>% mapview()
 
 #denver is 154.7 mi2
 den_parking_sum_overall$area_mi2/155
@@ -74,3 +77,4 @@ den_parking_500m = den_parking_sum_overall %>%
 save(den_parking_500m, file = "den_parking_500m.RData")
 load("den_parking_500m.RData")
 den_parking_500m %>% mapview()
+object.size(den_parking_500m)
