@@ -5,3 +5,32 @@ date: "March 21 2022"
 ---
 
 I would like this to show up on the website, but I don't want it to be included in the nav page. I want the ability to link to it, though.
+
+Test full-screen mapview per
+https://github.com/r-spatial/mapview/issues/38
+
+```{r loadpackages, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
+library(here)
+library(tidyverse)
+library(sf)
+library(terra)
+library(raster) 
+library(mapview)
+library(leaflet.extras)
+```
+
+# NDVI for the Denver area, 2016-2021
+We obtained the normalized difference vegetation index (NDVI) from the Landsat-8 satellite at a resolution of 30 meters squared at a roughly 15-day interval between 2016 and 2021 for the following area around Denver:
+
+## Define study area
+```{r full-screen-test, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("den_co_tract_geo.RData") 
+mv_den_co_tract_geo = den_co_tract_geo %>% 
+  mapview(zcol = "tract_fips", layer.name = "Census Tract") 
+
+mv_den_co_tract_geo@map %>% 
+  addFullscreenControl()
+```
+
+

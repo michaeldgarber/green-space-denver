@@ -5,6 +5,9 @@ library(mapview)
 library(here)
 library(terra)
 library(raster)
+library(leaflet)
+install.packages("leaflet.extras")
+library(leaflet.extras)
 setwd(here("data-processed"))
 #Revised 3/22/22
 
@@ -48,12 +51,14 @@ mv_ndvi_den_co_20210704= ndvi_den_co_20210704 %>%
     layer.name = "NDVI",
     col.regions = pal_terrain, 
     at = seq(-0.4, 1, 0.1)
-  )
+  ) 
 
 load("den_co_tract_geo.RData") 
 mv_den_co_tract_geo = den_co_tract_geo %>% 
-  mapview(zcol = "tract_fips")
+  mapview(zcol = "tract_fips", layer.name = "Census Tract") 
 
+mv_den_co_tract_geo@map %>% 
+  addFullscreenControl()
 mv_ndvi_den_co_20210704 + mv_den_co_tract_geo
 
 ### tracts and block groups-----------
