@@ -30,23 +30,7 @@ setwd(here("data-processed"))
 #denver FIPS code: 031
 ## geometry of tract-------------
 
-#a function to select variables and take measurements.
-#I do it thrice, so make a function
-select_transform_measure_area <-function(df){
-  df %>% 
-    dplyr::select(contains("fips"), admin_unit, geometry)%>% 
-    st_transform(2876) %>%   #convert to feet, as we've been doing elsewhere
-    #measure area here as well
-    mutate(
-      #I had called these, e.g., tract_area, but this way 
-      #I can leave it more 
-      #general. you know the unit from other clues.
-      area_ft2 = as.numeric(st_area(geometry)),
-      area_m2 = area_ft2/10.764, #meters squared, for informational purposes.
-      area_mi2 = area_ft2/(5280**2) ,#miles squared
-    )
-}
-  
+
 #tracts  
 den_metro_tract_geo  = tidycensus::get_acs(
   geography = "tract", 
@@ -66,9 +50,19 @@ den_metro_tract_geo  = tidycensus::get_acs(
     tract_fips = str_sub(GEOID, 1,11),#this always works
     county_fips = str_sub(GEOID, 3,5)
   ) %>% 
-  select_transform_measure_area()
-  
-den_metro_tract_geo %>% mapview(zcol = "area_mi2")
+  dplyr::select(contains("fips"), admin_unit, geometry)%>% 
+  st_transform(2876) %>%   #convert to feet, as we've been doing elsewhere
+  #measure area here as well
+  mutate(
+    #3/24 decision to use the _tract prefix rather than leave general.
+    #less confusing when link with other polygons which may have different
+    #areas
+    area_ft2_tract = as.numeric(st_area(geometry)),
+    area_m2_tract = area_ft2_tract/10.764, #meters squared, for informational purposes.
+    area_mi2_tract = area_ft2_tract/(5280**2) #miles squared
+  )
+
+den_metro_tract_geo %>% mapview(zcol = "area_mi2_tract")
 setwd(here("data-processed"))
 save(den_metro_tract_geo, file = "den_metro_tract_geo.RData")
 #a version restricted to just denver and jefferson counties (but still at tract level)
@@ -111,11 +105,17 @@ den_metro_bg_geo  = tidycensus::get_acs( #bg for block group
     tract_fips = str_sub(GEOID, 1,11),#this always works
     county_fips = str_sub(GEOID, 3,5)
   ) %>% 
-  select_transform_measure_area()
+  dplyr::select(contains("fips"), admin_unit, geometry)%>% 
+  st_transform(2876) %>%   #convert to feet, as we've been doing elsewhere
+  mutate(
+    area_ft2_bg = as.numeric(st_area(geometry)),
+    area_m2_bg = area_ft2_bg/10.764, #meters squared, for informational purposes.
+    area_mi2_bg = area_ft2_bg/(5280**2) #miles squared
+  )
 
 
 save(den_metro_bg_geo, file = "den_metro_bg_geo.RData")
-den_metro_bg_geo %>% mapview(zcol = "area_mi2")
+den_metro_bg_geo %>% mapview(zcol = "area_mi2_bg")
 load("den_metro_bg_geo.RData")
 nchar(den_metro_bg_geo$bg_fips)#12 characters
 den_metro_bg_geo %>% mapview()
@@ -149,22 +149,16 @@ den_metro_co_geo  = tidycensus::get_acs(
   dplyr::select(contains("fips"), admin_unit, 
                 contains("county"), geometry) %>% 
   st_transform(2876) %>%   #convert to feet, as we've been doing elsewhere
-  #measure area here as well
   mutate(
-    #I had called these, e.g., tract_area, but this way 
-    #I can leave it more 
-    #general. you know the unit from other clues.
-    area_ft2 = as.numeric(st_area(geometry)),
-    area_m2 = area_ft2/10.764, #meters squared, for informational purposes.
-    area_mi2 = area_ft2/(5280**2) ,#miles squared
+    #co for county
+    area_ft2_co = as.numeric(st_area(geometry)),
+    area_m2_co = area_ft2_co/10.764, #meters squared, for informational purposes.
+    area_mi2_co = area_ft2_co/(5280**2) ,#miles squared
   )
 
 save(den_metro_co_geo, file = "den_metro_co_geo.RData")
 load("den_metro_co_geo.RData")
-
-
-den_metro_co_geo %>% mapview(zcol = "area_mi2")
-#a no geo version
+den_metro_co_geo %>% mapview(zcol = "area_mi2_co")
 den_metro_co_nogeo = den_metro_co_geo %>% 
   st_set_geometry(NULL) %>% 
   as_tibble()
@@ -210,15 +204,18 @@ save(lookup_den_metro_bg_tract, file = "lookup_den_metro_bg_tract.RData")
 ## area measurements for tracts and block groups--------
 lookup_tract_area = den_metro_tract_geo %>% 
   st_set_geometry(NULL) %>% 
-  distinct(tract_fips, area_ft2, area_m2, area_mi2)
+  distinct(tract_fips, area_ft2_tract, area_m2_tract, area_mi2_tract) %>% 
+  as_tibble()
 save(lookup_tract_area, file = "lookup_tract_area.RData")
 nrow(lookup_tract_area)
 nrow(den_metro_tract_geo)
 
 lookup_bg_area = den_metro_bg_geo %>% 
   st_set_geometry(NULL) %>% 
-  distinct(bg_fips, area_ft2, area_m2, area_mi2)
+  distinct(bg_fips, area_ft2_bg, area_m2_bg, area_mi2_bg) %>% 
+  as_tibble()
 save(lookup_bg_area, file = "lookup_bg_area.RData")
+
 #the same for those without water are located in
 #the script that creates them:
 #~/2_ndvi_tract_bg_park_den.R
@@ -416,7 +413,7 @@ den_metro_tract_s_by_a_long_wrangle = den_metro_tract_s_by_a_long %>%
   dplyr::select(contains("fips"), everything()) %>% 
   #link area measurements to calculate population density
   left_join(lookup_tract_area, by = "tract_fips") %>% 
-  mutate( pop_dens_mi2 = pop/area_mi2 )
+  mutate( pop_dens_mi2 = pop/area_mi2_tract )#changed 3/24/22
 
 setwd(here("data-processed"))
 save(den_metro_tract_s_by_a_long_wrangle , 
@@ -492,7 +489,7 @@ den_metro_bg_s_by_a_long_wrangle = den_metro_bg_s_by_a_long %>%
   dplyr::select(contains("fips"), everything()) %>% 
   #link area measurements to calculate population density
   left_join(lookup_bg_area, by = "bg_fips") %>% 
-  mutate( pop_dens_mi2 = pop/area_mi2 )
+  mutate( pop_dens_mi2 = pop/area_mi2_bg )
   
   
 den_metro_bg_s_by_a_long_wrangle 
@@ -582,34 +579,23 @@ den_tract_acs5_2019_nogeo  = get_acs(
   ) 
 setwd(here("data-processed"))
 save(den_tract_acs5_2019_nogeo, file = "den_tract_acs5_2019_nogeo.RData")
-View(den_tract_acs5_2019_nogeo)
 #wrangle these wide-form data
 den_metro_tract_geo %>% mapview()
 st_crs(den_metro_tract_geo)
 #some operations that I perform to both the tract-level and the block-group-level
 #data, so make a function 
-tract_and_bg_wrangle <-function(df){
+
+rename_prefixes<-function(df){
   df %>% 
     #rename estimate and margin of error to something more meaningful
     #not sure what the ~ means or why we need .x but asi es
     dplyr::rename_with( ~gsub("_E", "", .x, fixed = TRUE)) %>% 
-    dplyr::rename_with(~gsub("_M", "_moe", .x, fixed = TRUE))  %>% 
+    dplyr::rename_with(~gsub("_M", "_moe", .x, fixed = TRUE))
+}
+
+tract_and_bg_wrangle <-function(df){
+  df %>% 
     mutate(
-      #calculate sf stuff first.
-      #I had called these, e.g., tract_area, but this way 
-      #I can leave it more 
-      #general. you know the unit from other clues.
-      area_ft2 = as.numeric(st_area(geometry)),
-      area_m2 = area_ft2/10.764, #meters squared, for informational purposes.
-      area_mi2 = area_ft2/(5280**2) ,#miles squared
-
-      #population density for each age category
-      pop_dens_mi2_all = pop_tot/area_mi2 ,
-      pop_dens_mi2_age_18_plus =   pop_age_18_plus/area_mi2 ,
-      pop_dens_mi2_age_20_plus =   pop_age_20_plus/area_mi2 ,
-      pop_dens_mi2_age_25_plus =   pop_age_25_plus/area_mi2 ,
-      pop_dens_mi2_age_30_plus =   pop_age_30_plus/area_mi2 ,
-
       #prop for proportion
       race_w_prop = race_w/race_tot,  
       race_b_prop = race_b/race_tot,
@@ -634,33 +620,45 @@ tract_and_bg_wrangle <-function(df){
         race_nw_prop > 0.4 ~ 1,
         race_nw_prop <= 0.4 ~ 0
       ),
+      #note the definition is EITHER of the two 
       pov_or_race_nw_40plus = case_when(
-        is.na(race_nw_prop_40plus) ~ NA_real_,
-        is.na(pov_last_12_prop_40plus) ~ NA_real_,
+        #if either ...1
         pov_last_12_prop_40plus==1 |
           race_nw_prop_40plus == 1 ~ 1,
-        TRUE ~0
+        
+        #complement: if both are 0, then 0.
+        #everything else should be missing.
+        pov_last_12_prop_40plus==0 &
+          race_nw_prop_40plus==0 ~0
       )
       ) %>% 
     #reorder the variables for convenient mapviewing
     dplyr::select(contains("fips"), 
                   starts_with("pop"), 
+                  starts_with("area"), 
                   starts_with("age"),
                   starts_with("pov"),
                   starts_with("hh_inc"), 
                   starts_with("edu"), 
                   starts_with("race"), 
                   starts_with("h_val"), 
-                  starts_with("area"), 
-                  everything())
+                  everything()) %>% 
+    #drop NAME
+    dplyr::select(-NAME)
 }
 
+lookup_tract_area
+lookup_county_name_den_metro
+den_metro_tract_geo
+
+### Wide-form tract wrangling----------
 den_tract_acs5_2019_wrangle_geo = den_tract_acs5_2019_nogeo %>%
   mutate(
     tract_fips = GEOID  #we're at the tract level
   )  %>% 
   dplyr::select(-GEOID) %>%    #drop geoid
-  left_join(den_metro_tract_geo, by = "tract_fips") %>%   #add geometry
+  #note this already has the area measurements as well.
+  left_join(den_metro_tract_geo, by = "tract_fips") %>%   
   st_as_sf() %>% 
   st_transform(2876) %>%   #convert to feet, as we've been doing elsewhere
   left_join(lookup_county_name_den_metro, by = "county_fips") %>% 
@@ -669,12 +667,26 @@ den_tract_acs5_2019_wrangle_geo = den_tract_acs5_2019_nogeo %>%
   left_join(den_metro_tract_20_plus, by = "tract_fips") %>% 
   left_join(den_metro_tract_25_plus, by = "tract_fips") %>% 
   left_join(den_metro_tract_30_plus, by = "tract_fips") %>% 
-  tract_and_bg_wrangle()
+  rename_prefixes() %>% 
+  mutate(
+      #population density for each age category
+    pop_dens_mi2_all = pop_tot/area_mi2_tract ,
+    pop_dens_mi2_age_18_plus =   pop_age_18_plus/area_mi2_tract ,
+    pop_dens_mi2_age_20_plus =   pop_age_20_plus/area_mi2_tract ,
+    pop_dens_mi2_age_25_plus =   pop_age_25_plus/area_mi2_tract ,
+    pop_dens_mi2_age_30_plus =   pop_age_30_plus/area_mi2_tract ) %>% 
+  tract_and_bg_wrangle()  #the remaining wrangling
 
 save(den_tract_acs5_2019_wrangle_geo, 
      file = "den_tract_acs5_2019_wrangle_geo.RData")
 names(den_tract_acs5_2019_wrangle_geo)
+den_tract_acs5_2019_wrangle_geo %>% mapview(zcol = "pop_dens_mi2_all")
 
+#make a no-geo version for linking
+den_tract_acs5_2019_wrangle_nogeo=den_tract_acs5_2019_wrangle_geo %>% 
+  st_set_geometry(NULL) %>% 
+  as_tibble()
+save(den_tract_acs5_2019_wrangle_nogeo, file = "den_tract_acs5_2019_wrangle_nogeo.RData")
 #checks
 den_tract_acs5_2019_wrangle_geo %>% 
   filter(county_name_short=="Denver") %>% 
@@ -716,8 +728,13 @@ den_bg_acs5_2019_nogeo  = get_acs(
   variables = acs_vars_sociodem 
 ) 
 
+#note poverty and education aren't getting pulled in. use tracts for equity instead
 save(den_bg_acs5_2019_nogeo, file = "den_bg_acs5_2019_nogeo.RData")
 
+### Wide-form block group wrangling-------------
+lookup_bg_area
+lookup_county_name_den_metro
+den_metro_bg_geo
 den_bg_acs5_2019_wrangle_geo = den_bg_acs5_2019_nogeo %>%
   mutate(
     bg_fips = GEOID  #we're at the tract level
@@ -733,15 +750,23 @@ den_bg_acs5_2019_wrangle_geo = den_bg_acs5_2019_nogeo %>%
   left_join(den_metro_bg_20_plus, by = "bg_fips") %>% 
   left_join(den_metro_bg_25_plus, by = "bg_fips") %>% 
   left_join(den_metro_bg_30_plus, by = "bg_fips") %>% 
-  tract_and_bg_wrangle()
+  rename_prefixes() %>% 
+  mutate(
+    #population density for each age category
+    pop_dens_mi2_all = pop_tot/area_mi2_bg ,
+    pop_dens_mi2_age_18_plus =   pop_age_18_plus/area_mi2_bg ,
+    pop_dens_mi2_age_20_plus =   pop_age_20_plus/area_mi2_bg ,
+    pop_dens_mi2_age_25_plus =   pop_age_25_plus/area_mi2_bg ,
+    pop_dens_mi2_age_30_plus =   pop_age_30_plus/area_mi2_bg ) %>% 
+  tract_and_bg_wrangle()  #the remaining wrangling
 
 save(den_bg_acs5_2019_wrangle_geo, 
      file = "den_bg_acs5_2019_wrangle_geo.RData")
   
-
 den_bg_acs5_2019_wrangle_geo %>% mapview(zcol = "hh_inc_med")
 den_bg_acs5_2019_wrangle_geo %>% mapview(zcol = "race_nw_prop")
 den_bg_acs5_2019_wrangle_geo %>% mapview(zcol = "pov_last_12_prop")
+den_bg_acs5_2019_wrangle_geo %>% mapview(zcol = "pov_or_race_nw_40plus")
 den_bg_acs5_2019_wrangle_geo %>% 
   filter(  county_name_short == "Denver") %>% 
   mapview(zcol = "pop_dens_mi2_all")
