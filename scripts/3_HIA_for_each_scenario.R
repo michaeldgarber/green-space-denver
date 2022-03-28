@@ -1049,9 +1049,14 @@ den_bg_int_wtr_50ft_ndvi %>%
 
 ##  Compute weighted average NDVI under each scenario--------
 ### Visualize the elements that will be averaged-----
+#save them as I will also present this in an rmarkdown doc
+save(den_bg_int_wtr_500m_200ft_comp_ndvi, file = "den_bg_int_wtr_500m_200ft_comp_ndvi.RData")
+save(den_bg_int_wtr_200ft_ndvi, file = "den_bg_int_wtr_200ft_ndvi.RData")
+save(den_co_osm_wtr, file = "den_co_osm_wtr.RData")
 #For example,
 pal_terrain_col = rev(terrain.colors(100)) 
 names(den_bg_int_wtr_500m_200ft_comp_ndvi)
+
 mv_den_bg_int_wtr_500m_200ft_comp_ndvi= den_bg_int_wtr_500m_200ft_comp_ndvi %>% 
   mapview(
     col.regions = pal_terrain_col,
@@ -1598,7 +1603,9 @@ den_bg_int_prkng_only_ndvi %>%
 
 ##  Compute weighted average NDVI under each scenario--------
 ### Visualize the elements that will be averaged-----
-
+#make sure they're saved so they can be retrieved
+save(den_bg_int_prkng_500m_comp_ndvi, file = "den_bg_int_prkng_500m_comp_ndvi.RData")
+save(den_bg_int_prkng_only_ndvi, file = "den_bg_int_prkng_only_ndvi.RData")
 #### Buffer excluding the parking---------
 names(den_bg_int_prkng_500m_comp_ndvi)
 mv_den_bg_int_prkng_500m_comp_ndvi= den_bg_int_prkng_500m_comp_ndvi %>% 

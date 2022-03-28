@@ -86,13 +86,17 @@ mv_bg_below_native_threshold@map %>%
   addFullscreenControl()
 ```
 # Scenario 2: add native-plants buffers to riparian areas
-We measured NDVI in a 200-foot buffer, a 100-foot buffer, and a 50-foot buffer around all bodies of water in Denver. We defined residential exposure to these riparian areas as living within a 500-meter buffer, following the green-space literature that has defined green-space exposure based on residential proximity. The below map depicts mean NDVI in the portions of census block groups that intersect a 200-foot buffer as well as those pieces that intersect the part of the 500 m buffer that would not be intervened upon, i.e., the part between the 200-foot buffer and the edge of the 500 m buffer.
+We measured NDVI in a 200-foot buffer, a 100-foot buffer, and a 50-foot buffer around all bodies of water in Denver. We downloaded bodies of water from OpenStreetMap (code [here](https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_load_denver_osm_parks_water.R). We defined residential exposure to these riparian areas as those individuals living within a 500-meter buffer, following the green-space literature that has defined green-space exposure based on residential proximity. We estimated the number of people in this buffer by multiplying the population density of the census block group by the intersecting area. 
+
+The below map depicts mean NDVI in the portions of census block groups that intersect a 200-foot buffer as well as those pieces that intersect the part of the 500 m buffer that would not be intervened upon, i.e., the part between the 200-foot buffer and the edge of the 500 m buffer.
 
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+library(here)
 setwd(here("data-processed"))
 load("den_bg_int_wtr_500m_200ft_comp_ndvi.RData")
 load("den_bg_int_wtr_200ft_ndvi.RData")
 load("den_co_osm_wtr.RData")
+load("study_area_2876.RData")
 pal_terrain_col = rev(terrain.colors(100)) 
 mv_den_bg_int_wtr_500m_200ft_comp_ndvi= den_bg_int_wtr_500m_200ft_comp_ndvi %>% 
   mapview(
@@ -119,17 +123,83 @@ mv_den_co_osm_wtr = den_co_osm_wtr %>%
 mv_rip_all3 = mv_den_bg_int_wtr_200ft_ndvi+ mv_den_bg_int_wtr_500m_200ft_comp_ndvi +mv_den_co_osm_wtr
 mv_rip_all3@map %>% 
   addFullscreenControl()
-
 ```
 
 # Scenario 4: add native plants to parking lots
 We obtained spatial data on [parking lots](https://www.denvergov.org/opendata/dataset/parking-lots-2016) from the City of Denver Open Data Catalog. About 9% of the city is covered with parking lots:
-```{r}
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("den_parking_sum_overall.RData")
+den_parking_sum_overall %>% 
+  st_set_geometry(NULL) %>% 
+  dplyr::select(-dummy) %>% 
+  mutate(
+    den_area_mi2_total = 155,
+    percent_area_covered_by_parking = area_mi2/den_area_mi2_total
+         )
+```
+
+We similarly measured the NDVI on the parking lots as well as the NDVI in the census block groups that are within a 500-m buffer radius of any parking lots (which is most).
+
+We present a small subset, as the file size with the full map rendered exceeds GitHub's file-upload limits:
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+#080310017021
+# 080310017022
+#080310020001
+#080310019021
+#080310017015
+#080310017013
+#080310017011
+setwd(here("data-processed"))
+load("den_bg_int_prkng_500m_comp_ndvi.RData")
+load("den_bg_int_prkng_only_ndvi.RData")
+load("study_area_2876.RData")
+#### Buffer excluding the parking---------
+mv_den_bg_int_prkng_500m_comp_ndvi= den_bg_int_prkng_500m_comp_ndvi %>% 
+  mutate(
+    bg_for_github = case_when(
+      bg_fips %in% c("080310017021", "080310017022", "080310020001", "080310019021", "080310017015", "080310017013", "080310017011", "080310017014") ~1,
+      TRUE ~ 0
+    )) %>% 
+      filter(bg_for_github==1) %>% 
+  mapview(
+    col.regions = pal_terrain_col,
+    layer.name = "NDVI, 500 m buffer, parking",
+    zcol = "ndvi_mean_wt_500m_prkng_comp")
+
+#### The parking only----------
+mv_den_bg_int_prkng_only_ndvi= den_bg_int_prkng_only_ndvi %>% 
+    mutate(
+    bg_for_github = case_when(
+      bg_fips %in% c("080310017021", "080310017022", "080310020001", "080310019021", "080310017015", "080310017013", "080310017011", "080310017014") ~1,
+      TRUE ~ 0
+    )) %>% 
+      filter(bg_for_github==1) %>% 
+  mapview(
+    col.regions = pal_terrain_col,
+    layer.name = "NDVI, parking only",
+    zcol = "ndvi_mean_wt_prkng_only")
+
+
+#### Visualize all at once--------------
+mv_prkng_both = mv_den_bg_int_prkng_500m_comp_ndvi+ mv_den_bg_int_prkng_only_ndvi 
+
+mv_prkng_both@map %>% 
+  addFullscreenControl()
 
 ```
 
 
-
 # Results
-We estimated the number of deaths averted under each scenario by following a recent meta-analyses that estimated that for every 0.1 unit increase in exposure to NDVI, the relative risk of death decreases about 4% (pooled risk ratio of 0.96, 95% confidence interval (CI): 0.94, 0.97)1. We defined NDVI exposure as that within a 500-meter buffer of the individual’s place of residence. We used this risk ratio to estimate the population attributable fraction corresponding to the proposed change in NDVI from the baseline level to the native-plants level for each census block group or, under the second scenario, the part of the census block group intersecting the proposed intervention area. We then estimated the number of deaths prevented considering estimates of population and all-cause mortality rates. We used 5-year American Community Survey Data (2015-2019) to estimate the population in 5-year age groups in each census block group and age-stratified estimates of mortality rates for the state of Colorado from the Global Burden of Disease project. If an intervention area did not cover an entire census block group, we multiplied the population density of the block group in that age group by the area of the block group covered by the intervention area to estimate the total population in the area affected by the intervention. We restricted analyses to adults aged 30 and above following the age range of many of the cohort studies reviewed.
+We estimated the number of deaths averted under each scenario by following a recent meta-analyses that estimated that for every 0.1 unit increase in exposure to NDVI, the relative risk of death decreases about 4% (pooled risk ratio of 0.96, 95% confidence interval (CI): 0.94, 0.97)1. We defined NDVI exposure as that within a 500-meter buffer of the individual’s place of residence. We used this risk ratio to estimate the population attributable fraction corresponding to the proposed change in NDVI from the baseline level to the native-plants level for each census block group (first scenario) or the part of the census block group intersecting the proposed intervention area (riparian and parking scenarios). We then estimated the number of deaths prevented considering estimates of population and all-cause mortality rates. We used 5-year American Community Survey Data (2015-2019) to estimate the population in 5-year age groups in each census block group and age-stratified estimates of mortality rates for the state of Colorado from the Global Burden of Disease project. If an intervention area did not cover an entire census block group, we multiplied the population density of the block group in that age group by the area of the block group covered by the intervention area to estimate the total population in the area affected by the intervention. We restricted analyses to adults aged 30 and above following the age range of many of the cohort studies reviewed. We also restricted analyses to those census block groups or census-block-group pieces below the native-plants NDVI threshold.
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("all_sc_marg_lf.RData")
+all_sc_marg_lf %>%  
+  dplyr::select(-starts_with("ndvi_below")) %>% 
+  dplyr::select(scenario, scenario_sub, pop_affected, attrib_deaths) %>% 
+  kable()
+```
 
