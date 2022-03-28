@@ -118,6 +118,7 @@ native_places_ndvi_day_geo %>%
 library(scales)
 names(native_places_ndvi_day_nogeo)
 table(native_places_ndvi_day_nogeo$place_type)
+load("native_places_ndvi_day_nogeo.RData")
 
 #confirm valid dates are only in may, june, july, august
 native_places_ndvi_day_nogeo %>% 

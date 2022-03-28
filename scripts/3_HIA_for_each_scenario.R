@@ -292,11 +292,13 @@ den_co_bg_ndvi = ndvi_den_co_20210704 %>%
 
 names(den_co_bg_ndvi)
 den_co_bg_ndvi
+save(den_co_bg_ndvi, file = "den_co_bg_ndvi.RData")
 
 ## Visualize NDVI by census block group--------
 pal_terrain = terrain.colors(100) %>% rev()#reverse the order of the palette
 # Examine weighted NDVI by census block group
 mv_den_co_bg_ndvi  = den_co_bg_ndvi %>% 
+  dplyr::select(bg_fips, ndvi_mean_wt) %>% 
   mapview(
     layer.name = "NDVI, block group",
     zcol = "ndvi_mean_wt",
@@ -304,6 +306,16 @@ mv_den_co_bg_ndvi  = den_co_bg_ndvi %>%
     at = seq(-0.1, 1, 0.1)
   )
 mv_den_co_bg_ndvi + mv_ndvi_den_co_20210704
+mv_ndvi_pixel_bg = mv_den_co_bg_ndvi+mv_ndvi_den_co_20210704
+
+#save for rendering elsewhere
+save(mv_den_co_bg_ndvi, file = "mv_den_co_bg_ndvi.RData")
+save(mv_ndvi_pixel_bg, file = "mv_ndvi_pixel_bg.RData")
+save(mv_ndvi_den_co_20210704, file = "mv_ndvi_den_co_20210704.Rdata")
+
+mv_den_co_bg_ndvi
+mv_ndvi_pixel_bg@map %>% 
+  addFullscreenControl()
 
 n_distinct(den_co_bg_ndvi$bg_id_row_number)
 nrow(den_co_bg_no_wtr_geo) #very good. so it's not dividing up the bgs further.
@@ -315,7 +327,7 @@ library(RColorBrewer)
 RColorBrewer::brewer.pal(3, "RdYlGn")[c(1,3)]  %>%   swatch()
 ndvi_below_thresh_pal = RColorBrewer::brewer.pal(3, "RdYlGn")[c(1,3)]  %>% rev()
 ndvi_below_thresh_pal %>% swatch()
-den_co_bg_ndvi %>% 
+mv_bg_below_native_threshold =den_co_bg_ndvi %>% 
   mutate(
   ndvi_below_native_threshold_char = case_when(
     ndvi_below_native_threshold == 1 ~ "Yes",
@@ -327,6 +339,9 @@ den_co_bg_ndvi %>%
     col.regions = ndvi_below_thresh_pal
   )
 
+mv_bg_below_native_threshold
+#save this for use in rmarkdown code
+save(mv_bg_below_native_threshold, file = "mv_bg_below_native_threshold.RData")
 #where would gain the most, under the 20% scenario?
 den_co_bg_ndvi %>% 
   mapview(

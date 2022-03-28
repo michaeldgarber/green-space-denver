@@ -45,11 +45,24 @@ For all scenarios, we measured green-space exposure by the normalized difference
 
 We first measured the mean NDVI of each census block group on July 4, 2021. The weighted block-group-level mean is presented here, weighted by the proportion each 30 square-meter pixel covers by the census block group. For example, if half of a pixel overlaps the block group, it receives a weight of 0.5 in the weighted average.
 
-
-We measured the mean NDVI of all census block groups
-```{r}
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
+load("den_co_bg_ndvi.RData")
 load("mv_ndvi_pixel_bg.RData")
-mv_ndvi_pixel_bg@map %>% 
+load("mv_ndvi_den_co_20210704.RData")
+load("mv_den_co_bg_ndvi.RData")
+#mv_den_co_bg_ndvi
+pal_terrain = terrain.colors(100) %>% rev()#reverse the order of the palette
+mv_den_co_bg_ndvi  = den_co_bg_ndvi %>% 
+  dplyr::select(bg_fips, ndvi_mean_wt) %>% 
+  mapview(
+    layer.name = "NDVI, block group",
+    zcol = "ndvi_mean_wt",
+    col.regions = pal_terrain, 
+    at = seq(-0.1, 1, 0.1)
+  )
+mv_den_co_bg_ndvi@map %>% 
   addFullscreenControl()
 ```
+
+We excluded census block groups near the airport and those whose baseline NDVI was above the native-plant threshold:
