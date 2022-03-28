@@ -6,6 +6,6 @@ The purpose of this website is to present some updates related to the Denver gre
 
 **Project Updates**
 
-* March 2022: Preliminary HIA results for four scenarios: [insert-link-when-done]
+* March 2022: Preliminary HIA results for four scenarios: https://michaeldgarber.github.io/green-space-denver/hia-results.htm
 
 * February 2022: A summary of NDVI of places and tracts: https://michaeldgarber.github.io/green-space-denver/ndvi-of-places-tracts.html

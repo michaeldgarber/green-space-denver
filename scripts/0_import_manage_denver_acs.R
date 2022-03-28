@@ -247,7 +247,7 @@ options(tigris_use_cache = TRUE)
 library(tidycensus)
 acs_2019_vars <- load_variables(2019, "acs5", cache = TRUE)
 save(acs_2019_vars, file = "acs_2019_vars.RData") #takes a while so save.
-# View(acs_2019_vars)
+View(acs_2019_vars)
 #make it a tibble so you can select just the vars that begin with B01001
 acs_2019_var_tib_sex_by_age = acs_2019_vars %>% 
   as_tibble() %>%
@@ -561,6 +561,10 @@ acs_vars_sociodem = c(
   edu_hs_tot_  = "B16010_001",    # total in this column (at least high school)
   edu_lt_hs_ = "B16010_002", #less than (not including) high school,
   edu_hs_ = "B16010_015", # high school graduate (includes equivalency)
+  
+  #housing cost burdened
+  #B25070 for rent; B25091 for mortgage
+  #https://www.arcgis.com/home/item.html?id=9c7647840d6540e4864d205bac505027
 
   #median age
   age_med_ = "B01002_001")
@@ -762,7 +766,13 @@ den_bg_acs5_2019_wrangle_geo = den_bg_acs5_2019_nogeo %>%
 
 save(den_bg_acs5_2019_wrangle_geo, 
      file = "den_bg_acs5_2019_wrangle_geo.RData")
-  
+
+#a no-geo version
+den_bg_acs5_2019_wrangle_nogeo = den_bg_acs5_2019_wrangle_geo %>% 
+  st_set_geometry(NULL) %>% 
+  as_tibble()
+save(den_bg_acs5_2019_wrangle_nogeo, file = "den_bg_acs5_2019_wrangle_nogeo.RData")  
+names(den_bg_acs5_2019_wrangle_nogeo)
 den_bg_acs5_2019_wrangle_geo %>% mapview(zcol = "hh_inc_med")
 den_bg_acs5_2019_wrangle_geo %>% mapview(zcol = "race_nw_prop")
 den_bg_acs5_2019_wrangle_geo %>% mapview(zcol = "pov_last_12_prop")

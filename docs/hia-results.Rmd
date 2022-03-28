@@ -1,0 +1,55 @@
+---
+title: "Preliminary health-impact assessment results"
+author: "Michael D Garber"
+date: "March 28, 2022"
+output: 
+  html_document: 
+    number_sections: yes
+---
+```{r loadpackages, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+library(here)
+library(tidyverse)
+library(sf)
+library(terra)
+library(raster) 
+library(mapview)
+library(knitr) #to make sure kable works
+library(viridis)
+library(scales)
+library(lubridate) #for ggplot
+library(leaflet)
+library(leaflet.extras)
+```
+
+# Introduction
+This document describes and presents initial results for the health-impact assessment related to adding more native plants to City of Denver. We aim to estimate the number of deaths that would be prevented by adding more green space, specifically native plants, to the City of Denver. We estimate the number of deaths prevented corresponding to three broad greening scenarios, which were informed by conversations with local stakeholders. The scenarios are:
+
+* Add native plants to all census block groups such that
+    * 100% of the block group's area is as green as native plants
+    * 20% of the block group's area is as green as native plants
+  
+* Create native buffers around riparian areas (rivers, streams, lakes, and ponds) of the following sizes:
+    * 200 feet (ideal for ecosystem health but possibly not realistic)
+    * 100 feet (compromise)
+    * 50 feet (most realistic; less good for ecosystem health)
+    
+* Replace a portion of parking-lot surface with native plants:
+    * 100% of the existing parking area
+    * 50% of the existing parking area
+    * 20% of the existing parking area
+  
+
+For all scenarios, we measured green-space exposure by the normalized difference vegetation index (NDVI) measured by the Landsat-8 satellite at a spatial resolution of 30 meters squared.  To determine the target NDVI value, we measured the NDVI of a 100% native zone in the Denver Botanic Gardens on several cloud-free spring and summer days. The NDVI value was about 0.5 in this area, so we assumed that, by adding more native plants to places in Denver, the NDVI of those areas would change to 0.5.
+
+# Scenario 1: add native plants to all census block groups
+
+We first measured the mean NDVI of each census block group on July 4, 2021. The weighted block-group-level mean is presented here, weighted by the proportion each 30 square-meter pixel covers by the census block group. For example, if half of a pixel overlaps the block group, it receives a weight of 0.5 in the weighted average.
+
+
+We measured the mean NDVI of all census block groups
+```{r}
+setwd(here("data-processed"))
+load("mv_ndvi_pixel_bg.RData")
+mv_ndvi_pixel_bg@map %>% 
+  addFullscreenControl()
+```

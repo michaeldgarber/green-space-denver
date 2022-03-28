@@ -47,13 +47,14 @@ pal_terrain = terrain.colors(100) %>% rev()#reverse the order of the palette
 mv_ndvi_den_co_20210704= ndvi_den_co_20210704 %>% 
   raster::raster() %>% 
   mapview(
-    layer.name = "NDVI",
+    layer.name = "NDVI, pixel",
     col.regions = pal_terrain, 
     at = seq(-0.4, 1, 0.1)
   ) 
 
 mv_ndvi_den_co_20210704
-
+#save this for use in the rmarkdown code:
+save(mv_ndvi_den_co_20210704, file = "mv_ndvi_den_co_20210704.RData")
 load("den_co_tract_geo.RData") 
 mv_den_co_tract_geo = den_co_tract_geo %>% 
   mapview(zcol = "tract_fips", layer.name = "Census Tract") 
@@ -216,6 +217,7 @@ load("den_metro_bg_s_by_a_long_wrangle.RData") #s_by_a denotes sex by age
 
 ### Link GBD to bg data & restrict to certain age groups----------
 #begin with the long-form metro data, restrict to denver only, link with GBD,
+#### Define lower bound for age-----------
 age_lowest_to_include=30
 den_co_bg_s_by_a_gbd_long_wrangle = den_metro_bg_s_by_a_long_wrangle %>% 
   filter(county_fips == "031" ) %>% 
@@ -296,7 +298,7 @@ pal_terrain = terrain.colors(100) %>% rev()#reverse the order of the palette
 # Examine weighted NDVI by census block group
 mv_den_co_bg_ndvi  = den_co_bg_ndvi %>% 
   mapview(
-    layer.name = "ndvi (weighted)",
+    layer.name = "NDVI, block group",
     zcol = "ndvi_mean_wt",
     col.regions = pal_terrain, 
     at = seq(-0.1, 1, 0.1)
@@ -307,11 +309,22 @@ n_distinct(den_co_bg_ndvi$bg_id_row_number)
 nrow(den_co_bg_no_wtr_geo) #very good. so it's not dividing up the bgs further.
 
 #Examine block groups above/below native threshold
+library(shades)
+library(RColorBrewer)
+
+RColorBrewer::brewer.pal(3, "RdYlGn")[c(1,3)]  %>%   swatch()
+ndvi_below_thresh_pal = RColorBrewer::brewer.pal(3, "RdYlGn")[c(1,3)]  %>% rev()
+ndvi_below_thresh_pal %>% swatch()
 den_co_bg_ndvi %>% 
+  mutate(
+  ndvi_below_native_threshold_char = case_when(
+    ndvi_below_native_threshold == 1 ~ "Yes",
+    ndvi_below_native_threshold == 0 ~ "No"
+  )) %>% 
   mapview(
-    layer.name = "Below native threhsold",
-    zcol = "ndvi_below_native_threshold",
-    col.regions = rainbow(n=2)
+    layer.name = "NDVI below native threhsold",
+    zcol = "ndvi_below_native_threshold_char",
+    col.regions = ndvi_below_thresh_pal
   )
 
 #where would gain the most, under the 20% scenario?
@@ -358,66 +371,118 @@ den_co_bg_s_by_a_gbd_ndvi_long_wrangle = den_co_bg_s_by_a_gbd_long_wrangle %>%
     #just the joint sex-by-age categories
     #ao = attributable outcomes, as this is a long-form dataset#
     #and presumably we will include some incidence data as well, s
-    attrib_o_alt_20 = paf_alt_20*(rate_per_100k_est/100000)*pop,
-    attrib_o_alt_100 = paf_alt_100*(rate_per_100k_est/100000)*pop
+    attrib_d_alt_20 = paf_alt_20*(rate_per_100k_est/100000)*pop,
+    attrib_d_alt_100 = paf_alt_100*(rate_per_100k_est/100000)*pop
   )
 
 
 ## summarize long-form estimates----------
 ### deaths prevented by age----------
+#sc for scenario;
 #DRR: use 18 and older
-sc_1_deaths_prev_by_age_group = den_co_bg_s_by_a_gbd_ndvi_long_wrangle %>% 
+names(den_co_bg_s_by_a_gbd_ndvi_long_wrangle)
+sc_all_bg_deaths_prev_by_age = den_co_bg_s_by_a_gbd_ndvi_long_wrangle %>% 
   #limit to areas with baseline NDVI below the native threshold.
   filter(ndvi_below_native_threshold==1) %>% 
   group_by(age_group_acs) %>% 
   summarise(
-    attrib_o_alt_20 = sum(attrib_o_alt_20, na.rm=TRUE),
-    attrib_o_alt_100 = sum(attrib_o_alt_100, na.rm=TRUE))
+    pop = sum(pop, na.rm=TRUE),
+    attrib_d_alt_20 = sum(attrib_d_alt_20, na.rm=TRUE),
+    attrib_d_alt_100 = sum(attrib_d_alt_100, na.rm=TRUE))
   
-sc_1_deaths_prev_by_age_group
+sc_all_bg_deaths_prev_by_age
 #save this to Excel for easier copy/paste
 setwd(here("results"))
 writexl::write_xlsx(
-  sc_1_deaths_prev_by_age_group,
-  "sc_1_deaths_prev_by_age_group.xlsx"
+  sc_all_bg_deaths_prev_by_age,
+  "sc_all_bg_deaths_prev_by_age.xlsx"
 )
 setwd(here("data-processed"))
 
 
 ### deaths prevented by block group----------
-sc_1_deaths_prev_by_BG = den_co_bg_s_by_a_gbd_ndvi_long_wrangle %>% 
+sc_all_bg_deaths_prev_by_bg = den_co_bg_s_by_a_gbd_ndvi_long_wrangle %>% 
   #limit to areas with baseline NDVI below the native threshold.
   filter(ndvi_below_native_threshold==1) %>% 
   group_by(bg_fips) %>% 
   summarise(
-    attrib_o_alt_20 = sum(attrib_o_alt_20, na.rm=TRUE),
-    attrib_o_alt_100 = sum(attrib_o_alt_100, na.rm=TRUE))
+    pop = sum(pop, na.rm=TRUE),
+    attrib_d_alt_20 = sum(attrib_d_alt_20, na.rm=TRUE),
+    attrib_d_alt_100 = sum(attrib_d_alt_100, na.rm=TRUE)
+  )
 
-sc_1_deaths_prev_by_BG
+sc_all_bg_deaths_prev_by_bg
 #visualize this
 library(viridis)
 setwd(here("data-processed"))
 load("den_metro_bg_geo.RData")
-sc_1_deaths_prev_by_BG %>% 
+mv_sc_all_bg_deaths_prev_by_bg=sc_all_bg_deaths_prev_by_bg %>% 
   ungroup() %>% 
   left_join(den_metro_bg_geo, by = "bg_fips") %>% 
   st_as_sf() %>% 
   mapview(
     layer.name = "Attributable deaths, all-cause",
-    zcol = "attrib_o_alt_20",
+    zcol = "attrib_d_alt_20",
     col.regions = viridis_pal(direction=-1)
   )
 
+mv_sc_all_bg_deaths_prev_by_bg_pp=sc_all_bg_deaths_prev_by_bg %>% 
+  ungroup() %>% 
+  left_join(den_metro_bg_geo, by = "bg_fips") %>% 
+  st_as_sf() %>% 
+  mapview(
+    layer.name = "Attributable deaths, all-cause",
+    zcol = "attrib_d_pp_alt_100",
+    col.regions = viridis_pal(direction=-1)
+  )
+
+mv_sc_all_bg_deaths_prev_by_bg_pp
+
 ### deaths prevented, overall----------
-sc_1_deaths_prev_overall = den_co_bg_s_by_a_gbd_ndvi_long_wrangle %>% 
+#marg for marginal total
+sc_all_bg_deaths_prev_marg = den_co_bg_s_by_a_gbd_ndvi_long_wrangle %>% 
   #limit to areas with baseline NDVI below the native threshold.
   filter(ndvi_below_native_threshold==1) %>% 
   group_by(ndvi_below_native_threshold) %>% 
   summarise(
-    attrib_o_alt_20 = sum(attrib_o_alt_20, na.rm=TRUE),
-    attrib_o_alt_100 = sum(attrib_o_alt_100, na.rm=TRUE))
+    pop = sum(pop, na.rm=TRUE),
+    attrib_d_alt_20 = sum(attrib_d_alt_20, na.rm=TRUE),
+    attrib_d_alt_100 = sum(attrib_d_alt_100, na.rm=TRUE))
 
-sc_1_deaths_prev_overall
+sc_all_bg_deaths_prev_marg
+
+### Make all of those long-form-------
+#write a function because same code x 3
+pivot_longer_sc_all_bg = function(df){
+  df %>% 
+    mutate(scenario = "all-bg") %>% #all block groups
+  pivot_longer(
+    cols = starts_with("attrib"),
+    names_to = "scenario_sub",
+    values_to = "attrib_deaths"
+  ) %>% 
+    mutate(
+      scenario_sub = case_when(
+        scenario_sub == "attrib_d_alt_20" ~ "20-pct",
+        scenario_sub == "attrib_d_alt_100" ~ "100-pct"
+      )
+    ) %>% 
+    rename(pop_affected = pop)
+}
+#lf for long-form
+sc_all_bg_deaths_prev_by_age_lf = sc_all_bg_deaths_prev_by_age %>% 
+  pivot_longer_sc_all_bg()
+
+sc_all_bg_deaths_prev_by_age_lf
+
+sc_all_bg_deaths_prev_by_bg_lf =sc_all_bg_deaths_prev_by_bg %>% 
+  pivot_longer_sc_all_bg()
+
+sc_all_bg_deaths_prev_by_bg_lf
+sc_all_bg_deaths_prev_marg_lf = sc_all_bg_deaths_prev_marg %>% 
+  pivot_longer_sc_all_bg()
+
+sc_all_bg_deaths_prev_marg_lf
 
 # 2. Scenaro 2: waterways--------
 
@@ -1168,9 +1233,9 @@ den_co_bg_long_rip = den_co_bg_s_by_a_gbd_long_wrangle %>%
     paf_alt_50ft =(rr_alt_50ft -1)/rr_alt_50ft  ,
     
     #attributable deaths
-    attrib_o_200ft = paf_alt_200ft*(rate_per_100k_est/100000)*pop_500m,
-    attrib_o_100ft = paf_alt_100ft*(rate_per_100k_est/100000)*pop_500m,
-    attrib_o_50ft = paf_alt_50ft*(rate_per_100k_est/100000)*pop_500m
+    attrib_d_200ft = paf_alt_200ft*(rate_per_100k_est/100000)*pop_500m,
+    attrib_d_100ft = paf_alt_100ft*(rate_per_100k_est/100000)*pop_500m,
+    attrib_d_50ft = paf_alt_50ft*(rate_per_100k_est/100000)*pop_500m
   )
 
 
@@ -1178,64 +1243,112 @@ save(den_co_bg_long_rip, file = "den_co_bg_long_rip.RData")
 
 ## summarize long-form estimates----------
 names(den_co_bg_long_rip)
+summary(den_co_bg_long_rip$pop_500m)
 ### deaths prevented by age----------
-sc_2_deaths_prev_by_age_group = den_co_bg_long_rip %>% 
+
+sc_rip_deaths_prev_by_age = den_co_bg_long_rip %>% 
   filter(ndvi_below_native_threshold==1) %>% #limit to pieces w NDVI below native
   group_by(age_group_acs) %>% 
   summarise(
-    attrib_o_200ft = sum(attrib_o_200ft, na.rm=TRUE),
-    attrib_o_100ft = sum(attrib_o_100ft, na.rm=TRUE),
-    attrib_o_50ft = sum(attrib_o_50ft, na.rm=TRUE)
+    pop_500m = sum(pop_500m, na.rm=TRUE),
+    attrib_d_200ft = sum(attrib_d_200ft, na.rm=TRUE),
+    attrib_d_100ft = sum(attrib_d_100ft, na.rm=TRUE),
+    attrib_d_50ft = sum(attrib_d_50ft, na.rm=TRUE)
     ) %>% 
   ungroup()
 
-sc_2_deaths_prev_by_age_group
+sc_rip_deaths_prev_by_age
 #save this to Excel for easier copy/paste
 setwd(here("results"))
 writexl::write_xlsx(
-  sc_1_deaths_prev_by_age_group,
-  "sc_1_deaths_prev_by_age_group.xlsx"
+  sc_all_bg_deaths_prev_by_age,
+  "sc_all_bg_deaths_prev_by_age.xlsx"
 )
 setwd(here("data-processed"))
 
 ### deaths prevented by block group----------
-sc_2_deaths_prev_by_BG = den_co_bg_long_rip %>% 
+sc_rip_deaths_prev_by_bg = den_co_bg_long_rip %>% 
   filter(ndvi_below_native_threshold==1) %>% #limit to pieces w NDVI below native
   group_by(bg_fips) %>% 
   summarise(
-    attrib_o_200ft = sum(attrib_o_200ft, na.rm=TRUE),
-    attrib_o_100ft = sum(attrib_o_100ft, na.rm=TRUE),
-    attrib_o_50ft = sum(attrib_o_50ft, na.rm=TRUE)
+    pop_500m = sum(pop_500m, na.rm=TRUE),
+    attrib_d_200ft = sum(attrib_d_200ft, na.rm=TRUE),
+    attrib_d_100ft = sum(attrib_d_100ft, na.rm=TRUE),
+    attrib_d_50ft = sum(attrib_d_50ft, na.rm=TRUE)
   ) %>% 
   ungroup()
 
-sc_2_deaths_prev_by_BG
+sc_rip_deaths_prev_by_bg
+#lf for long-form
+sc_rip_deaths_prev_by_bg_lg = sc_rip_deaths_prev_by_bg %>% 
+  pivot_longer(
+    cols = starts_with("attrib"),
+    names_to = "scenario_sub",
+    values_to = "deaths_prev"
+  )
+sc_rip_deaths_prev_by_bg_lg
+
 #visualize this
 library(viridis)
 load("den_metro_bg_geo.RData")
-sc_2_deaths_prev_by_BG %>% 
+sc_rip_deaths_prev_by_bg %>% 
   ungroup() %>% 
   left_join(den_metro_bg_geo, by = "bg_fips") %>% 
   st_as_sf() %>% 
   mapview(
     layer.name = "Attributable deaths, all-cause",
-    zcol = "attrib_o_200ft",
+    zcol = "attrib_d_200ft",
     col.regions = viridis_pal(direction=-1)
   )
 
 ### deaths prevented, overall----------
-sc_2_deaths_prev_overall = den_co_bg_long_rip %>% 
+#marg for marginal
+sc_rip_deaths_prev_marg = den_co_bg_long_rip %>% 
   filter(ndvi_below_native_threshold==1) %>% #limit to pieces w NDVI below native
   group_by(ndvi_below_native_threshold) %>% 
   summarise(
-    attrib_o_200ft = sum(attrib_o_200ft, na.rm=TRUE),
-    attrib_o_100ft = sum(attrib_o_100ft, na.rm=TRUE),
-    attrib_o_50ft = sum(attrib_o_50ft, na.rm=TRUE)
+    pop_500m = sum(pop_500m, na.rm=TRUE),
+    attrib_d_200ft = sum(attrib_d_200ft, na.rm=TRUE),
+    attrib_d_100ft = sum(attrib_d_100ft, na.rm=TRUE),
+    attrib_d_50ft = sum(attrib_d_50ft, na.rm=TRUE)
   ) %>% 
   ungroup()
 
+sc_rip_deaths_prev_marg
 
-sc_2_deaths_prev_overall
+### Make all of those long-form-------
+#write a function because same code x 3
+pivot_longer_sc_rip = function(df){
+  df %>% 
+    mutate(scenario = "riparian") %>% 
+    pivot_longer(
+      cols = starts_with("attrib"),
+      names_to = "scenario_sub",
+      values_to = "attrib_deaths"
+    ) %>% 
+    mutate(
+      scenario_sub = case_when(
+        scenario_sub == "attrib_d_200ft" ~ "200-ft",
+        scenario_sub == "attrib_d_100ft" ~ "100-ft",
+        scenario_sub == "attrib_d_50ft" ~ "50-ft",
+      )
+    ) %>% 
+    rename(pop_affected = pop_500m)
+}
+
+sc_rip_deaths_prev_by_age_lf = sc_rip_deaths_prev_by_age %>% 
+  pivot_longer_sc_rip()
+
+sc_rip_deaths_prev_by_age_lf
+
+sc_rip_deaths_prev_by_bg_lf =sc_rip_deaths_prev_by_bg %>% 
+  pivot_longer_sc_rip()
+
+sc_rip_deaths_prev_by_bg_lf
+sc_rip_deaths_prev_marg_lf = sc_rip_deaths_prev_marg %>% 
+  pivot_longer_sc_rip()
+
+sc_rip_deaths_prev_marg_lf
 
 # Stormwater scenario--------
 
@@ -1259,20 +1372,20 @@ den_prkng_500m_no_wtr %>% mapview()
 ## Symmetric difference between parking lots and 500 m buffer
 #Remove parking lots themselves from the buffer to compute the
 #weighted average as we did for scenario 2
-load("den_parking_sum_overall.RData") #ok as parking since it's loaded elsewhere
-den_prkng_sum_overall = den_parking_sum_overall %>% 
+load("den_parking_sum_marg.RData") #ok as parking since it's loaded elsewhere
+den_prkng_sum_marg = den_parking_sum_marg %>% 
   dplyr::select(geometry) %>%   #remove area measurements
   st_as_sf()
-den_prkng_sum_overall %>% mapview()
+den_prkng_sum_marg %>% mapview()
 #remove parking from the parking buffer (i.e., the complement (comp))
 den_prkng_500m_comp = den_prkng_500m  %>% 
-  st_difference(den_prkng_sum_overall) %>% 
+  st_difference(den_prkng_sum_marg) %>% 
   st_as_sf()
 den_prkng_500m_comp %>% mapview(layer.name = "comp")
 
 #remove water and parking from the parking buffer
 den_prkng_500m_no_wtr_prkng_comp = den_prkng_500m_no_wtr %>% 
-  st_difference(den_prkng_sum_overall)
+  st_difference(den_prkng_sum_marg)
 
 den_prkng_500m_no_wtr_prkng_comp %>% mapview(layer.name = "comp, no water")
 
@@ -1315,11 +1428,11 @@ den_bg_int_prkng_500m_comp %>% mapview()
 
 ### Only the parking lots themselves----------
 #Again, for the weighted average
-den_prkng_sum_overall %>% mapview()
+den_prkng_sum_marg %>% mapview()
 den_metro_bg_no_wtr_geo %>% mapview()
 den_bg_int_prkng_only = den_metro_bg_no_wtr_geo %>% #we already dropped water
-  st_intersection(den_prkng_sum_overall) %>% #use union version
-  #drop the existing area variables in den_prkng_sum_overall
+  st_intersection(den_prkng_sum_marg) %>% #use union version
+  #drop the existing area variables in den_prkng_sum_marg
   dplyr::select(-contains("area")) %>%
   #link in the block-group area measurements; out of curiosity, I want to know
   #how 
@@ -1616,11 +1729,10 @@ lookup_bg_int_prkng_500m_area = den_bg_int_prkng_500m %>%
 save(lookup_bg_int_prkng_500m_area, file = "lookup_bg_int_prkng_500m_area.RData")
 
 
-#Begin with this, which we created above
 names(den_co_bg_s_by_a_gbd_long_wrangle)
 names(lookup_bg_ndvi_prkng)
 names(lookup_bg_int_prkng_500m_area)
-#rip for riparian. this is the final long-form dataset for scenario 2.
+table(den_co_bg_s_by_a_gbd_ndvi_long_wrangle$age_group_acs)
 den_co_bg_long_prkng = den_co_bg_s_by_a_gbd_long_wrangle %>% 
   left_join(lookup_bg_int_prkng_500m_area, by = "bg_fips") %>% #link area of 500 m buffer
   left_join(lookup_bg_ndvi_prkng, by = "bg_fips") %>% #link NDVI data
@@ -1641,9 +1753,9 @@ den_co_bg_long_prkng = den_co_bg_s_by_a_gbd_long_wrangle %>%
     paf_alt_prkng_20 =(rr_alt_prkng_20 -1)/rr_alt_prkng_20  ,
     
     #attributable deaths
-    attrib_o_prkng_100 = paf_alt_prkng_100*(rate_per_100k_est/100000)*pop_500m,
-    attrib_o_prkng_50 = paf_alt_prkng_50*(rate_per_100k_est/100000)*pop_500m,
-    attrib_o_prkng_20 = paf_alt_prkng_20*(rate_per_100k_est/100000)*pop_500m
+    attrib_d_prkng_100 = paf_alt_prkng_100*(rate_per_100k_est/100000)*pop_500m,
+    attrib_d_prkng_50 = paf_alt_prkng_50*(rate_per_100k_est/100000)*pop_500m,
+    attrib_d_prkng_20 = paf_alt_prkng_20*(rate_per_100k_est/100000)*pop_500m
   )
 
 
@@ -1652,61 +1764,129 @@ save(den_co_bg_long_prkng, file = "den_co_bg_long_prkng.RData")
 ## summarize long-form estimates----------
 names(den_co_bg_long_prkng)
 ### deaths prevented by age----------
-sc_4_deaths_prev_by_age_group = den_co_bg_long_prkng %>% 
+sc_prkng_deaths_prev_by_age = den_co_bg_long_prkng %>% 
   filter(ndvi_below_native_threshold==1) %>% #limit to pieces w NDVI below native
   group_by(age_group_acs) %>% 
   summarise(
-    attrib_o_prkng_100 = sum(attrib_o_prkng_100, na.rm=TRUE),
-    attrib_o_prkng_50 = sum(attrib_o_prkng_50, na.rm=TRUE),
-    attrib_o_prkng_20 = sum(attrib_o_prkng_20, na.rm=TRUE)
+    pop_500m = sum(pop_500m, na.rm=TRUE),
+    attrib_d_prkng_100 = sum(attrib_d_prkng_100, na.rm=TRUE),
+    attrib_d_prkng_50 = sum(attrib_d_prkng_50, na.rm=TRUE),
+    attrib_d_prkng_20 = sum(attrib_d_prkng_20, na.rm=TRUE)
   ) %>% 
   ungroup()
 
-sc_4_deaths_prev_by_age_group
+sc_prkng_deaths_prev_by_age
 #save this to Excel for easier copy/paste
 setwd(here("results"))
 writexl::write_xlsx(
-  sc_1_deaths_prev_by_age_group,
-  "sc_1_deaths_prev_by_age_group.xlsx"
+  sc_all_bg_deaths_prev_by_age,
+  "sc_all_bg_deaths_prev_by_age.xlsx"
 )
 setwd(here("data-processed"))
 
 ### deaths prevented by block group----------
-sc_4_deaths_prev_by_BG = den_co_bg_long_prkng %>% 
+load("den_bg_acs5_2019_wrangle_nogeo.RData")
+den_bg_acs5_2019_wrangle_nogeo
+sc_prkng_deaths_prev_by_bg = den_co_bg_long_prkng %>% 
   filter(ndvi_below_native_threshold==1) %>% #limit to pieces w NDVI below native
   group_by(bg_fips) %>% 
   summarise(
-    attrib_o_prkng_100 = sum(attrib_o_prkng_100, na.rm=TRUE),
-    attrib_o_prkng_50 = sum(attrib_o_prkng_50, na.rm=TRUE),
-    attrib_o_prkng_20 = sum(attrib_o_prkng_20, na.rm=TRUE)
+    pop_500m = sum(pop_500m, na.rm=TRUE),
+    attrib_d_prkng_100 = sum(attrib_d_prkng_100, na.rm=TRUE),
+    attrib_d_prkng_50 = sum(attrib_d_prkng_50, na.rm=TRUE),
+    attrib_d_prkng_20 = sum(attrib_d_prkng_20, na.rm=TRUE)
   ) %>% 
-  ungroup()
+  ungroup() 
+  #link overall population data to calculate a rate
 
-sc_4_deaths_prev_by_BG
+
+
+sc_prkng_deaths_prev_by_bg
 #visualize this
 library(viridis)
 load("den_metro_bg_geo.RData")
-sc_4_deaths_prev_by_BG %>% 
+sc_prkng_deaths_prev_by_bg %>% 
   ungroup() %>% 
   left_join(den_metro_bg_geo, by = "bg_fips") %>% 
   st_as_sf() %>% 
   mapview(
     layer.name = "Attributable deaths, all-cause",
-    zcol = "attrib_o_prkng_100",
+    zcol = "attrib_d_prkng_100",
     col.regions = viridis_pal(direction=-1)
   )
 
 ### deaths prevented, overall----------
-sc_4_deaths_prev_overall = den_co_bg_long_prkng %>% 
+names(den_co_bg_long_prkng)
+sc_prkng_deaths_prev_marg = den_co_bg_long_prkng %>% 
   filter(ndvi_below_native_threshold==1) %>% #limit to pieces w NDVI below native
   group_by(ndvi_below_native_threshold) %>% 
   summarise(
-    attrib_o_prkng_100 = sum(attrib_o_prkng_100, na.rm=TRUE),
-    attrib_o_prkng_50 = sum(attrib_o_prkng_50, na.rm=TRUE),
-    attrib_o_prkng_20 = sum(attrib_o_prkng_20, na.rm=TRUE)
+    pop_500m = sum(pop_500m, na.rm=TRUE),
+    attrib_d_prkng_100 = sum(attrib_d_prkng_100, na.rm=TRUE),
+    attrib_d_prkng_50 = sum(attrib_d_prkng_50, na.rm=TRUE),
+    attrib_d_prkng_20 = sum(attrib_d_prkng_20, na.rm=TRUE)
   ) %>% 
   ungroup()
 
 
-sc_4_deaths_prev_overall
+sc_prkng_deaths_prev_marg
+
+### Make all of those long-form-------
+#write a function because same code x 3
+pivot_longer_sc_prkng = function(df){
+  df %>% 
+    mutate(scenario = "prkng") %>% 
+    pivot_longer(
+      cols = starts_with("attrib"),
+      names_to = "scenario_sub",
+      values_to = "attrib_deaths"
+    ) %>% 
+    mutate(
+      scenario_sub = case_when(
+        scenario_sub == "attrib_d_prkng_20" ~ "20-pct-prkng",
+        scenario_sub == "attrib_d_prkng_50" ~ "50-pct-prkng",
+        scenario_sub == "attrib_d_prkng_100" ~ "100-pct-prkng"
+      )
+    ) %>% 
+    rename(pop_affected = pop_500m)
+}
+
+#lf for long-form
+sc_prkng_deaths_prev_by_age_lf = sc_prkng_deaths_prev_by_age %>% 
+  pivot_longer_sc_prkng()
+
+sc_prkng_deaths_prev_by_age_lf
+
+sc_prkng_deaths_prev_by_bg_lf =sc_prkng_deaths_prev_by_bg %>% 
+  pivot_longer_sc_prkng()
+
+sc_prkng_deaths_prev_by_bg_lf
+
+sc_prkng_deaths_prev_marg_lf = sc_prkng_deaths_prev_marg %>% 
+  pivot_longer_sc_prkng()
+
+sc_prkng_deaths_prev_marg_lf
+
+# Combine all scenarios for easier summary
+all_sc_by_age_lf = sc_all_bg_deaths_prev_by_age_lf %>% 
+  bind_rows(
+    sc_rip_deaths_prev_by_age_lf,
+    sc_prkng_deaths_prev_by_age_lf
+  )
+
+
+all_sc_by_bg_lf = sc_all_bg_deaths_prev_by_bg_lf %>% 
+  bind_rows(
+    sc_rip_deaths_prev_by_bg_lf,
+    sc_prkng_deaths_prev_by_bg_lf
+  )
+
+all_sc_marg_lf = sc_all_bg_deaths_prev_marg_lf %>% 
+  bind_rows(
+    sc_rip_deaths_prev_marg_lf,
+    sc_prkng_deaths_prev_marg_lf
+  )
+
+setwd(here("data-processed"))
+save(all_sc_marg_lf, file = "all_sc_marg_lf.RData")
 
