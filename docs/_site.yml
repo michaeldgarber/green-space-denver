@@ -4,6 +4,7 @@ navbar:
   left:
     - icon: fa-home
       href: https://michaeldgarber.github.io/
+      text: "MDG"
     - text: "green-space-denver"
       href: index.html
 output:
