@@ -27,7 +27,7 @@ names(den_parking)
 # summarize area & keep geometry for unary uion----------
 #how many square miles of parking in Denver?
 #calculate using the unary union method
-den_parking_sum_overall =  den_parking %>% 
+den_parking_sum_union =  den_parking %>% 
   mutate(dummy=1) %>%
   group_by(dummy) %>%
   summarise(
@@ -36,8 +36,8 @@ den_parking_sum_overall =  den_parking %>%
   ungroup() %>% 
   st_simplify() %>% 
   st_as_sf()
-save(den_parking_sum_overall,  file = "den_parking_sum_overall.RData")
-object.size(den_parking_sum_overall)
+save(den_parking_sum_union,  file = "den_parking_sum_union.RData")
+object.size(den_parking_sum_union)
 
 #summarize by type. this will also create a smaller file.
 den_parking_sum_by_type =  den_parking %>% 
@@ -59,18 +59,18 @@ den_parking_sum_pervious_only  = den_parking_sum_by_type %>%
 den_parking_sum_pervious_only %>% mapview()
 
 #denver is 154.7 mi2
-den_parking_sum_overall$area_mi2/155
+den_parking_sum_union$area_mi2/155
 #so about 9% has been paved for parking.
-den_parking_sum_overall %>% mapview()
+den_parking_sum_union %>% mapview()
 
 # 500 m buffer--------
 #for some reason, this buffer code is taking forever. 
 setwd(here("data-processed"))
-load("den_parking_sum_overall.RData")
-den_parking_sum_overall %>% mapview()
+load("den_parking_sum_union.RData")
+den_parking_sum_union %>% mapview()
 #500 meters, but we're in feet
 dist_500_m = 500*3.28084
-den_parking_500m = den_parking_sum_overall %>% 
+den_parking_500m = den_parking_sum_union %>% 
   st_union() %>% 
   st_buffer(dist_500_m) #500 meters, but we're in feet
 

@@ -447,7 +447,7 @@ mv_sc_all_bg_deaths_prev_by_bg_pp=sc_all_bg_deaths_prev_by_bg %>%
   st_as_sf() %>% 
   mapview(
     layer.name = "Attributable deaths, all-cause",
-    zcol = "attrib_d_pp_alt_100",
+    zcol = "attrib_d_alt_100",
     col.regions = viridis_pal(direction=-1)
   )
 
@@ -1392,20 +1392,20 @@ den_prkng_500m_no_wtr %>% mapview()
 ## Symmetric difference between parking lots and 500 m buffer
 #Remove parking lots themselves from the buffer to compute the
 #weighted average as we did for scenario 2
-load("den_parking_sum_marg.RData") #ok as parking since it's loaded elsewhere
-den_prkng_sum_marg = den_parking_sum_marg %>% 
+den_prkng_500m_no_area = den_prkng_500m %>% 
   dplyr::select(geometry) %>%   #remove area measurements
   st_as_sf()
-den_prkng_sum_marg %>% mapview()
+den_parking_sum_union %>% mapview()
+
 #remove parking from the parking buffer (i.e., the complement (comp))
 den_prkng_500m_comp = den_prkng_500m  %>% 
-  st_difference(den_prkng_sum_marg) %>% 
+  st_difference(den_parking_sum_union) %>% 
   st_as_sf()
 den_prkng_500m_comp %>% mapview(layer.name = "comp")
 
 #remove water and parking from the parking buffer
 den_prkng_500m_no_wtr_prkng_comp = den_prkng_500m_no_wtr %>% 
-  st_difference(den_prkng_sum_marg)
+  st_difference(den_parking_sum_union)
 
 den_prkng_500m_no_wtr_prkng_comp %>% mapview(layer.name = "comp, no water")
 
@@ -1448,11 +1448,11 @@ den_bg_int_prkng_500m_comp %>% mapview()
 
 ### Only the parking lots themselves----------
 #Again, for the weighted average
-den_prkng_sum_marg %>% mapview()
+den_parking_sum_union %>% mapview()
 den_metro_bg_no_wtr_geo %>% mapview()
 den_bg_int_prkng_only = den_metro_bg_no_wtr_geo %>% #we already dropped water
-  st_intersection(den_prkng_sum_marg) %>% #use union version
-  #drop the existing area variables in den_prkng_sum_marg
+  st_intersection(den_parking_sum_union) %>% #use union version
+  #drop the existing area variables in den_parking_sum_union
   dplyr::select(-contains("area")) %>%
   #link in the block-group area measurements; out of curiosity, I want to know
   #how 
@@ -1911,4 +1911,4 @@ all_sc_marg_lf = sc_all_bg_deaths_prev_marg_lf %>%
 
 setwd(here("data-processed"))
 save(all_sc_marg_lf, file = "all_sc_marg_lf.RData")
-
+all_sc_marg_lf

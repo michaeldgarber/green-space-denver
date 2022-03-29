@@ -33,7 +33,7 @@ mv@map %>%
 ```{r}
 #Add full screen control to a combo mapview...multiple layers at once
 mv_1 = den_co_tract_geo %>% 
-  mapview(zcol = "area_mi2", layer.name = "area")
+  mapview(zcol = "area_mi2_tract", layer.name = "area")
 mv_2 = den_co_tract_geo %>% 
   mapview(zcol = "county_fips", layer.name = "county")
 

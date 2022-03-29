@@ -1,12 +1,11 @@
 name: "green-space-denver"
 output_dir: "."
 navbar:
-  title: "green-space-denver"
   left:
-    - text: "Project Updates"
+    - icon: fa-home
+      href: https://michaeldgarber.github.io/
+    - text: "green-space-denver"
       href: index.html
 output:
   html_document:
-    toc: true
-    toc_float: true
     highlight: textmate
