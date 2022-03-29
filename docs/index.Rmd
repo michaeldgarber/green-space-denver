@@ -1,5 +1,10 @@
 ---
 title: "green-space-denver"
+output:
+  html_document:
+    highlight: textmate
+    include:
+      after_body: footer.html
 ---
 
 The purpose of this page is to present some updates related to the Denver green-space health-impact assessment. The source repository for this site is https://github.com/michaeldgarber/green-space-denver

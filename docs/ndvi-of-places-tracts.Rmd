@@ -4,6 +4,8 @@ author: "Michael D Garber"
 date: "February 7, 2022"
 output: 
   html_document: 
+    toc: true #include the table of contents at the sub-page level instead of yml
+    toc_float: true
     number_sections: yes
 ---
 
