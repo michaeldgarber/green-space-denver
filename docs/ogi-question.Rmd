@@ -1,0 +1,65 @@
+---
+title: "OGI question re. regional projects"
+---
+
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+library(here)
+library(tidyverse)
+library(sf)
+library(mapview)
+library(knitr) #to make sure kable works
+library(leaflet)
+library(leaflet.extras)
+```
+
+Load data (I thought I'd leave the code here so you can see how I'm classifying the short-term projects).
+```{r, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, results=FALSE}
+setwd(here("data-input")) #ogi for office of green infrastructure - regional projects
+ogi_reg_proj  = st_read(dsn ="from-office-green-infra") %>%
+  st_transform(2876) %>% #local feet
+  st_make_valid() %>% 
+  st_simplify() %>% #reduce the object size a little
+  mutate(
+    #Per CB, these are the short-term priority projects likely to be built:
+    short_term_proj = case_when(
+      PROJECT_ID == "2020_REG_MCDONOUGH_PK" ~1,
+      PROJECT_ID == "2020_SUB_WBVWPARK"~1,
+      PROJECT_ID == "2020_REG_WEIRIRV"~1,
+      PROJECT_ID == "2020_REG_SUNK"~1,
+      PROJECT_ID == "2020_REG_38THFOX"~1,
+      TRUE ~0
+    )
+  )
+```
+
+List of project IDs
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+nrow(ogi_reg_proj) #23 rows
+
+#list of project-ids
+ogi_reg_proj %>% 
+  st_set_geometry(NULL) %>% 
+  as_tibble() %>% 
+  dplyr::select(PROJECT_ID) %>% 
+  arrange(PROJECT_ID) %>% 
+  knitr::kable()
+```
+
+```{r, warning=FALSE, message=FALSE}
+mv_ogi_project_id = ogi_reg_proj %>% 
+  mapview::mapview(
+    layer.name = "PROJECT_ID",
+    zcol = "PROJECT_ID")
+mv_ogi_project_id@map %>% 
+  leaflet.extras::addFullscreenControl()
+```
+
+It looks like just two of the projects coded as short-term are appearing
+```{r, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
+ogi_reg_proj %>% 
+  filter(short_term_proj==1) %>% 
+  st_set_geometry(NULL) %>% 
+  dplyr::select(PROJECT_ID, short_term_proj) %>% 
+  as_tibble()
+ogi_reg_proj %>% mapview(zcol = "short_term_proj")
+```

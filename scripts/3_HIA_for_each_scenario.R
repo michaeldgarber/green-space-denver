@@ -244,6 +244,9 @@ load("lookup_den_metro_bg_tract.RData")
 ndvi_native_threshold = .5
 #update 3/16/22 removing the date from the filename. it gets too long,
 #and it's in the columns.
+class(ndvi_den_co_20210704)
+den_co_bg_no_wtr_4326 %>% mapview()
+
 den_co_bg_ndvi = ndvi_den_co_20210704 %>% 
   #see documentation. we need to take a weighted average based on area
   terra::extract(
@@ -291,7 +294,8 @@ den_co_bg_ndvi = ndvi_den_co_20210704 %>%
 
 
 names(den_co_bg_ndvi)
-den_co_bg_ndvi
+den_co_bg_ndvi %>% mapview(zcol = "ndvi_mean_wt")
+
 save(den_co_bg_ndvi, file = "den_co_bg_ndvi.RData")
 
 ## Visualize NDVI by census block group--------
@@ -764,9 +768,11 @@ den_bg_int_wtr_500m_50ft_comp = den_metro_bg_no_wtr_geo %>%
   st_intersection(den_co_osm_wtr_500m_50ft_comp) %>% #unioned version
   mutate(
     area_ft2_bg_500m_50ft_comp = as.numeric(st_area(geometry)),
-    area_mi2_bg_500m_50ft_comp = area_ft2_bg_500m_50ft_comp*3.58701e-8
+    area_mi2_bg_500m_50ft_comp = area_ft2_bg_500m_50ft_comp/(5280**2)
   ) %>% 
   bg_int_wrangle_last_steps()
+
+
 
 #### Then the intervention areas themselves---------
 den_bg_int_wtr_200ft = den_metro_bg_no_wtr_geo %>% 
@@ -1370,13 +1376,72 @@ sc_rip_deaths_prev_marg_lf = sc_rip_deaths_prev_marg %>%
 
 sc_rip_deaths_prev_marg_lf
 
-# Stormwater scenario--------
+# Scenario 3. Stormwater management --------
 
+## Per conversations with CB @ OGI, we consider 3 sub-scenarios.
+#1. Regional projects
+#2. OGI capital budget
+#3. Stormwater regulations on new developments or re-developments.
+#See this script (0_read_office_green_inf_data.R) for additional detail.
+
+
+setwd(here("data-processed"))
+load("ogi_reg_proj.RData") 
+
+## Prep buffers around regional OGI projects--------
+# Data managed here: ~0_read_office_green_inf_data.R
+
+### 500 m buffer around all projects--------
+names(ogi_reg_proj)
+ogi_reg_proj_marg  = ogi_reg_proj %>% 
+  mutate(dummy=1) %>%
+  group_by(dummy) %>%
+  summarise(
+    area_ft2_ogi_proj = sum(area_ft2_ogi_proj),
+    area_ac_ogi_proj  = sum(area_ac_ogi_proj),
+    area_mi2_ogi_proj = sum(area_mi2_ogi_proj)  ,
+  ) %>% 
+  ungroup() %>% 
+  st_simplify() %>% 
+  st_as_sf() %>% 
+  dplyr::select(-dummy)
+
+ogi_reg_proj_marg %>% mapview(zcol = "area_ac_ogi_proj")
+
+st_crs(ogi_reg_proj_marg)
+dist_500_m = 500*3.28084
+ogi_reg_proj_marg_500m = ogi_reg_proj_marg %>% 
+  st_union() %>% 
+  st_buffer(dist_500_m) #500 meters, but we're in feet
+
+setwd(here("data-processed"))
+save(ogi_reg_proj_marg_500m, file = "ogi_reg_proj_marg_500m.RData")
+ogi_reg_proj_marg_500m %>% mapview()
+
+### 500 m buffer by priority (short-term vs later); see docs--------
+table(ogi_reg_proj$short_term_proj)
+ogi_reg_proj %>% mapview(zcol = "short_term_proj")
+ogi_reg_proj_by_priority  = ogi_reg_proj %>% 
+  group_by(short_term_proj) %>%
+  summarise(
+    area_ft2_ogi_proj = sum(area_ft2_ogi_proj),
+    area_ac_ogi_proj  = sum(area_ac_ogi_proj),
+    area_mi2_ogi_proj = sum(area_mi2_ogi_proj)  ,
+  ) %>% 
+  ungroup() %>% 
+  st_simplify() %>% 
+  st_as_sf() 
+
+ogi_reg_proj_by_priority_500m = ogi_reg_proj_by_priority %>% 
+  st_buffer(dist_500_m) #500 meters, but we're in feet
+
+ogi_reg_proj_by_priority_500m %>% mapview(zcol = "short_term_proj")
 # Scenario 4: Parking -----------
 ## Prep parking buffers--------
 #Parking data managd here: 0_read_denver_prkng.R
 setwd(here("data-processed"))
-load("den_parking_500m.RData") #I'm leaving this as parking and not prkng
+load("den_parking_500m.RData") #I'm leaving this as parking and not prkng.
+                              #Note I made the buffer in another code b/c it takes a while.
 den_prkng_500m = den_parking_500m %>% #for redundancy to be sure find + replace works.
   st_as_sf()
 load("den_co_osm_wtr_union.RData")
