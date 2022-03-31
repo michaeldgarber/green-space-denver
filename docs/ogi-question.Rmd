@@ -12,7 +12,7 @@ library(leaflet)
 library(leaflet.extras)
 ```
 
-Load data (I thought I'd leave the code here so you can see how I'm classifying the short-term projects).
+source code here: https://github.com/michaeldgarber/green-space-denver/blob/main/docs/ogi-question.Rmd
 ```{r, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, results=FALSE}
 setwd(here("data-input")) #ogi for office of green infrastructure - regional projects
 ogi_reg_proj  = st_read(dsn ="from-office-green-infra") %>%
@@ -20,7 +20,7 @@ ogi_reg_proj  = st_read(dsn ="from-office-green-infra") %>%
   st_make_valid() %>% 
   st_simplify() %>% #reduce the object size a little
   mutate(
-    #Per CB, these are the short-term priority projects likely to be built:
+    #Per CB, short-term priority projects likely to be built:
     short_term_proj = case_when(
       PROJECT_ID == "2020_REG_MCDONOUGH_PK" ~1,
       PROJECT_ID == "2020_SUB_WBVWPARK"~1,
@@ -32,7 +32,7 @@ ogi_reg_proj  = st_read(dsn ="from-office-green-infra") %>%
   )
 ```
 
-List of project IDs
+List of project IDs in the data
 ```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 nrow(ogi_reg_proj) #23 rows
 
@@ -45,7 +45,7 @@ ogi_reg_proj %>%
   knitr::kable()
 ```
 
-```{r, warning=FALSE, message=FALSE}
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
 mv_ogi_project_id = ogi_reg_proj %>% 
   mapview::mapview(
     layer.name = "PROJECT_ID",
@@ -54,8 +54,8 @@ mv_ogi_project_id@map %>%
   leaflet.extras::addFullscreenControl()
 ```
 
-It looks like just two of the projects coded as short-term are appearing
-```{r, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
+It looks like just two of the five projects coded as short-term are appearing.
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 ogi_reg_proj %>% 
   filter(short_term_proj==1) %>% 
   st_set_geometry(NULL) %>% 

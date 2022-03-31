@@ -35,7 +35,8 @@ den_parking_sum_union =  den_parking %>%
     area_mi2 = sum(area_mi2)) %>% 
   ungroup() %>% 
   st_simplify() %>% 
-  st_as_sf()
+  st_as_sf() %>% 
+  dplyr::select(-dummy)
 save(den_parking_sum_union,  file = "den_parking_sum_union.RData")
 object.size(den_parking_sum_union)
 
