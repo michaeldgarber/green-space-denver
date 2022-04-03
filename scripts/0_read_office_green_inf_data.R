@@ -28,11 +28,11 @@ library(here)
 #constrain the actual footprint.
 # •	We would expect ~75% of a facility footprint to have native/adapted vegetation
 # •	Short term / likely program goals are the build these projects:
-#   o	2020_REG_MCDONOUGH_PK
+#   o	2020MCDONOUGH_PK
 # o	2020_SUB_WBVWPARK
-# o	2020_REG_WEIRIRV
-# o	2020_REG_SUNK
-# o	2020_REG_38THFOX
+# o	2020WEIRIRV
+# o	2020SUNK
+# o	202038THFOX
 # •	Long term / aspiration program goals are to build all of the remaining projects
 
 # Reference sites for Landsat:
@@ -78,8 +78,12 @@ library(here)
 
 ## Load regional project data---------
 #ogi for office of green infrastructure - regional projects
-setwd(here("data-input"))
-ogi_reg_proj  = st_read(dsn ="from-office-green-infra") %>%
+library(here)
+library(tidyverse)
+library(sf)
+library(mapview)
+setwd(here("data-input", "office-green-infra"))
+ogi_proj  = st_read(dsn ="reg-proj-take-2") %>%
   st_transform(2876) %>% #local feet
   st_make_valid() %>% 
   st_simplify() %>% #reduce the object size a bit
@@ -90,25 +94,35 @@ ogi_reg_proj  = st_read(dsn ="from-office-green-infra") %>%
     area_mi2_ogi_proj = area_ft2_ogi_proj/(5280**2)  ,
     #per colin, these are the short-term priority projects likely to be built:
     short_term_proj = case_when(
-      PROJECT_ID == "2020_REG_MCDONOUGH_PK" ~1,
+      PROJECT_ID == "2020MCDONOUGH_PK" ~1,
       PROJECT_ID == "2020_SUB_WBVWPARK"~1,
-      PROJECT_ID == "2020_REG_WEIRIRV"~1,
-      PROJECT_ID == "2020_REG_SUNK"~1,
-      PROJECT_ID == "2020_REG_38THFOX"~1,
+      PROJECT_ID == "2020WEIRIRV"~1,
+      PROJECT_ID == "2020SUNK"~1,
+      PROJECT_ID == "202038THFOX"~1,
       TRUE ~0
     )
   )
 
-table(ogi_reg_proj$PROJECT_ID)
-
-ogi_reg_proj %>% dplyr::select(PROJECT_ID) %>% 
+class(ogi_proj)
+table(ogi_proj$PROJECT_ID)
+table(ogi_proj$short_term_proj)
+nrow(ogi_proj)
+ogi_proj %>% dplyr::select(PROJECT_ID) %>% 
   st_set_geometry(NULL) %>% 
   as_tibble()
 
 setwd(here("data-processed"))
-save(ogi_reg_proj, file = "ogi_reg_proj.RData")
-ogi_reg_proj %>% mapview(zcol = "area_ac_ogi_proj")
-ogi_reg_proj %>% mapview(zcol = "short_term_proj")
+save(ogi_proj, file = "ogi_proj.RData")
+ogi_proj %>% mapview(zcol = "area_ac_ogi_proj")
+ogi_proj %>% 
+  mapview(
+    zcol = "PROJECT_ID",
+    col.regions = rainbow(n = n_distinct(ogi_proj$PROJECT_ID))
+  )
+ogi_proj %>% 
+  mapview(
+    zcol = "short_term_proj",
+    col.regions = rainbow(n=2))
 
 #The code continues in the HIA code. The files aren't very big,
 #so it's easier to have everything there so I don't have to switch between scripts.
