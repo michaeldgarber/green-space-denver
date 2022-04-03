@@ -1,7 +1,7 @@
 ---
 title: "Preliminary health-impact assessment results"
 author: "Michael D Garber"
-date: "March 28, 2022"
+date: "Revised April 4 2022"
 output: 
   html_document:
     toc: true  
@@ -131,14 +131,15 @@ mv_rip_all3@map %>%
 We obtained spatial data on [parking lots](https://www.denvergov.org/opendata/dataset/parking-lots-2016) from the City of Denver Open Data Catalog. About 9% of the city is covered with parking lots:
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
-load("den_parking_sum_overall.RData")
-den_parking_sum_overall %>% 
+load("den_prkng_sum_marg.RData")
+den_prkng_sum_marg %>% 
   st_set_geometry(NULL) %>% 
-  dplyr::select(-dummy) %>% 
   mutate(
     den_area_mi2_total = 155,
     percent_area_covered_by_parking = area_mi2/den_area_mi2_total
-         )
+         ) %>% 
+  dplyr::select(-area_ft2) %>% 
+  knitr::kable()
 ```
 
 We similarly measured the NDVI on the parking lots as well as the NDVI in the census block groups that are within a 500-m buffer radius of any parking lots (which is most).
@@ -157,6 +158,8 @@ setwd(here("data-processed"))
 load("den_bg_int_prkng_500m_comp_ndvi.RData")
 load("den_bg_int_prkng_only_ndvi.RData")
 load("study_area_2876.RData")
+pal_terrain_col = rev(terrain.colors(100)) 
+library(leaflet.extras)
 #### Buffer excluding the parking---------
 mv_den_bg_int_prkng_500m_comp_ndvi= den_bg_int_prkng_500m_comp_ndvi %>% 
   mutate(
@@ -202,6 +205,12 @@ load("all_sc_marg_lf.RData")
 all_sc_marg_lf %>%  
   dplyr::select(-starts_with("ndvi_below")) %>% 
   dplyr::select(scenario, scenario_sub, pop_affected, attrib_deaths) %>% 
-  kable()
+  knitr::kable()
 ```
 
+# Next steps (as of April 4, 2022)
+* Add equity component
+
+* Add economic-impact attributable to health
+
+* Incorporate uncertainty throughout (via bootstrapping)

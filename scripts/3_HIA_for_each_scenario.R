@@ -1753,6 +1753,47 @@ sc_ogi_proj_deaths_prev_marg_lf = sc_ogi_proj_deaths_prev_marg %>%
 
 sc_ogi_proj_deaths_prev_marg_lf
 
+## Other Office of Green Infrastructure scenarios -----------
+### Green streets---------
+#Status quo:
+# 2.7 miles per year, and each mile of street equates to 0.15 acres
+#1 acre equals 43560 square feet
+.15*43560
+#assume a rectangle, so l*w=a; we know l; solve for w; w=a/l
+(.15*43560)/5280
+#so currently about 1.2 feet per foot of street....
+
+#goal is 0.75 acres per green mile
+(.75*43560)/5280 #so 6.1875 feet
+
+#Assume green streets can occur on all road types except motorway and trunk
+#randomly sample a cumulative sum of just below one mile
+load("den_osm_roads") #see for definitions
+#~/0_load_denver_osm_roads.R
+den_osm_roads_shuffle = den_osm_roads %>% 
+  filter(highway_primary_or_lower==1) %>% 
+  slice_sample(prop=1) %>% #shuffle the dataset by row so the cumulative sum is random
+  mutate(
+    length_mi_cumsum=cumsum(length_mi),
+    #status quo is 2.7 miles
+    #goal to increase to 5.
+    length_mi_cumsum_cat = case_when(
+      length_mi_cumsum < 2.7 ~ "<2.7",
+      length_mi_cumsum >=2.7 | length_mi_cumsum < 5 ~ "2.7-5.0",
+      length_mi_cumsum >5 ~ "5.0+"
+    ) 
+  )
+
+den_osm_roads_shuffle %>% 
+  filter(length_mi_cumsum_cat== "<2.7") %>% 
+  mapview(zcol = "length_mi_cumsum")
+den_osm_roads_shuffle %>% 
+  filter(length_mi_cumsum < 5) %>% 
+  mapview(zcol = "length_mi_cumsum")
+
+### Stormwater regulations---------
+#How to operationalize? Randomly sample parcels based on size class
+load("den_landuse_2018.RData")
 
 # 4. Scenario 4: Parking -----------
 ## Prep parking buffers--------
