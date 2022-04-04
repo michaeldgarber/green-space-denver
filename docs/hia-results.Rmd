@@ -127,60 +127,71 @@ mv_rip_all3@map %>%
   addFullscreenControl()
 ```
 
+# Scenario 3: green infrastructure
+We spoke with representatives at the local Office of Green Infrastructure, and they described three categories of initiatives--some planned, some aspirational--that could include native or adapted plants.
+
+* Large ponds or basin located on public property that treat collect and treat stormwater after it has been collected in a storm pipe. They are usually vegetated, often with native or adapted plants.
+    * Expect about 75% of the facility's footprint to have native or adapted plants.
+    * 20% of the block group's area is as green as native plants
+  
+* Green streets
+    * Historically, about 2.7 miles of green streets each year, and each mile equates to about 0.15 acres of native or vegetated landscape.
+    * Short term goal: increase output to 5.0 miles of green streets; same amount of vegetation per green mile
+    * Aspirational goal: output to 5.0 miles; increase vegetated area to 0.75 acres per green mile
+  
+* Site redevelopment storwmater controls 
+    * As properties develop or redevelop, they may be required to include stormwater runoff control measures to offset negative impacts to flooding and water quality downstream of the site associated with the impervious surfaces added during the development. These stormwater control measures are often green-on-the-ground practices vegetated with native or adapted plants.
+    * The requirements may differ by parcel size. A rough guess that projects that may require stormwater control by parcel size:
+        * greater than 1 acre: about 100 sites per year
+        * 0.5-1.0 acre: about 25 sites per year
+        * less than 0.5 acre: 400 sites per year
+        
+        
+
 # Scenario 4: add native plants to parking lots
 We obtained spatial data on [parking lots](https://www.denvergov.org/opendata/dataset/parking-lots-2016) from the City of Denver Open Data Catalog. About 9% of the city is covered with parking lots:
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
-load("den_prkng_sum_marg.RData")
-den_prkng_sum_marg %>% 
+load("den_prkng_marg.RData")
+den_prkng_marg %>% 
   st_set_geometry(NULL) %>% 
   mutate(
     den_area_mi2_total = 155,
-    percent_area_covered_by_parking = area_mi2/den_area_mi2_total
+    percent_area_covered_by_parking = area_mi2_prkng/den_area_mi2_total
          ) %>% 
-  dplyr::select(-area_ft2) %>% 
+  dplyr::select(-starts_with("area_ft2")) %>% 
   knitr::kable()
 ```
 
 We similarly measured the NDVI on the parking lots as well as the NDVI in the census block groups that are within a 500-m buffer radius of any parking lots (which is most).
 
-We present a small subset, as the file size with the full map rendered exceeds GitHub's file-upload limits:
+We present a small subset near Union Station, as the file size visualizing the NDVI measurements for the full city exceeds GitHub's file-upload limits:
 
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
-#080310017021
-# 080310017022
-#080310020001
-#080310019021
-#080310017015
-#080310017013
-#080310017011
 setwd(here("data-processed"))
 load("den_bg_int_prkng_500m_comp_ndvi.RData")
 load("den_bg_int_prkng_only_ndvi.RData")
 load("study_area_2876.RData")
+load("union_station_1_mi_4326.RData") # we will limit to a 1-mi radius around union station
 pal_terrain_col = rev(terrain.colors(100)) 
 library(leaflet.extras)
+library(mapview)
 #### Buffer excluding the parking---------
-mv_den_bg_int_prkng_500m_comp_ndvi= den_bg_int_prkng_500m_comp_ndvi %>% 
-  mutate(
-    bg_for_github = case_when(
-      bg_fips %in% c("080310017021", "080310017022", "080310020001", "080310019021", "080310017015", "080310017013", "080310017011", "080310017014") ~1,
-      TRUE ~ 0
-    )) %>% 
-      filter(bg_for_github==1) %>% 
+sf::sf_use_s2(FALSE) #have to use this as I was getting an error that loop not valid
+mv_union_sta_den_bg_int_prkng_500m_comp_ndvi= den_bg_int_prkng_500m_comp_ndvi %>% 
+  st_intersection(union_station_1_mi_4326) %>% 
+  st_make_valid() %>% 
+  st_buffer(0) %>% 
   mapview(
     col.regions = pal_terrain_col,
     layer.name = "NDVI, 500 m buffer, parking",
     zcol = "ndvi_mean_wt_500m_prkng_comp")
 
 #### The parking only----------
-mv_den_bg_int_prkng_only_ndvi= den_bg_int_prkng_only_ndvi %>% 
-    mutate(
-    bg_for_github = case_when(
-      bg_fips %in% c("080310017021", "080310017022", "080310020001", "080310019021", "080310017015", "080310017013", "080310017011", "080310017014") ~1,
-      TRUE ~ 0
-    )) %>% 
-      filter(bg_for_github==1) %>% 
+mv_union_sta_den_bg_int_prkng_only_ndvi= den_bg_int_prkng_only_ndvi %>% 
+  st_intersection(union_station_1_mi_4326) %>% 
+  st_make_valid() %>% 
+  st_buffer(0) %>% 
   mapview(
     col.regions = pal_terrain_col,
     layer.name = "NDVI, parking only",
@@ -188,11 +199,11 @@ mv_den_bg_int_prkng_only_ndvi= den_bg_int_prkng_only_ndvi %>%
 
 
 #### Visualize all at once--------------
-mv_prkng_both = mv_den_bg_int_prkng_500m_comp_ndvi+ mv_den_bg_int_prkng_only_ndvi 
+mv_prkng_both = mv_union_sta_den_bg_int_prkng_500m_comp_ndvi+ 
+  mv_union_sta_den_bg_int_prkng_only_ndvi
 
 mv_prkng_both@map %>% 
   addFullscreenControl()
-
 ```
 
 

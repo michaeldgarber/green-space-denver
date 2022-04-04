@@ -2274,6 +2274,7 @@ sc_parcel_deaths_prev_marg_lf
 setwd(here("data-processed"))
 load("den_prkng_500m.RData") #Note rename from parking to prkng
 load("den_prkng_marg.RData") #I used to call this sum_union; marg for marginal is more clear to me
+names(den_prkng_marg)
 den_prkng_500m = den_prkng_500m %>% #for redundancy to be sure find + replace works.
   st_as_sf()
 load("den_co_osm_wtr_union.RData")
