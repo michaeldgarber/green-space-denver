@@ -69,14 +69,16 @@ mv_ndvi_den_co_20210704 + mv_den_co_tract_geo
 # ~/green-space-denver/scripts/2_ndvi_tract_bg_park_den.R
 load("den_metro_tract_no_wtr_geo.RData")
 names(den_metro_tract_no_wtr_geo)
+#per above, there are a few on this july 4 2021 
+#where the data are not complete. create a filter so you
+#can remove as needed. If you gather more NDVI data with a wider
+#bounding box, this may not be necessary
+#ideally, this would be coded more upstream, but we only
+#need it for this application, so okay here.
+#remove by neighborhood, specifically the following nbhd ids: 23, 28, 45
+load("")
 den_co_tract_no_wtr_geo = den_metro_tract_no_wtr_geo %>% 
   filter(county_fips == "031") %>% 
-  #per above, there are a few on this july 4 2021 
-  #where the data are not complete. create a filter so you
-  #can remove as needed. If you gather more NDVI data with a wider
-  #bounding box, this may not be necessary
-  #ideally, this would be coded more upstream, but we only
-  #need it for this application, so okay here.
   mutate(
     tracts_north_east_no_ls8 = case_when( #no landsat-8 data
       tract_fips == "08031980000" ~ 1,
@@ -1754,6 +1756,7 @@ sc_ogi_proj_deaths_prev_marg_lf = sc_ogi_proj_deaths_prev_marg %>%
 sc_ogi_proj_deaths_prev_marg_lf
 
 ## Other Office of Green Infrastructure scenarios -----------
+#Overarching question here shoudl be: what overall timeframe? 5 yr?
 ### Green streets---------
 #Status quo:
 # 2.7 miles per year, and each mile of street equates to 0.15 acres
@@ -1794,6 +1797,32 @@ den_osm_roads_shuffle %>%
 ### Stormwater regulations---------
 #How to operationalize? Randomly sample parcels based on size class
 load("den_landuse_2018.RData")
+names(den_landuse_2018)
+#As suggested by CB, we could expect the following new or redevelopments per year:
+# •	100 sites / year > 1.0 ac
+# •	25 sites / year 0.5 to 1.0 ac
+# •	400 sites / year < 0.5 ac and adding 3000 SF of impervious cover
+#call these large, medium, small
+table(den_landuse_2018$area_ac_cat)
+den_landuse_sample_large = den_landuse_2018 %>% 
+  filter(area_ac_cat == ">1.0 acre") %>% 
+  slice_sample(n=100, replace=FALSE)
+
+den_landuse_sample_large %>% mapview()
+den_landuse_sample_medium = den_landuse_2018 %>% 
+  filter(area_ac_cat == "0.5-1.0 ac") %>% 
+  slice_sample(n=25, replace=FALSE)
+
+den_landuse_sample_medium %>% mapview()
+
+den_landuse_sample_small = den_landuse_2018 %>% 
+  filter(area_ac_cat == "<0.5 acre") %>% 
+  slice_sample(n=400, replace=FALSE)
+
+den_landuse_sample_small %>% mapview()
+
+
+
 
 # 4. Scenario 4: Parking -----------
 ## Prep parking buffers--------

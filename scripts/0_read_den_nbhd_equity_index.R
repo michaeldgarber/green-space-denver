@@ -6,14 +6,14 @@ library(here)
 # read neighborhood data-----------
 #https://www.denvergov.org/opendata/dataset/city-and-county-of-denver-statistical-neighborhoods
 setwd(here("data-input", "city-of-denver-data"))
-den_neighb = st_read(dsn ="neighborhoods") %>%
+den_nbhd = st_read(dsn ="neighborhoods") %>%
   st_transform(2876) %>% #central colorado, feet
   st_make_valid() %>% 
   #measure area of neighborhoods
   mutate(
-    nbhd_area_ft2 = as.numeric(st_area(geometry)),
-    nbhd_area_m2 = nbhd_area_ft2/10.764, #meters squared, for informational purposes.
-    nbhd_area_mi2 = nbhd_area_ft2/(5280**2) #miles squared
+    area_ft2_nbhd = as.numeric(st_area(geometry)),
+    area_m2_nbhd = area_ft2_nbhd/10.764, #meters squared, for informational purposes.
+    area_mi2_nbhd = area_ft2_nbhd/(5280**2) #miles squared
   ) %>% 
   rename(#rename some vars for future joins
     nbhd_id = NBHD_ID,
@@ -21,20 +21,24 @@ den_neighb = st_read(dsn ="neighborhoods") %>%
     nbhd_notes = NOTES,
     nbhd_type = TYPOLOGY
   )
-
-  
 setwd(here("data-processed"))
-save(den_neighb, file = "den_neighb.RData")
-den_neighb %>% mapview()
+save(den_nbhd, file = "den_nbhd.RData")
+den_nbhd %>% mapview(zcol = "nbhd_id")
 
+## neighborhood-neighborhood-id lookup------
+lookup_den_nbhd_name_id = den_nbhd  %>% 
+  distinct(nbhd_id, nbhd_name) %>% 
+  as_tibble()
+
+
+save(lookup_den_nbhd_name_id, file = "lookup_den_nbhd_name_id.RData")
 
 #about how big (area) are neighborhoods?
-
-den_neighb %>% 
-  ggplot(aes(area_mi2))+
+den_nbhd %>% 
+  ggplot(aes(area_mi2_nbhd))+
   geom_histogram()
 options(scipen = 999)
-summary(den_neighb$area_mi2)
+summary(den_nbhd$area_mi2)
 #so about 1-2 square miles each.
 #okay, if people are on average exposed within a 500m buffer, that's
 ft_in_500m = 500*3.28
@@ -42,9 +46,25 @@ ft_in_500m = 500*3.28
 circle_area_in_ft2_500_m = pi*ft_in_500m**2
 circle_area_in_mi2_500_m= circle_area_in_ft2_500_m/(5280**2)
 circle_area_in_mi2_500_m
-den_neighb %>%   mapview(
-  col.regions = rainbow(n_distinct(den_neighb$NBHD_NAME)),
-  zcol = "NBHD_NAME")
+den_nbhd %>%   mapview(
+  col.regions = rainbow(n_distinct(den_nbhd$nbhd_name)),
+  zcol = "nbhd_name")
+
+## look-up table for neighborhoods and census tracts in Denver---------
+#only variables unique to neighborhood; i.e., remove area measurements
+
+den_nbhd_for_join  = den_nbhd %>% 
+  dplyr::select(-contains("area")) 
+
+lookup_den_nbhd_tract = den_co_tract_geo %>% 
+  st_join(den_nbhd, largest=TRUE) %>% #ensure only largest
+  st_set_geometry(NULL) %>% 
+  distinct(tract_fips, nbhd_id)
+
+
+setwd(here("data-processed"))
+save(lookup_den_nbhd_tract, file = "lookup_den_nbhd_tract.RData")
+
 
 # read Denver equity index------
 #These are the neighborhood level. Neighborhoods are typically comprised
@@ -92,17 +112,5 @@ summary(den_co_tract_wrangle_geo$area_mi2)
 mv_den_co_tract_geo = den_co_tract_wrangle_geo %>% 
   mapview(zcol = "tract_fips")
 mv_den_equity_ind_2020+mv_den_co_tract_geo
-
-# Create a look-up table for neighborhoods and census tracts in Denver---------
-#only variables unique to neighborhood; i.e., remove area measurements
-names(den_neighb)
-
-den_neighb_for_join  = den_neighb %>% 
-  dplyr::select(-contains("area")) 
-
-
-lookup_den_neighb_tract = den_co_tract_geo %>% 
-  st_join(den_neighb, largest=TRUE)#ensure only largest
-save(lookup_den_neighb_tract, file = "")
 
 
