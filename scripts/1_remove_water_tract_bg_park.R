@@ -1,4 +1,4 @@
-filename: remove_water_tract_bg_park
+#filename: 1_remove_water_tract_bg_park
 
 #This is a stand-alone script for removing water from administrative units
 #and parks for good measure
@@ -96,7 +96,7 @@ sf::sf_use_s2(FALSE) #getting invalid spherical geo
 #Update to shorten object names: no_wtr rather than no_water
 den_jeff_co_green_space_no_wtr = den_jeff_co_green_space %>% 
   st_transform(2876) %>% 
-  st_simplify() %>% #makes the file smaller.
+  st_simplify(dTolerance = 5) %>% #makes the file smaller.
   st_make_valid() %>% 
   st_difference(den_osm_water_poly_both_union) %>% 
   st_make_valid() #this did the trick! I was having issues with mapview before 

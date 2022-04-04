@@ -86,7 +86,7 @@ setwd(here("data-input", "office-green-infra"))
 ogi_proj  = st_read(dsn ="reg-proj-take-2") %>%
   st_transform(2876) %>% #local feet
   st_make_valid() %>% 
-  st_simplify() %>% #reduce the object size a bit
+  st_simplify(dTolerance = 5) %>% #every five feet
   mutate(
     #As elsewhere, I'm making the area variables verbose in case they get mixed with other areal units
     area_ft2_ogi_proj =  as.numeric(st_area(geometry)),

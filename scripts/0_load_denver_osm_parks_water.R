@@ -109,9 +109,12 @@ den_metro_protected_area_resolved = den_metro_protected_area_polygons %>%
 #note this may not be comprehensive, but it's a start.
 #load this file from the other code
 load("den_jeff_co_geo.RData")
+st_crs(den_jeff_co_geo)
+st_crs(den_metro_park_resolved)
 #note name change to specify that it's just these two counties
 #update to change to green space (omit the word public for brevity)
 den_jeff_co_green_space =den_metro_park_resolved %>% 
+  st_transform(2876) %>% 
   bind_rows(
     den_metro_nature_reserve_resolved,
     den_metro_protected_area_resolved
@@ -307,7 +310,7 @@ table(den_metro_natural_water_multipolygons_linked_w_poly$int_multipolygon_polyg
 den_metro_natural_multi_no_poly = den_metro_natural_water_multipolygons_linked_w_poly %>% 
   filter(int_multipolygon_polygon=="no") %>% 
   st_transform(2876) %>% 
-  st_simplify()
+  st_simplify(dTolerance = 5)
 save(den_metro_natural_multi_no_poly, file = "den_metro_natural_multi_no_poly.RData")
 load("den_metro_natural_multi_no_poly.RData")
 mv_natural_multi_no_poly = den_metro_natural_multi_no_poly %>% 
@@ -321,7 +324,7 @@ den_metro_natural_water_poly = den_metro_natural_water_polygons %>%
   st_transform(2876) %>% 
   bind_rows(den_metro_natural_multi_no_poly) %>% 
   st_as_sf() %>% 
-  st_simplify()
+  st_simplify(dTolerance = 5)
 
 save(den_metro_natural_water_poly, file = "den_metro_natural_water_poly.RData")
 den_metro_natural_water_poly %>% mapview(zcol = "osm_origin_feature_type", layer.name = "poly")
@@ -419,8 +422,7 @@ test = den_metro_natural_water_poly %>%
     grepl("pool", osm_name) ~ 1,
     grepl("fountain", osm_name) ~ 1,
     grepl("Fountain", osm_name) ~ 1,
-  ),
-  TRUE ~0
+  TRUE ~0)
   ) %>% 
   filter(osm_name_pool_fountain==1)
 test %>% mapview()
@@ -428,11 +430,12 @@ table(test$osm_name_pool_fountain)
 test %>% mapview(
   layer.name = "pool or fountain",
   zcol = "osm_name_pool_fountain")
+names(den_metro_natural_water_poly)
 den_osm_water_poly_both = den_metro_natural_water_poly %>% 
   st_transform(2876) %>% 
   st_buffer(.01) %>% #buffer a small amount, so the sf type is more coherent?
   bind_rows(den_metro_waterways_buff_lines) %>% 
-  st_simplify() %>% 
+  st_simplify(dTolerance = 7) %>% #simplify every x feet; 7 seems to work well throughout
   #restrict to the original bounding box
   st_intersection(den_metro_bbox_custom_2876) %>% 
   #measure the area of each feature. important to remove very small ponds.

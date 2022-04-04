@@ -17,50 +17,56 @@ library(shades)
 setwd(here("data-input", "city-of-denver-data"))
 den_landuse_2018 = st_read(dsn ="existing_landuse") %>%
   st_transform(2876) %>% #local feet
-  st_simplify() %>% 
+  st_simplify(dTolerance = 5) %>% #vertices every 5 feet for speed
   st_make_valid() %>% 
   st_as_sf() %>% 
   mutate(
-    area_ft2 = as.numeric(st_area(geometry)),
-    area_mi2 = area_ft2/(5280**2) ,
-    area_ac = area_ft2/43560, #acres
+    parcel_id = row_number(),
+    area_ft2_parcel = as.numeric(st_area(geometry)),
+    area_mi2_parcel = area_ft2_parcel/(5280**2) ,
+    area_ac_parcel = area_ft2_parcel/43560, #acres
     
     #classify parcels by size per CB suggestions on stormwater regulation
-    area_ac_cat = case_when(
-      area_ac >= 1 ~ ">1.0 acre",
-      area_ac < 1 & area_ac >=0.5 ~ "0.5-1.0 ac",
-      area_ac < 0.5 ~ "<0.5 acre"
+    parcel_size_cat = factor(
+        case_when(
+          area_ac_parcel >= 1 ~ ">1.0 acre",
+          area_ac_parcel < 1 & area_ac_parcel >=0.5 ~ "0.5-1.0 ac",
+          area_ac_parcel < 0.5 ~ "<0.5 acre"
+                    ),
+    levels = c("<0.5 acre", "0.5-1.0 ac", ">1.0 acre")
     ),
+    
     #per CCDOGI doc provided by CB
     # Stormwater footprint:impervious footprint
     stormwater_footprint_ratio = 
       case_when(
-        area_ac_cat==">1.0 acre" ~ 40,
-        area_ac_cat=="0.5-1.0 ac" ~ 25,
-        area_ac_cat=="<0.5 acre" ~ 10,
+        parcel_size_cat==">1.0 acre" ~ 40,
+        parcel_size_cat=="0.5-1.0 ac" ~ 25,
+        parcel_size_cat=="<0.5 acre" ~ 10
         ),
     #Comment: come back to this, as I don't fully understand his suggestions
     #regarding the proportion of land that woudl be vegetated vs impervious
     #rough guess based on CB suggestion
     n_redevelop_per_y = 
-      case_when(
-        area_ac_cat==">1.0 acre" ~ 100,
-        area_ac_cat=="0.5-1.0 ac" ~ 25,
-        area_ac_cat=="<0.5 acre" ~ 400,
-    )
-    )
-      
-table(den_landuse_2018$area_ac_cat)
-setwd(here("data-processed"))#save
+        case_when(
+          parcel_size_cat==">1.0 acre" ~ 100,
+          parcel_size_cat=="0.5-1.0 ac" ~ 25,
+          parcel_size_cat=="<0.5 acre" ~ 400
+                )
+  )
+
+object.size(den_landuse_2018)
+setwd(here("data-processed"))
 save(den_landuse_2018, file = "den_landuse_2018.RData")
+table(den_landuse_2018$parcel_size_cat)
 names(den_landuse_2018)
 #these mapviews take a while
 # den_landuse_2018 %>%
-#   filter(area_ac_cat == ">1.0 acre") %>%
-#   mapview(zcol = "area_ac")
+#   filter(parcel_size_cat == ">1.0 acre") %>%
+#   mapview(zcol = "area_ac_parcel")
 # den_landuse_2018 %>%
-#   filter(area_ac_cat == "<0.5 acre") %>%
-#   mapview(zcol = "area_ac")
+#   filter(parcel_size_cat == "<0.5 acre") %>%
+#   mapview(zcol = "area_ac_parcel")
 
 head(den_landuse_2018)
 #Examine a subset, since the data are pretty big.

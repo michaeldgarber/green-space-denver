@@ -59,7 +59,8 @@ den_nbhd_for_join  = den_nbhd %>%
 lookup_den_nbhd_tract = den_co_tract_geo %>% 
   st_join(den_nbhd, largest=TRUE) %>% #ensure only largest
   st_set_geometry(NULL) %>% 
-  distinct(tract_fips, nbhd_id)
+  distinct(tract_fips, nbhd_id) %>% 
+  as_tibble()
 
 
 setwd(here("data-processed"))

@@ -6,6 +6,7 @@ library(osmdata)
 library(sf)
 library(tidyverse)
 library(mapview)
+library(here)
 
 setwd(here("data-processed"))
 load("den_co_geo.RData")
