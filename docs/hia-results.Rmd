@@ -199,9 +199,10 @@ to-do
 
 ## 3.c. Site new or re-development storwmater controls
 The approach for estimating the health impact of the redevelopment controls is different from scenarios 2 and 3.a. because we do not know where the re-developments will occur. We thus simulated possible scenarios. As stated above, we anticipate the following number of parcels will be subject to these rules per year:
-        * greater than 1 acre: about 100 sites per year
-        * 0.5-1.0 acre: about 25 sites per year
-        * less than 0.5 acre: 400 sites per year
+
+* greater than 1 acre: about 100 sites per year
+* 0.5-1.0 acre: about 25 sites per year
+* less than 0.5 acre: 400 sites per year
 
 We gathered data on parcels from Denver's Open Data Portal ([Existing Landuse 2018](https://www.denvergov.org/opendata/dataset/city-and-county-of-denver-existing-landuse-2018)) and measured their area. A subset of these parcels near Union Station is mapped below.
 
