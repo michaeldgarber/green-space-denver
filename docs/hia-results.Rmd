@@ -24,21 +24,23 @@ library(leaflet.extras)
 
 # Introduction
 This document describes and presents initial results for the health-impact assessment related to adding more native plants to City of Denver. We aim to estimate the number of deaths that would be prevented by adding more green space, specifically native plants, to the City of Denver. We estimate the number of deaths prevented corresponding to three broad greening scenarios, which were informed by conversations with local stakeholders. The scenarios are:
+   
 
-* Add native plants to all census block groups such that
+1. Add native plants to all census block groups such that
     * 100% of the block group's area is as green as native plants
     * 20% of the block group's area is as green as native plants
-  
-* Create native buffers around riparian areas (rivers, streams, lakes, and ponds) of the following sizes:
+
+2. Create native buffers around riparian areas (rivers, streams, lakes, and ponds) of the following sizes:
     * 200 feet (ideal for ecosystem health but possibly not realistic)
     * 100 feet (compromise)
     * 50 feet (most realistic; less good for ecosystem health)
-    
-* Replace a portion of parking-lot surface with native plants:
+  
+3. Initiatives related to green infrastructure and stormwater management. (Please refer to corresponding section for details.)
+
+4. Replace a portion of parking-lot surface with native plants:
     * 100% of the existing parking area
     * 50% of the existing parking area
-    * 20% of the existing parking area
-  
+    * 20% of the existing parking area   
 
 For all scenarios, we measured green-space exposure by the normalized difference vegetation index (NDVI) measured by the Landsat-8 satellite at a spatial resolution of 30 meters squared.  To determine the target NDVI value, we measured the NDVI of a 100% native zone in the Denver Botanic Gardens on several cloud-free spring and summer days. The NDVI value was about 0.5 in this area, so we assumed that, by adding more native plants to places in Denver, the NDVI of those areas would change to 0.5.
 
@@ -130,7 +132,8 @@ mv_rip_all3@map %>%
 # Scenario 3: green infrastructure
 We spoke with representatives at the local Office of Green Infrastructure, and they described three categories of initiatives--some planned, some aspirational--that could include native or adapted plants.
 
-* Large ponds or basin located on public property that treat collect and treat stormwater after it has been collected in a storm pipe. They are usually vegetated, often with native or adapted plants.
+* Large stormwater retention projects:
+    * Large ponds or basin located on public property that treat collect and treat stormwater after it has been collected in a storm pipe. They are usually vegetated, often with native or adapted plants.
     * Expect about 75% of the facility's footprint to have native or adapted plants.
     * 20% of the block group's area is as green as native plants
   
@@ -139,17 +142,135 @@ We spoke with representatives at the local Office of Green Infrastructure, and t
     * Short term goal: increase output to 5.0 miles of green streets; same amount of vegetation per green mile
     * Aspirational goal: output to 5.0 miles; increase vegetated area to 0.75 acres per green mile
   
-* Site redevelopment storwmater controls 
+* Site new or re-development storwmater controls 
     * As properties develop or redevelop, they may be required to include stormwater runoff control measures to offset negative impacts to flooding and water quality downstream of the site associated with the impervious surfaces added during the development. These stormwater control measures are often green-on-the-ground practices vegetated with native or adapted plants.
     * The requirements may differ by parcel size. A rough guess that projects that may require stormwater control by parcel size:
         * greater than 1 acre: about 100 sites per year
         * 0.5-1.0 acre: about 25 sites per year
         * less than 0.5 acre: 400 sites per year
         
-        
+## 3.a. Large stormwater retention ponds
+We were provided a list of planned projects throughout Denver. Based on our conversations, we assume that about 75% of the project's footprint would consist of native or vegetation, so our intervention is defined as changing the NDVI values of these polygons from their baseline value (on July 4 2021) to the native-plant value of 0.5 As we did for the riparian areas, we defined exposure to the projects as those individuals living within a 500 m buffer of the projects. A map of baseline NDVI of the projects themselves and of a 500 m buffer around the projects is below.
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+library(here)
+setwd(here("data-processed"))
+load("den_bg_int_ogi_proj_500m_comp_ndvi.RData")
+load("den_bg_int_ogi_proj_only_ndvi.RData")
+load("den_co_osm_wtr.RData")
+load("study_area_2876.RData")
+pal_terrain_col = rev(terrain.colors(100)) 
+
+#### 500 mBuffer excluding the project---------
+mv_den_bg_int_ogi_proj_500m_comp_ndvi= den_bg_int_ogi_proj_500m_comp_ndvi %>% 
+  mapview(
+    col.regions = pal_terrain_col,
+    at = seq(-.1, 1, 0.1), #0 to 1 by .1; define the breaks so consistent between layers
+    layer.name = "NDVI, 500m buffer, projects",
+    zcol = "ndvi_mean_wt_500m_ogi_proj_comp")
+
+#### The project only----------
+mv_den_bg_int_ogi_proj_only_ndvi= den_bg_int_ogi_proj_only_ndvi %>% 
+  mapview(
+    col.regions = pal_terrain_col,
+    at = seq(-.1, 1, 0.1), #0 to 1 by .1; define the breaks so consistent between layers
+    layer.name = "NDVI, projects only",
+    zcol = "ndvi_mean_wt_ogi_proj_only")
+
+#### Bodies of water--------
+load("den_co_osm_water_union.RData")
+load("den_co_osm_water.RData")
+mv_den_co_osm_water = den_co_osm_water %>% 
+  st_intersection(study_area_2876) %>% 
+  mapview(
+    layer.name = "Water type",
+    col.regions = rainbow(n_distinct(den_co_osm_water$water_type)),
+    zcol = "water_type")
+
+#### Visualize all at once--------------
+mv_ogi_proj_all3 = mv_den_bg_int_ogi_proj_500m_comp_ndvi+ 
+  mv_den_bg_int_ogi_proj_only_ndvi +mv_den_co_osm_wtr
+mv_ogi_proj_all3@map %>% 
+  addFullscreenControl()
+```
+
+## 3.b. Green streets
+to-do
+
+## 3.c. Site new or re-development storwmater controls
+The approach for estimating the health impact of the redevelopment controls is different from scenarios 2 and 3.a. because we do not know where the re-developments will occur. We thus simulated possible scenarios. As stated above, we anticipate the following number of parcels will be subject to these rules per year:
+        * greater than 1 acre: about 100 sites per year
+        * 0.5-1.0 acre: about 25 sites per year
+        * less than 0.5 acre: 400 sites per year
+
+We gathered data on parcels from Denver's Open Data Portal ([Existing Landuse 2018](https://www.denvergov.org/opendata/dataset/city-and-county-of-denver-existing-landuse-2018)) and measured their area. A subset of these parcels near Union Station is mapped below.
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+library(here)
+setwd(here("data-processed"))
+load("den_landuse_union_sta.RData")
+
+mv_landuse_union_sta = den_landuse_union_sta %>% 
+  dplyr::select(-starts_with("address")) %>% 
+  mapview(
+    zcol = "CPD_LANDUS",
+    layer.name = "Land-use type",
+    col.regions = rainbow(n=n_distinct(den_landuse_union_sta$CPD_LANDUS)))
+mv_landuse_union_sta@map %>% 
+  addFullscreenControl()
+```
+
+Then, from all parcels, we sampled 100 sites of size greater than 1 acre, 25 sites of size 0.5-1 acre, and 400 sites less than 0.5 acres. One such sample appears below.
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+library(here)
+setwd(here("data-processed"))
+load("den_landuse_sample.RData")
+mv_den_landuse_sample = den_landuse_sample %>% 
+  mapview(
+    layer.name = "Parcel size category",
+    zcol = "parcel_size_cat")
+mv_den_landuse_sample@map %>% 
+  addFullscreenControl()
+```
+
+From this point, we followed the same framework as we've done for other projects. We estimated that about 50% of this redevelopment would be native (subject to change), and we considered those exposed to these re-developments as anyone living within 500 m of them. The baseline NDVI of the sampled parcels and that of their corresponding 500m buffers is visualized below.
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("den_bg_int_parcel_500m_comp_ndvi.RData")
+load("den_bg_int_parcel_only_ndvi.RData")
+load("study_area_2876.RData")
+load("union_station_1_mi_4326.RData") # we will limit to a 1-mi radius around union station
+pal_terrain_col = rev(terrain.colors(100)) 
+library(leaflet.extras)
+library(mapview)
+#### Buffer excluding the parking---------
+sf::sf_use_s2(FALSE) #have to use this as I was getting an error that loop not valid
+mv_union_sta_den_bg_int_parcel_500m_comp_ndvi= den_bg_int_parcel_500m_comp_ndvi %>% 
+  mapview(
+    col.regions = pal_terrain_col,
+    layer.name = "NDVI, 500 m buffer, parcel",
+    zcol = "ndvi_mean_wt_500m_parcel_comp")
+
+#### The parking only----------
+mv_union_sta_den_bg_int_parcel_only_ndvi= den_bg_int_parcel_only_ndvi %>% 
+  mapview(
+    col.regions = pal_terrain_col,
+    layer.name = "NDVI, parcel only",
+    zcol = "ndvi_mean_wt_parcel_only")
+
+#### Visualize all at once--------------
+mv_parcel_both = mv_union_sta_den_bg_int_parcel_500m_comp_ndvi+ 
+  mv_union_sta_den_bg_int_parcel_only_ndvi
+
+mv_parcel_both@map %>% 
+  addFullscreenControl()
+```
+
 
 # Scenario 4: add native plants to parking lots
-We obtained spatial data on [parking lots](https://www.denvergov.org/opendata/dataset/parking-lots-2016) from the City of Denver Open Data Catalog. About 9% of the city is covered with parking lots:
+We obtained spatial data on [parking lots](https://www.denvergov.org/opendata/dataset/parking-lots-2016) from the City of Denver Open Data Catalog. About 9% of Denver's area is a parking lot:
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 load("den_prkng_marg.RData")
@@ -157,10 +278,10 @@ den_prkng_marg %>%
   st_set_geometry(NULL) %>% 
   mutate(
     den_area_mi2_total = 155,
-    percent_area_covered_by_parking = area_mi2_prkng/den_area_mi2_total
+    prop_den_parking = area_mi2_prkng/den_area_mi2_total
          ) %>% 
   dplyr::select(-starts_with("area_ft2")) %>% 
-  knitr::kable()
+  knitr::kable(digits = 2)
 ```
 
 We similarly measured the NDVI on the parking lots as well as the NDVI in the census block groups that are within a 500-m buffer radius of any parking lots (which is most).
@@ -197,7 +318,6 @@ mv_union_sta_den_bg_int_prkng_only_ndvi= den_bg_int_prkng_only_ndvi %>%
     layer.name = "NDVI, parking only",
     zcol = "ndvi_mean_wt_prkng_only")
 
-
 #### Visualize all at once--------------
 mv_prkng_both = mv_union_sta_den_bg_int_prkng_500m_comp_ndvi+ 
   mv_union_sta_den_bg_int_prkng_only_ndvi
@@ -216,7 +336,7 @@ load("all_sc_marg_lf.RData")
 all_sc_marg_lf %>%  
   dplyr::select(-starts_with("ndvi_below")) %>% 
   dplyr::select(scenario, scenario_sub, pop_affected, attrib_deaths) %>% 
-  knitr::kable()
+  knitr::kable(digits = 1) #set max digits (after decimal, I guess)
 ```
 
 # Next steps (as of April 4, 2022)

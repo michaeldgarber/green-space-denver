@@ -95,6 +95,22 @@ den_landuse_2018_subset %>%
     zcol = "CPD_LANDUS",
     col.regions = rainbow(n=n_distinct(den_landuse_2018_subset$CPD_LANDUS)))
 
+## another subset around union station (to parallel that for parking)-------
+#load the union station 1-mi buffer
+setwd(here("data-processed"))
+load("union_station_1_mi.RData")
+load("union_station_1_mi_4326.RData")
+st_crs(den_landuse_2018)
+st_crs(union_station_1_mi_2876)
+den_landuse_union_sta = den_landuse_2018 %>% 
+  st_intersection(union_station_1_mi_2876)
+save(den_landuse_union_sta, file = "den_landuse_union_sta.RData")
+den_landuse_union_sta %>% 
+  mapview(
+    zcol = "CPD_LANDUS",
+    col.regions = rainbow(n=n_distinct(den_landuse_union_sta$CPD_LANDUS)))
+
+
 # Load zoning data----------
 #These data do not have quite the spatial resolution of the parcel-based data, which is fine.
 #They are easier to work with.

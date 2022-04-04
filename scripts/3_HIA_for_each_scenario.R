@@ -1821,6 +1821,10 @@ den_landuse_sample = den_landuse_sample_large %>%
   )
 
 den_landuse_sample %>% mapview(zcol = "parcel_size_cat")
+#even though this is a sample and will be re-saved constantly, save it so I can use it in the
+#rmarkdown doc
+save(den_landuse_sample, file = "den_landuse_sample.RData")
+
 names(den_landuse_sample)
 #### Prep buffers around these places----------
 parcel_by_size  = den_landuse_sample %>% 
