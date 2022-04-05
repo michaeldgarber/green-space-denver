@@ -10,7 +10,7 @@ library(mapview) #loads leeaflet.
 library(here) #updated 12/16/21 to add everything into the main analysis data folder and not the buffers
 here()
 
-register_google(key = "AIzaSyBwpCFVf9sa7E-julIPmYuW18b675rSafE")
+#google api key registered in a separate script
 union_station_tib = as_tibble("Union Station, Denver, Colorado") %>% 
   rename(address = value)
 union_station_geo = mutate_geocode(union_station_tib, address, force=TRUE) %>%
