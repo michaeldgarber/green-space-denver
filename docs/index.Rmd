@@ -15,9 +15,6 @@ This page presents some work-in-progress updates for the Denver green-space heal
 
 -   February 2022: A summary of NDVI of places and tracts: <https://michaeldgarber.github.io/green-space-denver/ndvi-of-places-tracts.html>
 
-<br>
-
-<br>
 
 <br>
 

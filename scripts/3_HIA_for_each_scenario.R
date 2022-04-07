@@ -271,6 +271,8 @@ extract_wrangle_ndvi_bg_int = function(df1, df2){
 
 names(den_co_bg_no_wtr_filtered_geo)
 names(den_co_bg_no_wtr_filtered_4326)
+#Update April 6 2022
+#adding a 30% scenario per interview with parks dept.
 den_co_bg_ndvi = ndvi_den_co_20210704 %>% 
   extract_wrangle_ndvi_bg_int(df2 = den_co_bg_no_wtr_filtered_4326) %>% 
   mutate(
@@ -2774,7 +2776,8 @@ pivot_longer_sc_prkng = function(df){
       scenario_sub = case_when(
         scenario_sub == "attrib_d_prkng_20" ~ "pct-prkng-20",
         scenario_sub == "attrib_d_prkng_50" ~ "pct-prkng-50",
-        scenario_sub == "attrib_d_prkng_100" ~ "pct-prkng-100"
+        scenario_sub == "attrib_d_prkng_100" ~ "pct-prkng-100",
+        deaths_prevented = attrib_deaths*-1 #add this for interpretation
       )
     ) %>% 
     rename(pop_affected = pop_500m)

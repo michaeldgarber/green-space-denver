@@ -1,12 +1,14 @@
 ---
 title: "Preliminary health-impact assessment results"
 author: "Michael D Garber"
-date: "Revised April 4 2022"
+date: "Revised April 7 2022"
 output: 
   html_document:
     toc: true  
     toc_float: true
+bibliography: references.bib
 ---
+
 ```{r loadpackages, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 library(here)
 library(tidyverse)
@@ -23,28 +25,33 @@ library(leaflet.extras)
 ```
 
 # Introduction
-This document describes and presents initial results for the health-impact assessment related to adding more native plants to City of Denver. We aim to estimate the number of deaths that would be prevented by adding more green space, specifically native plants, to the City of Denver. We estimate the number of deaths prevented corresponding to three broad greening scenarios, which were informed by conversations with local stakeholders. The scenarios are:
-   
 
-1. Add native plants to all census block groups such that
-    * 100% of the block group's area is as green as native plants
-    * 20% of the block group's area is as green as native plants
+This document presents initial results for a health-impact assessment related to adding more vegetated landscape to the City of Denver. We aim to estimate the number of deaths that would be prevented by adding more green space, specifically native plants, to the City of Denver. We estimate the number of deaths prevented corresponding to four categories of greening scenarios, which were informed by conversations with local stakeholders. The scenarios are:
 
-2. Create native buffers around riparian areas (rivers, streams, lakes, and ponds) of the following sizes:
-    * 200 feet (ideal for ecosystem health but possibly not realistic)
-    * 100 feet (compromise)
-    * 50 feet (most realistic; less good for ecosystem health)
-  
-3. Initiatives related to green infrastructure and stormwater management. (Please refer to corresponding section for details.)
+1.  Add native plants to all census block groups such that
 
-4. Replace a portion of parking-lot surface with native plants:
-    * 100% of the existing parking area
-    * 50% of the existing parking area
-    * 20% of the existing parking area   
+    -   100% of the block group's area is as green as native plants
+    -   20% of the block group's area is as green as native plants
 
-For all scenarios, we measured green-space exposure by the normalized difference vegetation index (NDVI) measured by the Landsat-8 satellite at a spatial resolution of 30 meters squared.  To determine the target NDVI value, we measured the NDVI of a 100% native zone in the Denver Botanic Gardens on several cloud-free spring and summer days. The NDVI value was about 0.5 in this area, so we assumed that, by adding more native plants to places in Denver, the NDVI of those areas would change to 0.5.
+2.  Create native buffers around riparian areas (rivers, streams, lakes, and ponds) of the following sizes:
+
+    -   200 feet (ideal for ecosystem health but possibly not realistic)
+    -   100 feet (compromise)
+    -   50 feet (most realistic; less good for ecosystem health)
+
+3.  Initiatives related to green infrastructure and stormwater management. (Please refer to corresponding section for details.)
+
+4.  Replace a portion of parking-lot surface with native plants:
+
+    -   100% of the existing parking area
+    -   50% of the existing parking area
+    -   20% of the existing parking area
+
+For all scenarios, we measured green-space exposure by the normalized difference vegetation index (NDVI) measured by the Landsat-8 satellite at a spatial resolution of 30 meters squared. To determine the target (alternative) NDVI value, we measured the NDVI of a 100% native zone in the Denver Botanic Gardens on several cloud-free spring and summer days. The NDVI value was about 0.5 in this area, so we assumed that, by adding more native plants to places in Denver, the NDVI of those areas would change to 0.5. Other less maintained areas may have a lower NDVI, so we plan to vary
 
 # Scenario 1: add native plants to all census block groups
+
+Under the first scenario, which we view as the most ambitious, we consider the expected impact on mortality by applying a green-space intervention to all census block groups, without specifying where. This scenario was informed by conversations with colleagues who stated that
 
 We first measured the mean NDVI of each census block group on July 4, 2021. The weighted block-group-level mean is presented here, weighted by the proportion each 30 square-meter pixel covers by the census block group. For example, if half of a pixel overlaps the block group, it receives a weight of 0.5 in the weighted average. We also removed bodies of water before measuring NDVI.
 
@@ -69,6 +76,7 @@ mv_den_co_bg_ndvi@map %>%
 ```
 
 We excluded census block whose baseline NDVI was above the native-plant threshold:
+
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 library(RColorBrewer)
 setwd(here("data-processed"))
@@ -89,8 +97,10 @@ mv_bg_below_native_threshold =den_co_bg_ndvi %>%
 mv_bg_below_native_threshold@map %>% 
   addFullscreenControl()
 ```
+
 # Scenario 2: add native-plants buffers to riparian areas
-We measured NDVI in a 200-foot buffer, a 100-foot buffer, and a 50-foot buffer around all bodies of water in Denver. We downloaded bodies of water from OpenStreetMap (code [here](https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_load_denver_osm_parks_water.R). We defined residential exposure to these riparian areas as those individuals living within a 500-meter buffer, following the green-space literature that has defined green-space exposure based on residential proximity. We estimated the number of people in this buffer by multiplying the population density of the census block group by the intersecting area. 
+
+We measured NDVI in a 200-foot buffer, a 100-foot buffer, and a 50-foot buffer around all bodies of water in Denver. We downloaded bodies of water from OpenStreetMap (code [here](https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_load_denver_osm_parks_water.R). We defined residential exposure to these riparian areas as those individuals living within a 500-meter buffer, following the green-space literature that has defined green-space exposure based on residential proximity. We estimated the number of people in this buffer by multiplying the population density of the census block group by the intersecting area.
 
 The below map depicts mean NDVI in the portions of census block groups that intersect a 200-foot buffer as well as those pieces that intersect the part of the 500 m buffer that would not be intervened upon, i.e., the part between the 200-foot buffer and the edge of the 500 m buffer.
 
@@ -130,26 +140,26 @@ mv_rip_all3@map %>%
 ```
 
 # Scenario 3: green infrastructure
+
 We spoke with representatives at the local Office of Green Infrastructure, and they described three categories of initiatives--some planned, some aspirational--that could include native or adapted plants.
 
-* Large stormwater retention projects:
-    * Large ponds or basin located on public property that treat collect and treat stormwater after it has been collected in a storm pipe. They are usually vegetated, often with native or adapted plants.
-    * Expect about 75% of the facility's footprint to have native or adapted plants.
-    * 20% of the block group's area is as green as native plants
-  
-* Green streets
-    * Historically, about 2.7 miles of green streets each year, and each mile equates to about 0.15 acres of native or vegetated landscape.
-    * Short term goal: increase output to 5.0 miles of green streets; same amount of vegetation per green mile
-    * Aspirational goal: output to 5.0 miles; increase vegetated area to 0.75 acres per green mile
-  
-* Site new or re-development storwmater controls 
-    * As properties develop or redevelop, they may be required to include stormwater runoff control measures to offset negative impacts to flooding and water quality downstream of the site associated with the impervious surfaces added during the development. These stormwater control measures are often green-on-the-ground practices vegetated with native or adapted plants.
-    * The requirements may differ by parcel size. A rough guess that projects that may require stormwater control by parcel size:
-        * greater than 1 acre: about 100 sites per year
-        * 0.5-1.0 acre: about 25 sites per year
-        * less than 0.5 acre: 400 sites per year
-        
+-   Large stormwater retention projects:
+    -   Large ponds or basin located on public property that treat collect and treat stormwater after it has been collected in a storm pipe. They are usually vegetated, often with native or adapted plants.
+    -   Expect about 75% of the facility's footprint to have native or adapted plants.
+    -   20% of the block group's area is as green as native plants
+-   Green streets
+    -   Historically, about 2.7 miles of green streets each year, and each mile equates to about 0.15 acres of native or vegetated landscape.
+    -   Short term goal: increase output to 5.0 miles of green streets; same amount of vegetation per green mile
+    -   Aspirational goal: output to 5.0 miles; increase vegetated area to 0.75 acres per green mile
+-   Site new or re-development storwmater controls
+    -   As properties develop or redevelop, they may be required to include stormwater runoff control measures to offset negative impacts to flooding and water quality downstream of the site associated with the impervious surfaces added during the development. These stormwater control measures are often green-on-the-ground practices vegetated with native or adapted plants.
+    -   The requirements may differ by parcel size. A rough guess that projects that may require stormwater control by parcel size:
+        -   greater than 1 acre: about 100 sites per year
+        -   0.5-1.0 acre: about 25 sites per year
+        -   less than 0.5 acre: 400 sites per year
+
 ## 3.a. Large stormwater retention ponds
+
 We were provided a list of planned projects throughout Denver. Based on our conversations, we assume that about 75% of the project's footprint would consist of native or vegetation, so our intervention is defined as changing the NDVI values of these polygons from their baseline value (on July 4 2021) to the native-plant value of 0.5 As we did for the riparian areas, we defined exposure to the projects as those individuals living within a 500 m buffer of the projects. A map of baseline NDVI of the projects themselves and of a 500 m buffer around the projects is below.
 
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
@@ -195,14 +205,16 @@ mv_ogi_proj_all3@map %>%
 ```
 
 ## 3.b. Green streets
+
 to-do
 
 ## 3.c. Site new or re-development storwmater controls
+
 The approach for estimating the health impact of the redevelopment controls is different from scenarios 2 and 3.a. because we do not know where the re-developments will occur. We thus simulated possible scenarios. As stated above, we anticipate the following number of parcels will be subject to these rules per year:
 
-* greater than 1 acre: about 100 sites per year
-* 0.5-1.0 acre: about 25 sites per year
-* less than 0.5 acre: 400 sites per year
+-   greater than 1 acre: about 100 sites per year
+-   0.5-1.0 acre: about 25 sites per year
+-   less than 0.5 acre: 400 sites per year
 
 We gathered data on parcels from Denver's Open Data Portal ([Existing Landuse 2018](https://www.denvergov.org/opendata/dataset/city-and-county-of-denver-existing-landuse-2018)) and measured their area. A subset of these parcels near Union Station is mapped below.
 
@@ -269,9 +281,10 @@ mv_parcel_both@map %>%
   addFullscreenControl()
 ```
 
-
 # Scenario 4: add native plants to parking lots
+
 We obtained spatial data on [parking lots](https://www.denvergov.org/opendata/dataset/parking-lots-2016) from the City of Denver Open Data Catalog. About 9% of Denver's area is a parking lot:
+
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 load("den_prkng_marg.RData")
@@ -327,9 +340,9 @@ mv_prkng_both@map %>%
   addFullscreenControl()
 ```
 
-
 # Results
-We estimated the number of deaths averted under each scenario by following a recent meta-analyses that estimated that for every 0.1 unit increase in exposure to NDVI, the relative risk of death decreases about 4% (pooled risk ratio of 0.96, 95% confidence interval (CI): 0.94, 0.97)1. We defined NDVI exposure as that within a 500-meter buffer of the individual’s place of residence. We used this risk ratio to estimate the population attributable fraction corresponding to the proposed change in NDVI from the baseline level to the native-plants level for each census block group (first scenario) or the part of the census block group intersecting the proposed intervention area (riparian and parking scenarios). We then estimated the number of deaths prevented considering estimates of population and all-cause mortality rates. We used 5-year American Community Survey Data (2015-2019) to estimate the population in 5-year age groups in each census block group and age-stratified estimates of mortality rates for the state of Colorado from the Global Burden of Disease project. If an intervention area did not cover an entire census block group, we multiplied the population density of the block group in that age group by the area of the block group covered by the intervention area to estimate the total population in the area affected by the intervention. We restricted analyses to adults aged 30 and above following the age range of many of the cohort studies reviewed. We also restricted analyses to those census block groups or census-block-group pieces below the native-plants NDVI threshold.
+
+We estimated the number of deaths averted under each scenario by following a recent meta-analyses that estimated that for every 0.1 unit increase in exposure to NDVI, the relative risk of death decreases about 4% (pooled risk ratio of 0.96, 95% confidence interval (CI): 0.94, 0.97)[@rojas-rueda2019]. We defined NDVI exposure as that within a 500-meter buffer of the individual's place of residence. We used this risk ratio to estimate the population attributable fraction corresponding to the proposed change in NDVI from the baseline level to the native-plants level for each census block group (first scenario) or the part of the census block group intersecting the proposed intervention area (riparian and parking scenarios). We then estimated the number of deaths prevented considering estimates of population and all-cause mortality rates. We used 5-year American Community Survey Data (2015-2019) to estimate the population in 5-year age groups in each census block group and age-stratified estimates of mortality rates for the state of Colorado from the Global Burden of Disease project. If an intervention area did not cover an entire census block group, we multiplied the population density of the block group in that age group by the area of the block group covered by the intervention area to estimate the total population in the area affected by the intervention. We restricted analyses to adults aged 30 and above following the age range of many of the cohort studies reviewed. We also restricted analyses to those census block groups or census-block-group pieces below the native-plants NDVI threshold.
 
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
@@ -341,8 +354,11 @@ all_sc_marg_lf %>%
 ```
 
 # Next steps (as of April 4, 2022)
-* Add equity component
 
-* Add economic-impact attributable to health
+-   Add equity component
 
-* Incorporate uncertainty throughout (via bootstrapping)
+-   Add economic-impact attributable to health
+
+-   Incorporate uncertainty throughout (via bootstrapping)
+
+# References
