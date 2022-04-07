@@ -7,10 +7,18 @@ output:
       after_body: footer.html
 ---
 
-The purpose of this page is to present some updates related to the Denver green-space health-impact assessment. The source repository for this site is https://github.com/michaeldgarber/green-space-denver
+This page presents some work-in-progress updates for the Denver green-space health-impact assessment.
 
 **Project Updates**
 
-* March 2022: Preliminary HIA results for four scenarios: https://michaeldgarber.github.io/green-space-denver/hia-results.html
+-   March 2022: Preliminary HIA results for four scenarios: <https://michaeldgarber.github.io/green-space-denver/hia-results.html>
 
-* February 2022: A summary of NDVI of places and tracts: https://michaeldgarber.github.io/green-space-denver/ndvi-of-places-tracts.html
+-   February 2022: A summary of NDVI of places and tracts: <https://michaeldgarber.github.io/green-space-denver/ndvi-of-places-tracts.html>
+
+<br>
+
+<br>
+
+<br>
+
+source repository: <https://github.com/michaeldgarber/green-space-denver>
