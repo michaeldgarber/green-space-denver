@@ -50,12 +50,15 @@ den_nbhd %>%   mapview(
   col.regions = rainbow(n_distinct(den_nbhd$nbhd_name)),
   zcol = "nbhd_name")
 
+den_nbhd
 ## look-up table for neighborhoods and census tracts in Denver---------
 #only variables unique to neighborhood; i.e., remove area measurements
 
 den_nbhd_for_join  = den_nbhd %>% 
   dplyr::select(-contains("area")) 
 
+setwd(here("data-processed"))
+load("den_co_tract_geo.RData")
 lookup_den_nbhd_tract = den_co_tract_geo %>% 
   st_join(den_nbhd, largest=TRUE) %>% #ensure only largest
   st_set_geometry(NULL) %>% 
