@@ -157,7 +157,7 @@ We spoke with representatives at the local Office of Green Infrastructure, and t
         -   0.5-1.0 acre: about 25 sites per year
         -   less than 0.5 acre: 400 sites per year
 
-## 3.a. Large stormwater retention ponds
+## 3.1. Large stormwater retention ponds
 
 We were provided a list of planned projects throughout Denver. Based on our conversations, we assume that about 75% of the project's footprint would consist of native or vegetation, so our intervention is defined as changing the NDVI values of these polygons from their baseline value (on July 4 2021) to the native-plant value of 0.5 As we did for the riparian areas, we defined exposure to the projects as those individuals living within a 500 m buffer of the projects. A map of baseline NDVI of the projects themselves and of a 500 m buffer around the projects is below.
 
@@ -203,11 +203,11 @@ mv_ogi_proj_all3@map %>%
   addFullscreenControl()
 ```
 
-## 3.b. Green streets
+## 3.2. Green streets
 
 Not yet complete.
 
-## 3.c. Site new or re-development storwmater controls
+## 3.3. Site new or re-development storwmater controls
 
 The approach for estimating the health impact of the redevelopment controls is different from scenarios 2 and 3.a. because we do not know where the re-developments will occur. We thus simulated possible scenarios. As stated above, we anticipate the following number of parcels will be subject to these rules per year:
 

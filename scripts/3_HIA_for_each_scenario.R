@@ -2047,7 +2047,7 @@ mv_den_bg_int_parcel_500m_comp_ndvi= den_bg_int_parcel_500m_comp_ndvi %>%
   mapview(
     col.regions = pal_terrain_col,
     at = seq(-.1, 1, 0.1), #0 to 1 by .1; define the breaks so consistent between layers
-    layer.name = "ndvi_mean_wt_500m_parcel_comp",
+    layer.name = "NDVI, 500 m buffer around parcels",
     zcol = "ndvi_mean_wt_500m_parcel_comp")
 
 #### The project only----------
@@ -2056,7 +2056,7 @@ mv_den_bg_int_parcel_only_ndvi= den_bg_int_parcel_only_ndvi %>%
   mapview(
     col.regions = pal_terrain_col,
     at = seq(-.1, 1, 0.1), #0 to 1 by .1; define the breaks so consistent between layers
-    layer.name = "ndvi_mean_wt_parcel_only",
+    layer.name = "NDVI, parcels only",
     zcol = "ndvi_mean_wt_parcel_only")
 
 mv_den_bg_int_parcel_only_ndvi
@@ -2515,7 +2515,7 @@ mv_den_bg_int_prkng_500m_comp_ndvi= den_bg_int_prkng_500m_comp_ndvi %>%
   mapview(
     col.regions = pal_terrain_col,
     at = seq(-.1, 1, 0.1), #0 to 1 by .1; define the breaks so consistent between layers
-    layer.name = "ndvi_mean_wt_500m_prkng_comp",
+    layer.name = "NDVI, 500 m buffer excl. parking",
     zcol = "ndvi_mean_wt_500m_prkng_comp")
 
 #### The parking only----------
@@ -2524,7 +2524,7 @@ mv_den_bg_int_prkng_only_ndvi= den_bg_int_prkng_only_ndvi %>%
   mapview(
     col.regions = pal_terrain_col,
     at = seq(-.1, 1, 0.1), #0 to 1 by .1; define the breaks so consistent between layers
-    layer.name = "ndvi_mean_wt_prkng_only",
+    layer.name = "NDVI, parking only",
     zcol = "ndvi_mean_wt_prkng_only")
 
 mv_den_bg_int_prkng_only_ndvi
@@ -2776,9 +2776,8 @@ pivot_longer_sc_prkng = function(df){
       scenario_sub = case_when(
         scenario_sub == "attrib_d_prkng_20" ~ "pct-prkng-20",
         scenario_sub == "attrib_d_prkng_50" ~ "pct-prkng-50",
-        scenario_sub == "attrib_d_prkng_100" ~ "pct-prkng-100",
-        deaths_prevented = attrib_deaths*-1 #add this for interpretation
-      )
+        scenario_sub == "attrib_d_prkng_100" ~ "pct-prkng-100"),
+      deaths_prevented = attrib_deaths*-1 #add this for interpretation
     ) %>% 
     rename(pop_affected = pop_500m)
 }
