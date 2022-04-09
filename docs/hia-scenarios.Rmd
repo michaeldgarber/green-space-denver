@@ -66,9 +66,9 @@ We conducted ten interviews with local stakeholders who are actively engaged in 
 
 4.  Replace a portion of parking-lot surface with native plants:
 
-    -   100% of the existing parking area
-    -   50% of the existing parking area
-    -   20% of the existing parking area
+    -   100% of the existing parking area (unrealistic, out of curiosity)
+    -   50% of the existing parking area (perhaps realistic)
+    -   20% of the existing parking area (most realistic)
 
 ## Visualization of scenarios
 
@@ -303,7 +303,7 @@ mv_parcel_both@map %>%
 
 ### Scenario 4: add native plants to parking lots
 
-Finally, under the fourth scenario, we propose replacing a portion (20%) of parking-lot surface with native plants. Denver's area is about 9% parking lot, so even replacing a small amount of parking-lot surface could have a large impact on the total area of urban greening. We obtained spatial data on [parking lots](https://www.denvergov.org/opendata/dataset/parking-lots-2016) from the City of Denver Open Data Catalog.
+Finally, under the fourth scenario, we propose replacing a portion of parking-lot surface with native plants. Denver's area is about 9% parking lot, so even replacing a small amount of parking-lot surface could have a large impact on the total area of urban greening. We obtained spatial data on [parking lots](https://www.denvergov.org/opendata/dataset/parking-lots-2016) from the City of Denver Open Data Catalog.
 
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
@@ -320,7 +320,7 @@ den_prkng_marg %>%
     digits = 2)
 ```
 
-We similarly measured the NDVI on the parking lots as well as the NDVI in the census block groups that are within a 500-m buffer radius of any parking lots (most). We present a small subset near Union Station:
+We similarly measured the NDVI on the parking lots as well as the NDVI in the census block groups within a 500-m buffer radius of any parking lot (which is almost the whole city). We present a small subset of these areas near Union Station:
 
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
