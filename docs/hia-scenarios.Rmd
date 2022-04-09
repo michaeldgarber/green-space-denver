@@ -372,11 +372,11 @@ To estimate the number of premature deaths prevented in each age group and area,
 
 ### Health equity
 
-The adverse health consequences of climate change are distributed inequitably.[@environmentalhealthmattersinitiative2022] Both the State of Colorado and the City of Denver have emphasized the importance of prioritizing health equity and environmental justice in their work.[@equity;@statehea] We will consider three definitions of equity used by state and local authorities.
+The adverse health consequences of climate change are distributed inequitably.[@environmentalhealthmattersinitiative2022] Both the State of Colorado and the City of Denver have emphasized the importance of prioritizing health equity and environmental justice in their work.[@equity; @statehea] We will consider three definitions of equity used by state and local authorities.
 
 1.  Colorado legislative definition of disproportionately impacted communities[@concerni]
 
-2.  Colorado Department of Public Health & Environment equity score[@statehe]
+2.  Colorado Department of Public Health & Environment equity score[@cdphe2021]
 
 3.  City of Denver Equity Index 2020 available on Denver's Open Data Catalog[@denvero]
 
