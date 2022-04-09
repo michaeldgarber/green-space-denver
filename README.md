@@ -1,2 +1,2 @@
 # green-space-denver
-A repository in its early stages to manage data related to a green-space project in the Denver area.
+A repository to manage data and present results for a green-space project in Denver.
