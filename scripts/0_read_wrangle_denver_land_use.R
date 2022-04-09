@@ -15,6 +15,7 @@ library(shades)
 #city-and-county-of-denver-existing-landuse-2018
 #dsn = #the folder where the shapefile is located
 setwd(here("data-input", "city-of-denver-data"))
+getwd()
 den_landuse_2018 = st_read(dsn ="existing_landuse") %>%
   st_transform(2876) %>% #local feet
   st_simplify(dTolerance = 5) %>% #vertices every 5 feet for speed
@@ -30,10 +31,10 @@ den_landuse_2018 = st_read(dsn ="existing_landuse") %>%
     parcel_size_cat = factor(
         case_when(
           area_ac_parcel >= 1 ~ ">1.0 acre",
-          area_ac_parcel < 1 & area_ac_parcel >=0.5 ~ "0.5-1.0 ac",
+          area_ac_parcel < 1 & area_ac_parcel >=0.5 ~ "0.5-1.0 acre",
           area_ac_parcel < 0.5 ~ "<0.5 acre"
                     ),
-    levels = c("<0.5 acre", "0.5-1.0 ac", ">1.0 acre")
+    levels = c("<0.5 acre", "0.5-1.0 acre", ">1.0 acre")
     ),
     
     #per CCDOGI doc provided by CB
@@ -41,7 +42,7 @@ den_landuse_2018 = st_read(dsn ="existing_landuse") %>%
     stormwater_footprint_ratio = 
       case_when(
         parcel_size_cat==">1.0 acre" ~ 40,
-        parcel_size_cat=="0.5-1.0 ac" ~ 25,
+        parcel_size_cat=="0.5-1.0 acre" ~ 25,
         parcel_size_cat=="<0.5 acre" ~ 10
         ),
     #Comment: come back to this, as I don't fully understand his suggestions
@@ -49,9 +50,9 @@ den_landuse_2018 = st_read(dsn ="existing_landuse") %>%
     #rough guess based on CB suggestion
     n_redevelop_per_y = 
         case_when(
-          parcel_size_cat==">1.0 acre" ~ 100,
-          parcel_size_cat=="0.5-1.0 ac" ~ 25,
-          parcel_size_cat=="<0.5 acre" ~ 400
+          parcel_size_cat== ">1.0 acre" ~ 100,
+          parcel_size_cat== "0.5-1.0 acre" ~ 25,
+          parcel_size_cat== "<0.5 acre" ~ 400
                 )
   )
 

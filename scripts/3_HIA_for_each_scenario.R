@@ -1798,6 +1798,7 @@ table(den_landuse_2018$n_redevelop_per_y)
 st_crs(den_landuse_2018)
 st_crs(study_area_2876)
 names(den_landuse_2018)
+table(den_landuse_2018$parcel_size_cat)
 den_landuse_filtered = den_landuse_2018 %>% 
   st_intersection(study_area_2876) #remove northeast tracts as we've done elsewhere
 
@@ -1807,7 +1808,7 @@ den_landuse_sample_large = den_landuse_filtered %>%
 den_landuse_sample_large %>% mapview()
 
 den_landuse_sample_medium = den_landuse_filtered %>% 
-  filter(parcel_size_cat == "0.5-1.0 ac") %>% 
+  filter(parcel_size_cat == "0.5-1.0 acre") %>% 
   slice_sample(n=25, replace=FALSE)
 den_landuse_sample_medium %>% mapview()
 

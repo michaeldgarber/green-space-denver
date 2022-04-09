@@ -11,7 +11,7 @@ This page presents some work-in-progress updates for the Denver green-space heal
 
 **Project Updates**
 
--   April 2022: Visualize the scenarios without preliminary results: <https://michaeldgarber.github.io/green-space-denver/hia-scenarios.html>
+-   April 2022: Overview of scenarios for sharing: <https://michaeldgarber.github.io/green-space-denver/hia-scenarios.html>
 
 -   March 2022: Preliminary HIA results for four scenarios: <https://michaeldgarber.github.io/green-space-denver/hia-results.html>
 
