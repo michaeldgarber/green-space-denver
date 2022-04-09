@@ -6,6 +6,7 @@ output:
   html_document:
     toc: true  
     toc_float: true
+    toc_depth: 4
 bibliography: references.bib
 csl: american-medical-association.csl
 link-citations: true
@@ -266,7 +267,7 @@ mv_den_landuse_sample@map %>%
   addFullscreenControl()
 ```
 
-From this point, we followed the same framework as we've done for other projects. The baseline NDVI of the sampled parcels and that of their corresponding 500m buffers is visualized below.
+From this point, we followed the same framework as for other scenarios. The baseline NDVI of the sampled parcels and that of their corresponding 500m buffers is visualized below.
 
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
@@ -367,7 +368,7 @@ We will estimate the number of premature deaths averted under each scenario by f
 
 Under the first scenario, the areal unit is the block-group itself, and because we are not specifying where, exactly, in the block group the greening intervention would occur, we will define NDVI exposure as the average NDVI in the block group and will compare that value with the alternative native-plants value. We will use 5-year American Community Survey Data (2015-2019) to estimate the population in 5-year age groups in each census block group. For the other three scenarios, we will draw a 500-m buffer around the intervention area, as shown above. To estimate the population affected, we will multiply the population density of the block group in that age group by the area of the block group covered by the intervention area.
 
-To estimate the number of premature deaths prevented in each age group and area, we will multiply the population-attributable fraction by the baseline mortality rate by the population size. We will analyses to adults aged 30 and above (subject to change) following the age range of many of the cohort studies reviewed,[@rojas-rueda2019] and will exclude northeastern census block groups near the airport (subject to change; maybe not for each scenario).
+To estimate the number of premature deaths prevented in each age group and area, we will multiply the population-attributable fraction by the baseline mortality rate by the population size. We will restrict analyses to adults aged 30 and above (subject to change) following the age range of many of the cohort studies reviewed,[@rojas-rueda2019] and will exclude northeastern census block groups near the airport (subject to change; perhaps not for all scenarios).
 
 ### Health equity
 

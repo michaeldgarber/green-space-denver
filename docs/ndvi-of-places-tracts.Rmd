@@ -14,7 +14,7 @@ Updated March 21 with new filename.
 This document presents some preliminary analyses characterizing the NDVI of certain places and census tracts throughout the Denver area. 
 
 First, load packages used in this Rmarkdown doc.
-```{r loadpackages, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
+```{r loadpackages, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 library(here)
 library(tidyverse)
 library(sf)
@@ -31,7 +31,7 @@ library(lubridate) #for ggplot
 We obtained the normalized difference vegetation index (NDVI) from the Landsat-8 satellite at a resolution of 30 meters squared at a roughly 15-day interval between 2016 and 2021 for the following area around Denver:
 
 ## Define study area
-```{r denverbbox, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
+```{r denverbbox, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 load("den_metro_bbox_custom.RData")
 #around Denver and Jefferson Counties but only as far south as Castle Rock, i.e, not all of Jeff Co to limit data gathered
@@ -270,25 +270,9 @@ https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_load_de
 We then removed bodies of water from the census tract here:
 https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/1_merge_tracts_with_water.R
 
-Here is a map of the median NDVI of the census tracts in the area on 2021-06-10. Note that the southernmost portion of the southernmost census tract of Jefferson County is excluded because it was outside of the area from which we gathered data on NDVI.
-```{r ndvitracts2021-06-10, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
-setwd(here("data-processed"))
-load("den_metro_tracts_ndvi_day_wrangle_geo.RData")
-load("den_metro_bbox_custom_sf.RData")
-pal_viridis_trunc=viridis::viridis_pal(end=.9)  
-
-den_metro_tracts_ndvi_day_wrangle_geo %>% 
-  filter(date == "2021-06-10") %>% 
-  st_intersection(den_metro_bbox_custom_sf) %>% 
-  mapview(
-    layer.name = "NDVI, Median",
-     col.regions = pal_viridis_trunc,
-    zcol = "ndvi_med" 
-    )
-```
-
-And the analogous map on 2021-07-04:
+Here is a map of the median NDVI of the census tracts in the area on 2021-07-04:
 ```{r ndvitracts2021-07-04, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE, fig.width=10}
+#4/8/22 note I used to have another code chunk above this one showing a different day (2021-06-10), but the code was breaking.
 den_metro_tracts_ndvi_day_wrangle_geo %>% 
   filter(date == "2021-07-04") %>% 
   st_intersection(den_metro_bbox_custom_sf) %>% 
