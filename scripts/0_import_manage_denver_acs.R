@@ -168,12 +168,22 @@ save(den_metro_co_nogeo, file = "den_metro_co_nogeo.RData")
 # look-up tables for tract, counties, and county names--------
 setwd(here("data-processed"))
 
-## a geo lookup--------
+## geo lookups--------
 load("den_metro_co_geo.RData")
+### county geo lookup------------
 lookup_den_metro_co_fips_geo = den_metro_co_geo %>% 
   distinct(county_fips, geometry)%>% 
   as_tibble()
 save(lookup_den_metro_co_fips_geo, file = "lookup_den_metro_co_fips_geo.RData")
+
+### tract geo lookup----------
+lookup_den_metro_tract_geo = den_metro_tract_geo %>% 
+  distinct(tract_fips, geometry)
+save(lookup_den_metro_tract_geo, file = "lookup_den_metro_tract_geo.RData")
+### bg geo lookup----------
+lookup_den_metro_bg_geo = den_metro_bg_geo %>% 
+  distinct(bg_fips, geometry)
+save(lookup_den_metro_bg_geo, file = "lookup_den_metro_bg_geo.RData")
 
 #county name look up denver metro
 lookup_county_name_den_metro = den_metro_co_geo %>% 
@@ -247,25 +257,25 @@ options(tigris_use_cache = TRUE)
 library(tidycensus)
 acs_2019_vars <- load_variables(2019, "acs5", cache = TRUE)
 save(acs_2019_vars, file = "acs_2019_vars.RData") #takes a while so save.
-View(acs_2019_vars)
+
 #make it a tibble so you can select just the vars that begin with B01001
-acs_2019_var_tib_sex_by_age = acs_2019_vars %>% 
+acs_2019_var_tib_sex_age = acs_2019_vars %>% 
   as_tibble() %>%
   #could also do the grepl framework but this is more straightforward
   mutate(
-    sex_by_age = case_when(
+    sex_age = case_when(
       concept == "SEX BY AGE" ~ 1,
       TRUE ~ 0
   )) %>% 
-  filter(sex_by_age==1)
+  filter(sex_age==1)
 
 #now grab the vars as a vector for use in the get_acs() function
-acs_2019_vars_sex_by_age = acs_2019_var_tib_sex_by_age %>% 
+acs_2019_vars_sex_age = acs_2019_var_tib_sex_age %>% 
   dplyr::select(name) %>% 
   pull()
 
 #s_by_a = sex by age
-lookup_acs_2019_var_s_by_a_label = acs_2019_var_tib_sex_by_age %>% 
+lookup_acs_2019_var_sex_age_label = acs_2019_var_tib_sex_age %>% 
   #rename first so it's var_name and var_label. 
   #less ambiguous with, e.g., census tract name
   rename(
@@ -357,27 +367,27 @@ lookup_acs_2019_var_s_by_a_label = acs_2019_var_tib_sex_by_age %>%
 
 
 setwd(here("data-processed"))
-save(lookup_acs_2019_var_s_by_a_label, 
-     file = "lookup_acs_2019_var_s_by_a_label.RData")
+save(lookup_acs_2019_var_sex_age_label, 
+     file = "lookup_acs_2019_var_sex_age_label.RData")
 
 #Put this into Excel, so I can create a look-up table there between
 #this and the GBD data
 library(writexl)
 setwd(here("data-processed"))
 writexl::write_xlsx(
-  lookup_acs_2019_var_s_by_a_label,
-  "lookup_acs_2019_var_s_by_a_label.xlsx"
+  lookup_acs_2019_var_sex_age_label,
+  "lookup_acs_2019_var_sex_age_label.xlsx"
                     )
 
-table(lookup_acs_2019_var_s_by_a_label$age_group_acs) #good
-table(lookup_acs_2019_var_s_by_a_label$var_label)
-table(lookup_acs_2019_var_s_by_a_label$age_group_acs,
- lookup_acs_2019_var_s_by_a_label$age_group_acs_18_plus) 
+table(lookup_acs_2019_var_sex_age_label$age_group_acs) #good
+table(lookup_acs_2019_var_sex_age_label$var_label)
+table(lookup_acs_2019_var_sex_age_label$age_group_acs,
+ lookup_acs_2019_var_sex_age_label$age_group_acs_18_plus) 
 
 
 ### tracts: dl sex by age long form------------
 #this will be long form. easier to link with health information.
-den_metro_tract_s_by_a_long  = tidycensus::get_acs( #s by a = sex by age
+den_metro_tract_sex_age  = tidycensus::get_acs( #s by a = sex by age
   geography = "tract", 
   year=2019, 
 #  cache_table = TRUE, #this may have been throwing an error. leave this as default.
@@ -386,20 +396,20 @@ den_metro_tract_s_by_a_long  = tidycensus::get_acs( #s by a = sex by age
   keep_geo_vars = FALSE, 
 #  output = "long", #keep it long form. easier to link with GBD data
   survey = "acs5", 
-  variables = acs_2019_vars_sex_by_age,
+  variables = acs_2019_vars_sex_age,
   geometry = FALSE
 ) 
-den_metro_tract_s_by_a_long
+den_metro_tract_sex_age
 
-save(den_metro_tract_s_by_a_long, 
-     file = "den_metro_tract_s_by_a_long.RData")
+save(den_metro_tract_sex_age, 
+     file = "den_metro_tract_sex_age.RData")
 
 ### wrangle long-form (age/sex) tracts---------
 #in the object name, specify that it's long form to distinguish from the 
 #_geo version above
-den_metro_tract_s_by_a_long_wrangle = den_metro_tract_s_by_a_long %>% 
+den_metro_tract_sex_age_wrangle = den_metro_tract_sex_age %>% 
   rename( var_name = variable) %>% #note because it's long form, it's called variable here
-  left_join(lookup_acs_2019_var_s_by_a_label, by = "var_name") %>% #brings in lots
+  left_join(lookup_acs_2019_var_sex_age_label, by = "var_name") %>% #brings in lots
   mutate(
     tract_fips = str_sub(GEOID, 1,11),#this always works
     county_fips = str_sub(GEOID, 3,5)
@@ -416,35 +426,35 @@ den_metro_tract_s_by_a_long_wrangle = den_metro_tract_s_by_a_long %>%
   mutate( pop_dens_mi2 = pop/area_mi2_tract )#changed 3/24/22
 
 setwd(here("data-processed"))
-save(den_metro_tract_s_by_a_long_wrangle , 
-     file = "den_metro_tract_s_by_a_long_wrangle .RData")
+save(den_metro_tract_sex_age_wrangle , 
+     file = "den_metro_tract_sex_age_wrangle .RData")
 
 ### tracts: summarize age group categories for later linking------
 #note eventually we should probably consider the moe here
-names(den_metro_tract_s_by_a_long_wrangle)
+names(den_metro_tract_sex_age_wrangle)
 
-den_metro_tract_18_plus  = den_metro_tract_s_by_a_long_wrangle %>% 
+den_metro_tract_18_plus  = den_metro_tract_sex_age_wrangle %>% 
   group_by(tract_fips, age_group_acs_18_plus) %>% 
   summarise(pop_age_18_plus = sum(pop, na.rm = TRUE)) %>% 
   ungroup() %>% 
   filter(age_group_acs_18_plus==1) %>% 
   dplyr::select(-starts_with("age_group")) #remove so it doesn't link in.
 
-den_metro_tract_20_plus  = den_metro_tract_s_by_a_long_wrangle %>% 
+den_metro_tract_20_plus  = den_metro_tract_sex_age_wrangle %>% 
   group_by(tract_fips, age_group_acs_20_plus) %>% 
   summarise(pop_age_20_plus = sum(pop, na.rm = TRUE)) %>% 
   ungroup() %>% 
   filter(age_group_acs_20_plus==1) %>% 
   dplyr::select(-starts_with("age_group")) #remove so it doesn't link in.
 
-den_metro_tract_25_plus  = den_metro_tract_s_by_a_long_wrangle %>% 
+den_metro_tract_25_plus  = den_metro_tract_sex_age_wrangle %>% 
   group_by(tract_fips, age_group_acs_25_plus) %>% 
   summarise(pop_age_25_plus = sum(pop, na.rm = TRUE)) %>% 
   ungroup() %>% 
   filter(age_group_acs_25_plus==1) %>% 
   dplyr::select(-starts_with("age_group")) #remove so it doesn't link in.
 
-den_metro_tract_30_plus  = den_metro_tract_s_by_a_long_wrangle %>% 
+den_metro_tract_30_plus  = den_metro_tract_sex_age_wrangle %>% 
   group_by(tract_fips, age_group_acs_30_plus) %>% 
   summarise(pop_age_30_plus = sum(pop, na.rm = TRUE)) %>% 
   ungroup() %>% 
@@ -453,7 +463,7 @@ den_metro_tract_30_plus  = den_metro_tract_s_by_a_long_wrangle %>%
 
 ###  bg: dl sex by age long form--------
 #this will be long form. easier to link with health information.
-den_metro_bg_s_by_a_long  = tidycensus::get_acs( #s by a = sex by age
+den_metro_bg_sex_age  = tidycensus::get_acs( #s by a = sex by age
   geography = "block group", 
   year=2019, 
   #  cache_table = TRUE, #this may have been throwing an error. 
@@ -463,19 +473,19 @@ den_metro_bg_s_by_a_long  = tidycensus::get_acs( #s by a = sex by age
   keep_geo_vars = FALSE, 
   #  output = "long", #keep it long form. easier to link with GBD data
   survey = "acs5", 
-  variables = acs_2019_vars_sex_by_age,
+  variables = acs_2019_vars_sex_age,
   geometry = FALSE
 ) 
-den_metro_bg_s_by_a_long
+den_metro_bg_sex_age
 
-save(den_metro_bg_s_by_a_long, 
-     file = "den_metro_bg_s_by_a_long.RData")
+save(den_metro_bg_sex_age, 
+     file = "den_metro_bg_sex_age.RData")
 
 ### wrangle long-form (age/sex) bg---------
-den_metro_bg_s_by_a_long_wrangle = den_metro_bg_s_by_a_long %>% 
+den_metro_bg_sex_age_wrangle = den_metro_bg_sex_age %>% 
   #note because it's long form, it's called variable here
   rename( var_name = variable) %>% 
-  left_join(lookup_acs_2019_var_s_by_a_label, by = "var_name") %>% 
+  left_join(lookup_acs_2019_var_sex_age_label, by = "var_name") %>% 
   mutate(
     bg_fips = str_sub(GEOID, 1,12),
     tract_fips = str_sub(GEOID, 1,11), 
@@ -492,37 +502,37 @@ den_metro_bg_s_by_a_long_wrangle = den_metro_bg_s_by_a_long %>%
   mutate( pop_dens_mi2 = pop/area_mi2_bg )
   
   
-den_metro_bg_s_by_a_long_wrangle 
+den_metro_bg_sex_age_wrangle 
 setwd(here("data-processed"))
-save(den_metro_bg_s_by_a_long_wrangle , 
-     file = "den_metro_bg_s_by_a_long_wrangle.RData")
+save(den_metro_bg_sex_age_wrangle , 
+     file = "den_metro_bg_sex_age_wrangle.RData")
 
 ### block group: summarize age group categories for later linking------
 #note eventually we should probably consider the moe here
-names(den_metro_tract_s_by_a_long_wrangle)
+names(den_metro_tract_sex_age_wrangle)
 
-den_metro_bg_18_plus  = den_metro_bg_s_by_a_long_wrangle %>% 
+den_metro_bg_18_plus  = den_metro_bg_sex_age_wrangle %>% 
   group_by(bg_fips, age_group_acs_18_plus) %>% 
   summarise(pop_age_18_plus = sum(pop, na.rm = TRUE)) %>% 
   ungroup() %>% 
   filter(age_group_acs_18_plus==1) %>% 
   dplyr::select(-starts_with("age_group")) #remove so it doesn't link in.
 
-den_metro_bg_20_plus  = den_metro_bg_s_by_a_long_wrangle %>% 
+den_metro_bg_20_plus  = den_metro_bg_sex_age_wrangle %>% 
   group_by(bg_fips, age_group_acs_20_plus) %>% 
   summarise(pop_age_20_plus = sum(pop, na.rm = TRUE)) %>% 
   ungroup() %>% 
   filter(age_group_acs_20_plus==1) %>% 
   dplyr::select(-starts_with("age_group")) #remove so it doesn't link in.
 
-den_metro_bg_25_plus  = den_metro_bg_s_by_a_long_wrangle %>% 
+den_metro_bg_25_plus  = den_metro_bg_sex_age_wrangle %>% 
   group_by(bg_fips, age_group_acs_25_plus) %>% 
   summarise(pop_age_25_plus = sum(pop, na.rm = TRUE)) %>% 
   ungroup() %>% 
   filter(age_group_acs_25_plus==1) %>% 
   dplyr::select(-starts_with("age_group")) #remove so it doesn't link in.
 
-den_metro_bg_30_plus  = den_metro_bg_s_by_a_long_wrangle %>% 
+den_metro_bg_30_plus  = den_metro_bg_sex_age_wrangle %>% 
   group_by(bg_fips, age_group_acs_30_plus) %>% 
   summarise(pop_age_30_plus = sum(pop, na.rm = TRUE)) %>% 
   ungroup() %>% 

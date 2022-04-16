@@ -273,7 +273,9 @@ https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/1_merge_t
 Here is a map of the median NDVI of the census tracts in the area on 2021-07-04:
 ```{r ndvitracts2021-07-04, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE, fig.width=10}
 #4/8/22 note I used to have another code chunk above this one showing a different day (2021-06-10), but the code was breaking.
-den_metro_tracts_ndvi_day_wrangle_geo %>% 
+setwd(here("data-processed"))
+load("den_metro_tract_ndvi_day_wrangle_geo.RData")
+den_metro_tract_ndvi_day_wrangle_geo %>% 
   filter(date == "2021-07-04") %>% 
   st_intersection(den_metro_bbox_custom_sf) %>% 
   mapview(
