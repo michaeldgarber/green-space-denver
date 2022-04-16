@@ -45,6 +45,7 @@ st_crs(ndvi_den_metro_terr_5_yr)
 st_crs(den_metro_tract_no_wtr_geo)
 den_metro_tract_no_wtr_4326 = den_metro_tract_no_wtr_geo %>% 
   st_transform(4326)
+#note this step is super slow because it's 5 years
 den_metro_tract_ndvi_long =ndvi_den_metro_terr_5_yr %>% 
   #this creates a data frame with a row id for each intersecting polygon, 
   #presumably sorted by their order of appearance

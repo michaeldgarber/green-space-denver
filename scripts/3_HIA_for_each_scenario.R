@@ -162,68 +162,6 @@ save(lookup_den_co_bg_no_wtr_geo, file = "lookup_den_co_bg_no_wtr_geo.RData")
 # source(here("scripts","0_read_wrangle_denver_land_use.R")) #this takes ~10 s
 
 
-## Prep sex-by-age pop data & link with GBD rate data--------------
-#Do here since it's used for all scenarios
-#Note these are long-form
-### Add dose-response function to GBD data----------
-#source this script:
-source( here("scripts","0_read_gbd_colorado.R"))  
-names(ihme_co)
-ihme_co_w_drf = ihme_co %>% 
-  #add dose-response function here conditional on outcome.
-  mutate(
-    #From Rojas 2019
-    #    Green spaces and mortality: a systematic review and 
-    #meta-analysis of cohort studies
-    #dose-response function (drf)
-    drf_est = case_when(
-      measure == "deaths" & cause_short == "all" ~ 0.96,
-      TRUE ~ NA_real_),
-    drf_ll = case_when(
-      measure == "deaths" & cause_short == "all" ~ 0.94,
-      TRUE ~ NA_real_),
-    drf_ul = case_when(
-      measure == "deaths" & cause_short == "all" ~ 0.97,
-      TRUE ~ NA_real_),
-    
-    drf_measure = case_when(
-      measure == "deaths" & cause_short == "all" ~  "risk-ratio",
-      TRUE ~ NA_character_),
-    #the amount of change in NDVI corresponding to the change in risk
-    #measured by the risk ratio from the meta-analysis
-    drf_increment = case_when( 
-      measure == "deaths" & cause_short == "all" ~  .1,
-      TRUE ~ NA_real_)
-  )
-
-
-#We created a spreadsheet to link the age groups here:
-setwd(here("data-processed"))
-lookup_acs_gbd_age = readxl::read_excel("lookup_acs_gbd_age.xlsx")
-load("den_metro_bg_sex_age_wrangle.RData") #long form
-
-### Link GBD to bg data & restrict to certain age groups----------
-#begin with the long-form metro data, restrict to denver only, link with GBD,
-#### Define lower bound for age-----------
-age_lowest_to_include=30
-den_co_bg_sex_age_gbd_wrangle = den_metro_bg_sex_age_wrangle %>% 
-  filter(county_fips == "031" ) %>% 
-  left_join(lookup_acs_gbd_age, by = "age_group_acs") %>%  #link age groups for linking
-  left_join(ihme_co_w_drf, #link to GBD data
-            by = c("age_group_gbd", "sex")) %>% 
-  #exclude the "all" ages and sexes. that is, filter them out
-  filter(age_group_acs != "all") %>% 
-  filter(sex != "all") %>% 
-  #limit to adults 30 and older, as most studies from meta-analysis
-  #can change if needed
-  filter(age_group_acs_lb>=age_lowest_to_include) %>% 
-  #also apply these filters. remove as we determine additional
-  #dose-response functions 
-  #(e.g., the Paul 2020; Urban green space and the risks of dementia and stroke)
-  filter(measure == "deaths" & cause_short == "all") %>% 
-  dplyr::select(-var_label, -var_name) #drop these
-
-View(den_co_bg_sex_age_gbd_wrangle)
 
 #I'm first computing NDVI diff for each scenario, and then in a subsequent
 #major section, calculating avoidable deaths.
@@ -398,9 +336,6 @@ mv_bg_below_native_threshold =den_co_bg_ndvi_geo %>%
   )
 
 mv_bg_below_native_threshold
-summary(den_co_bg_ndvi$ndvi_mean_wt)
-summary(den_co_bg_ndvi$ndvi_diff_20)
-summary(den_co_bg_ndvi$ndvi_diff_100)
 
 # 2. Scenario 2: waterways--------
 
@@ -510,7 +445,7 @@ save(den_co_osm_wtr_200ft_union_no_wtr, file = "den_co_osm_wtr_200ft_union_no_wt
 den_co_osm_wtr_200ft_comp = den_co_osm_wtr_res_union %>% 
   st_difference(den_co_osm_wtr_200ft_tx_union)
 den_co_osm_wtr_200ft_comp %>% mapview()
-save(den_co_osm_wtr_100ft_comp, file = "den_co_osm_wtr_100ft_comp.RData")
+save(den_co_osm_wtr_200ft_comp, file = "den_co_osm_wtr_200ft_comp.RData")
 
 
 ### 100 feet (realistic)---------
@@ -562,16 +497,16 @@ save(den_co_osm_wtr_50ft_comp,
 #and intersect it with the full buffer (including the water; it will go away)
 #Update 4/3/22 restrict to Denver only (not metro)
 load("den_co_bg_no_wtr_filtered_geo.RData")
-st_crs(den_metro_bg_geo)
+st_crs(den_co_bg_no_wtr_filtered_geo)
 
 #Intersect block groups with both the complement buffers and the intervention buffers
 #what proportion of the block group is covered by the intersection?
-#multiply the resulting area covered by the pop. density 
-#(assume uniform pop dens. in block group)
-load("den_bg_acs5_2019_wrangle_geo.RData")
+#multiply the resulting area covered by the pop_est. density 
+#(assume uniform pop_est dens. in block group)
+load("den_bg_acs5_wrangle_geo.RData")
 st_crs(den_co_osm_wtr_res)
-st_crs(den_bg_acs5_2019_wrangle_geo)
-names(den_bg_acs5_2019_wrangle_geo)
+st_crs(den_bg_acs5_wrangle_geo)
+names(den_bg_acs5_wrangle_geo)
 
 #I do this for all of them, so make a function, as the code gets to be long
 #otherwise
@@ -1556,6 +1491,7 @@ den_bg_int_parcel_tx_ndvi = ndvi_den_co_20210704 %>%
     buff_type = "tx" ) %>%
   dplyr::select( bg_fips, buff_type, scenario_sub, starts_with("ndvi_mean"), contains("area"))
 
+den_bg_int_parcel_tx_ndvi
 save(den_bg_int_parcel_tx_ndvi, 
      file = "den_bg_int_parcel_tx_ndvi.RData")
 den_bg_int_parcel_tx_ndvi %>% 
@@ -1635,13 +1571,6 @@ den_bg_int_parcel_ndvi_wide = den_bg_int_parcel_res_ndvi_nogeo %>%
 
 den_bg_int_parcel_ndvi_wide
 
-
-
-
-## summarize long-form estimates----------
-names(den_co_bg_long_parcel)
-
-
 # 4. Scenario 4: Parking -----------
 ## Prep parking buffers--------
 #Parking data managed here: 0_read_denver_parking.R
@@ -1720,8 +1649,6 @@ names(den_prkng)
 den_prkng_geo_only = den_prkng %>% 
   dplyr::select(prkng_id, geometry)
 
-prkng_by_size %>% mapview(zcol = "prkng_size_cat")
-class(prkng_by_size$geometry)
 den_landuse_sample
 den_landuse_sample_geo_only = den_landuse_sample %>% 
   dplyr::select(starts_with("prkng"), geometry)
@@ -1968,23 +1895,94 @@ den_bg_int_prkng_alt_all %>%
 ####################################################-
 # COMBINE SCENARIOS AND COMPUTE ATTRIB DEATHS---------------
 ####################################################-
+
+
+## Prep sex-by-age pop_est data & link with GBD rate data--------------
+# 4/16/22 I originally had this above, but I like it better here,
+#as here is where we do the HIA in the code
+
+#Note these are long-form
+### Add dose-response function to GBD data----------
+#source this script:
+source( here("scripts","0_read_gbd_colorado.R"))  
+names(ihme_co)
+log(.97)
+log(.96)
+log(.94)
+exp(log(.97))
+ihme_co_w_drf = ihme_co %>% 
+  #add dose-response function here conditional on outcome.
+  mutate(
+    #From Rojas 2019 Green space-mortality meta-analysis
+    #dose-response function (drf)
+    drf_est = case_when(
+      measure == "deaths" & cause_short == "all" ~ 0.96,
+      TRUE ~ NA_real_),
+    drf_ll = case_when(
+      measure == "deaths" & cause_short == "all" ~ 0.94,
+      TRUE ~ NA_real_),
+    drf_ul = case_when(
+      measure == "deaths" & cause_short == "all" ~ 0.97,
+      TRUE ~ NA_real_),
+    
+    drf_measure = case_when(
+      measure == "deaths" & cause_short == "all" ~  "risk-ratio",
+      TRUE ~ NA_character_),
+    #the amount of change in NDVI corresponding to the change in risk
+    #measured by the risk ratio from the meta-analysis
+    drf_increment = case_when( 
+      measure == "deaths" & cause_short == "all" ~  .1,
+      TRUE ~ NA_real_)
+  )
+
+
+#We created a spreadsheet to link the age groups here:
+setwd(here("data-processed"))
+lookup_acs_gbd_age = readxl::read_excel("lookup_acs_gbd_age.xlsx")
+load("den_metro_bg_sex_age_wrangle.RData") #long form
+
+### Link GBD to bg data & restrict to certain age groups----------
+#begin with the long-form metro data, restrict to denver only, link with GBD,
+#### Define lower bound for age-----------
+age_lowest_to_include=30
+den_co_bg_sex_age_gbd_wrangle = den_metro_bg_sex_age_wrangle %>% 
+  filter(county_fips == "031" ) %>% 
+  left_join(lookup_acs_gbd_age, by = "age_group_acs") %>%  #link age groups for linking
+  left_join(ihme_co_w_drf, #link to GBD data
+            by = c("age_group_gbd", "sex")) %>% 
+  #exclude the "all" ages and sexes. that is, filter them out
+  filter(age_group_acs != "all") %>% 
+  filter(sex != "all") %>% 
+  #limit to adults 30 and older, as most studies from meta-analysis
+  #can change if needed
+  filter(age_group_acs_lb>=age_lowest_to_include) %>% 
+  #also apply these filters. remove as we determine additional
+  #dose-response functions 
+  #(e.g., the Paul 2020; Urban green space and the risks of dementia and stroke)
+  filter(measure == "deaths" & cause_short == "all") %>% 
+  dplyr::select(-var_label, -var_name) #drop these
+
+names(den_co_bg_sex_age_gbd_wrangle )
+
 ## Link each with the gbd data separately before the bind-rows--------------
 #the block-group based scenario is slightly different. the others can be combined for shorter code.
 ### scenario 1 - block groups----------
+n_distinct(den_co_bg_sex_age_gbd_wrangle$bg_fips)
+n_distinct(den_co_bg_ndvi_alt_all_nogeo$bg_fips)
 hia_bg_ante_bind = den_co_bg_sex_age_gbd_wrangle %>% 
   #as of 4/14/22, we are now long form with both.
   #this should repeat for every row of bg_fips in the right df
   left_join(den_co_bg_ndvi_alt_all_nogeo, by = "bg_fips") %>% 
-  #redefine pop to a general term across scenarios
+  #redefine pop_est to a general term across scenarios
   mutate(
     prop_tx_itself_veg=1, #of the area of the actual treatment, what proportion is treated?
     #note this is different than prop_area_tx
     #for example, the office-green-infra polygons are all considered "treatment" areas
     #but only 50% might be vegetated,
     #for the bg intervention, we always say 1
-    pop_affected = pop,
+    pop_affected = pop_est,
     pop_affected_type = "bg", #just to keep track of how this was calculated
-  )   #for this scenario, it's just the pop of the bg
+  )   #for this scenario, it's just the pop_est of the bg
 
 
 ### all other scenarios---------------
@@ -1994,6 +1992,8 @@ hia_bg_ante_bind = den_co_bg_sex_age_gbd_wrangle %>%
 #area of each chunk
 #rip for riparian. this is the final long-form dataset for scenario 2.
 names(den_bg_int_wtr_ndvi_all_nogeo)
+names(den_co_bg_sex_age_gbd_wrangle)
+n_distinct(den_bg_int_wtr_ndvi_all_nogeo$bg_fips)#so begin with the den_co_bg data as we're doing
 hia_rip_ante_bind = den_co_bg_sex_age_gbd_wrangle %>% 
   left_join(den_bg_int_wtr_ndvi_all_nogeo, by = "bg_fips")
 
@@ -2029,10 +2029,10 @@ hia_all = hia_bg_ante_bind %>%
   mutate(
     #much better now that this at the end of the code
     rr_alt = drf_est**(ndvi_diff/drf_increment), #calc. risk ratios per dose-response funct
-    paf =(rr_alt -1)/rr_alt , #pop attrib fraction
+    paf =(rr_alt -1)/rr_alt , #pop_est attrib fraction
     #attributable deaths
     #note the rate is per 100,000 so first divide it by
-    #100,000 before multiplying by the pop. in that age group.
+    #100,000 before multiplying by the pop_est. in that age group.
     #we've already filtered out the marginal population totals above, so this is
     #just the joint sex-by-age categories
     #could generalize from d to o for outcome if we include other outcomes rather than just death
@@ -2067,11 +2067,11 @@ hia_all_overall = hia_all %>%
     attrib_d = sum(attrib_d, na.rm=TRUE)
   )
 
-
+hia_all_overall
 
 ### Summarize by block group----------
 load("lookup_den_metro_bg_geo.RData") #created 0_import_manage_denver_acs.R
-
+lookup_den_metro_bg_geo %>% mapview()
 hia_all_bg = hia_all %>% 
   filter(ndvi_below_native_threshold==1) %>% 
   group_by(bg_fips, scenario, scenario_sub) %>% 
@@ -2079,6 +2079,7 @@ hia_all_bg = hia_all %>%
     pop_affected = sum(pop_affected, na.rm=TRUE),
     attrib_d = sum(attrib_d, na.rm=TRUE)
   )
+hia_all_bg
 
 hia_all_bg %>% 
   filter(scenario == "all-bg") %>% 

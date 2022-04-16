@@ -1,4 +1,6 @@
-#Revised March 11 2022
+#filename: 0_read_den_nbhd_equity_index.R
+
+##Revised March 11 2022
 library(tidyverse)
 library(mapview)
 library(sf)
