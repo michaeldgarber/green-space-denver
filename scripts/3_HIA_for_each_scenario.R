@@ -287,8 +287,16 @@ den_co_bg_ndvi_alt_all_nogeo = den_co_bg_ndvi_alt_100_nogeo %>%
   ) %>% 
   mutate_ndvi_diff_bg_itself() %>% 
   #just keep bg_fips (and not tract or county) to avoid join conflicts
-  dplyr::select(contains("bg_fips"), contains("scenario"), contains("ndvi"), contains("prop_area"))
+  dplyr::select(contains("bg_fips"), contains("scenario"), contains("ndvi"), contains("prop_area")) %>% 
+  #4/16/22 add this for consistency here
+  #note this is different than prop_area_tx
+  #for example, the office-green-infra polygons are all considered "treatment" areas
+  #but only 50% might be vegetated,
+  #for the bg intervention, we always say 1
+  mutate(prop_tx_itself_veg=1) #of the area of the actual treatment, what proportion is treated?
 
+
+save(den_co_bg_ndvi_alt_all_nogeo, file = "den_co_bg_ndvi_alt_all_nogeo.RData")
 den_co_bg_ndvi_alt_all_nogeo
 names(den_co_bg_ndvi_alt_all_nogeo)
 
@@ -302,7 +310,7 @@ den_co_bg_ndvi_alt_all_nogeo %>%
     layer.name = "ndvi_diff",
     zcol = "ndvi_diff")
 
-save(den_co_bg_ndvi_alt_all_nogeo, file = "den_co_bg_ndvi_alt_all_nogeo.RData")
+
 
 ### Examine weighted NDVI by census block group--------
 pal_terrain = terrain.colors(100) %>% rev()#reverse the order of the palette
@@ -1198,6 +1206,8 @@ den_bg_int_ogi_proj_ndvi_wide = den_bg_int_ogi_proj_res_ndvi_nogeo %>%
       (1-prop_tx_itself_veg)*ndvi_mean_wt_tx ) %>% 
   mutate_ndvi_diff_bg_int()
 
+#save for use in bootstrap code
+save(den_bg_int_ogi_proj_ndvi_wide, file = "den_bg_int_ogi_proj_ndvi_wide.RData")
 den_bg_int_ogi_proj_ndvi_wide
 names(den_bg_int_ogi_proj_ndvi_wide)
 
@@ -1569,7 +1579,8 @@ den_bg_int_parcel_ndvi_wide = den_bg_int_parcel_res_ndvi_nogeo %>%
       (1-prop_tx_itself_veg)*ndvi_mean_wt_tx ) %>% 
   mutate_ndvi_diff_bg_int() #all one step in contrast with riparian areas
 
-den_bg_int_parcel_ndvi_wide
+save(den_bg_int_parcel_ndvi_wide, file = "den_bg_int_parcel_ndvi_wide.RData")
+
 
 # 4. Scenario 4: Parking -----------
 ## Prep parking buffers--------
@@ -1885,6 +1896,9 @@ den_bg_int_prkng_alt_all = den_bg_int_prkng_alt_100 %>%
   ) %>% 
   mutate_ndvi_diff_bg_int() 
 
+#save for use in bootstrap code
+save(den_bg_int_prkng_alt_all, file = "den_bg_int_prkng_alt_all.RData")
+
 #confirm ndvi diff differs by sub-scenario
 den_bg_int_prkng_alt_all %>% 
   group_by(scenario_sub) %>% 
@@ -1906,34 +1920,43 @@ den_bg_int_prkng_alt_all %>%
 #source this script:
 source( here("scripts","0_read_gbd_colorado.R"))  
 names(ihme_co)
+View(ihme_co)
 log(.97)
 log(.96)
 log(.94)
 exp(log(.97))
-ihme_co_w_drf = ihme_co %>% 
-  #add dose-response function here conditional on outcome.
+
+### create a dataset with the dose-response function-------- 
+#values from From Rojas 2019 Green space-mortality meta-analysis
+# dose-response function (drf)
+
+drf_deaths =  0.96 %>% 
+  as_tibble() %>% 
+  rename(drf_est=value) %>% 
   mutate(
-    #From Rojas 2019 Green space-mortality meta-analysis
-    #dose-response function (drf)
-    drf_est = case_when(
-      measure == "deaths" & cause_short == "all" ~ 0.96,
-      TRUE ~ NA_real_),
-    drf_ll = case_when(
-      measure == "deaths" & cause_short == "all" ~ 0.94,
-      TRUE ~ NA_real_),
-    drf_ul = case_when(
-      measure == "deaths" & cause_short == "all" ~ 0.97,
-      TRUE ~ NA_real_),
-    
-    drf_measure = case_when(
-      measure == "deaths" & cause_short == "all" ~  "risk-ratio",
-      TRUE ~ NA_character_),
+    drf_ll = 0.94,
+    drf_ul = 0.97,
     #the amount of change in NDVI corresponding to the change in risk
     #measured by the risk ratio from the meta-analysis
-    drf_increment = case_when( 
-      measure == "deaths" & cause_short == "all" ~  .1,
-      TRUE ~ NA_real_)
+    drf_increment = 0.1,
+    
+    drf_est_log = log(drf_est),
+    drf_ll_log = log(drf_ll),
+    drf_ul_log = log(drf_ul),
+    measure = "deaths", #to link with the IHME data
+    cause_short = "all" ,#to link with the IHME data
+    
+    #assume symmetrical around lower bound on the log scale.
+    #assume lower bound is estimate - 1.96*SD
+    drf_sd_log_scale = abs(drf_est_log-drf_ll_log)/1.96
   )
+
+summary(drf_deaths$drf_sd_log_scale)
+summary(drf_deaths$drf_est_log)
+save(drf_deaths, file = "drf_deaths.RData") #to quickly load elsewhere
+ihme_co_w_drf = ihme_co %>% 
+  left_join(drf_deaths, by = c("measure", "cause_short"))
+
 
 
 #We created a spreadsheet to link the age groups here:
@@ -1950,9 +1973,8 @@ den_co_bg_sex_age_gbd_wrangle = den_metro_bg_sex_age_wrangle %>%
   left_join(lookup_acs_gbd_age, by = "age_group_acs") %>%  #link age groups for linking
   left_join(ihme_co_w_drf, #link to GBD data
             by = c("age_group_gbd", "sex")) %>% 
-  #exclude the "all" ages and sexes. that is, filter them out
-  filter(age_group_acs != "all") %>% 
-  filter(sex != "all") %>% 
+  filter(age_group_acs != "all") %>% #exclude "all" from ages
+  filter(sex != "all") %>%  #exclude "all" from sex
   #limit to adults 30 and older, as most studies from meta-analysis
   #can change if needed
   filter(age_group_acs_lb>=age_lowest_to_include) %>% 
@@ -1962,81 +1984,55 @@ den_co_bg_sex_age_gbd_wrangle = den_metro_bg_sex_age_wrangle %>%
   filter(measure == "deaths" & cause_short == "all") %>% 
   dplyr::select(-var_label, -var_name) #drop these
 
-names(den_co_bg_sex_age_gbd_wrangle )
-
-## Link each with the gbd data separately before the bind-rows--------------
-#the block-group based scenario is slightly different. the others can be combined for shorter code.
-### scenario 1 - block groups----------
-n_distinct(den_co_bg_sex_age_gbd_wrangle$bg_fips)
-n_distinct(den_co_bg_ndvi_alt_all_nogeo$bg_fips)
-hia_bg_ante_bind = den_co_bg_sex_age_gbd_wrangle %>% 
-  #as of 4/14/22, we are now long form with both.
-  #this should repeat for every row of bg_fips in the right df
-  left_join(den_co_bg_ndvi_alt_all_nogeo, by = "bg_fips") %>% 
-  #redefine pop_est to a general term across scenarios
-  mutate(
-    prop_tx_itself_veg=1, #of the area of the actual treatment, what proportion is treated?
-    #note this is different than prop_area_tx
-    #for example, the office-green-infra polygons are all considered "treatment" areas
-    #but only 50% might be vegetated,
-    #for the bg intervention, we always say 1
-    pop_affected = pop_est,
-    pop_affected_type = "bg", #just to keep track of how this was calculated
-  )   #for this scenario, it's just the pop_est of the bg
-
-
-### all other scenarios---------------
-### scenario 2 - riparian areas
-#calculation population in each age group in each small area
-#using the population density values in each age group and the
-#area of each chunk
-#rip for riparian. this is the final long-form dataset for scenario 2.
-names(den_bg_int_wtr_ndvi_all_nogeo)
+#save for use in bootstrap
+save(den_co_bg_sex_age_gbd_wrangle, file = "den_co_bg_sex_age_gbd_wrangle.RData") 
 names(den_co_bg_sex_age_gbd_wrangle)
-n_distinct(den_bg_int_wtr_ndvi_all_nogeo$bg_fips)#so begin with the den_co_bg data as we're doing
-hia_rip_ante_bind = den_co_bg_sex_age_gbd_wrangle %>% 
-  left_join(den_bg_int_wtr_ndvi_all_nogeo, by = "bg_fips")
+summary(den_co_bg_sex_age_gbd_wrangle$pop_moe)
+summary(den_co_bg_sex_age_gbd_wrangle$pop_est)
+# den_co_bg_sex_age_gbd_wrangle %>% 
+#   dplyr::select(starts_with("pop")) %>% 
+#   View()
+## Bind each scenario, link with pop, and conduct HIA---------
+#the block-group based scenario is slightly different. the others can be combined for shorter code.
+#We can write this more concisely.
+#Begin with the unique list of block groups; actually no, because we would have to left join
+#with the unique list anyway, which is more steps. leave as is.
+den_co_bg_unique_list = den_metro_bg_sex_age_wrangle %>% 
+  filter(county_fips == "031" ) %>% 
+  dplyr::select(bg_fips) %>% 
+  distinct()
+den_co_bg_unique_list
 
-#scenario 3 - ogi proj
-hia_ogi_ante_bind = den_co_bg_sex_age_gbd_wrangle %>% 
-  left_join(den_bg_int_ogi_proj_ndvi_wide, by = "bg_fips")
-
-#scenario 3 - parcels
-hia_parcel_ante_bind = den_co_bg_sex_age_gbd_wrangle %>% 
-  left_join(den_bg_int_parcel_ndvi_wide, by = "bg_fips")
-
-#scenario 4 - parking
-hia_prkng_ante_bind = den_co_bg_sex_age_gbd_wrangle %>% 
-  left_join(den_bg_int_prkng_alt_all, by = "bg_fips") 
-
-### Bind all of the non-bg scenarios------------
-hia_all_non_bg = hia_rip_ante_bind %>% 
+n_distinct(den_bg_int_ogi_proj_ndvi_wide$bg_fips) #193 bgs affected
+n_distinct(den_bg_int_wtr_ndvi_all_nogeo$bg_fips)#405 bgs affected
+#actually, just stack them all, link den_co_bg, and use case_when to define vars
+names(den_bg_int_ogi_proj_ndvi_wide)
+table( den_co_bg_ndvi_alt_all_nogeo$scenario)
+hia_all  = den_co_bg_ndvi_alt_all_nogeo %>% #scenario 1 - all bg
   bind_rows(
-    hia_ogi_ante_bind,
-    hia_parcel_ante_bind,
-    hia_prkng_ante_bind
-  ) %>% 
-  #in theses scenarios, in contrast to the first with the block groups,
-  #the pop_affected is just that within the 500-m buffer
+    den_bg_int_wtr_ndvi_all_nogeo, #scenario 2 - riparian
+    den_bg_int_ogi_proj_ndvi_wide, #scenario 3 - ogi proj
+    den_bg_int_parcel_ndvi_wide, #scenario 3 - ogi parcel
+    den_bg_int_prkng_alt_all #scenario 4 - parking
+  ) %>% #link pop data here
+  left_join(den_co_bg_sex_age_gbd_wrangle, by = "bg_fips") %>% 
   mutate(
-    pop_affected = area_mi2_bg_int_res*pop_dens_mi2,#updated 4/14/22
-    pop_affected_type = "res-buffer" #residential buffer
-  )
-
-## Bind all scenarios and compute deaths averted
-hia_all = hia_bg_ante_bind %>% 
-  bind_rows(hia_all_non_bg) %>% 
-  mutate(
-    #much better now that this at the end of the code
+    pop_affected = case_when(
+      scenario == "all-bg" ~ pop_est, #for scenario 1, it's just the pop of the bg
+      TRUE ~ area_mi2_bg_int_res*pop_dens_mi2 #for other scenarios, multiply area by pop dens
+          ),
+    pop_affected_type = case_when(
+      scenario == "all-bg" ~ "bg", #to keep track of how calculated
+      TRUE ~   "res-buffer" #residential buffer otherwise
+    ),
+    #now conduct HIA
     rr_alt = drf_est**(ndvi_diff/drf_increment), #calc. risk ratios per dose-response funct
     paf =(rr_alt -1)/rr_alt , #pop_est attrib fraction
     #attributable deaths
-    #note the rate is per 100,000 so first divide it by
-    #100,000 before multiplying by the pop_est. in that age group.
-    #we've already filtered out the marginal population totals above, so this is
-    #just the joint sex-by-age categories
+    #rate is per 100,000 so first divide by 100,000 before multiplying by the pop_est. in age group
+    #marginal totals were filtered out above, so it's just the joint sex-by-age categories
     #could generalize from d to o for outcome if we include other outcomes rather than just death
-    attrib_d = paf*(rate_per_100k_est/100000)*pop_affected,
+    attrib_d = paf*(rate_per_100k_est/100000)*pop_affected, #attrib deaths. note divide by 100000
     
     #one thing to check is whether we've limited to ndvi_below_threshold and how
     #does it make sense to simply not intervene upon any block group that has a ndvi above threshold?
@@ -2048,8 +2044,13 @@ hia_all = hia_bg_ante_bind %>%
       TRUE ~0
     )
   ) %>% 
-  dplyr::select(contains("fips"), contains("scenario"), everything())
+  dplyr::select(
+    contains("fips"), contains("scenario"), 
+    starts_with("pop"), starts_with("area"), contains("area"),
+    contains("ndvi"), contains("drf"),
+    everything())
 
+save(hia_all, file = "hia_all.RData")
 #checks
 table(hia_all$scenario)
 table(hia_all$scenario_sub)

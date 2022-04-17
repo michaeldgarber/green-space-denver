@@ -408,6 +408,25 @@ den_metro_tract_sex_age
 save(den_metro_tract_sex_age, 
      file = "den_metro_tract_sex_age.RData")
 
+### Define a function for this wrangling since I use it twice
+tract_bg_common_dplyr_1 = function(df){
+  df %>% 
+  #drop geoid and name. we have it via the fips codes
+  dplyr::select(-GEOID, -NAME) %>%  
+    #rename the estimate to explicitly be population,
+    rename(
+      pop_est = estimate, #this is the population estimate in that age-sex group
+      pop_moe = moe) %>% 
+    #for the bootstrapping, add a confidence interval for pop,
+    #assuming that the margin of error represents a 90% confidence interval
+    #or 1.645 SE
+    #https://www.census.gov/content/dam/Census/programs-surveys/acs/guidance/training-presentations/20180418_MOE.pdf
+    mutate(
+      pop_sd = pop_moe/1.645
+    ) %>% 
+    dplyr::select(contains("fips"), everything()) 
+}
+
 ### wrangle long-form (age/sex) tracts---------
 #in the object name, specify that it's long form to distinguish from the 
 #_geo version above
@@ -418,14 +437,7 @@ den_metro_tract_sex_age_wrangle = den_metro_tract_sex_age %>%
     tract_fips = str_sub(GEOID, 1,11),#this always works
     county_fips = str_sub(GEOID, 3,5)
   )  %>% 
-  dplyr::select( #drop geoid and name. we have it via the fips codes
-    -GEOID, -NAME  
-    ) %>%  
-  #rename the estimate to explicitly be population,
-  rename(pop_est = estimate, #this is the population estimate in that age-sex group
-         #update 4/16/22 changed to pop_est to more easily find/replace with pop_moe
-         pop_moe = moe) %>% 
-  dplyr::select(contains("fips"), everything()) %>% 
+  tract_bg_common_dplyr_1() %>% 
   #link area measurements to calculate population density
   left_join(lookup_tract_area, by = "tract_fips") %>% 
   mutate( pop_dens_mi2 = pop_est/area_mi2_tract )#changed 3/24/22
@@ -496,18 +508,17 @@ den_metro_bg_sex_age_wrangle = den_metro_bg_sex_age %>%
     tract_fips = str_sub(GEOID, 1,11), 
     county_fips = str_sub(GEOID, 3,5)
   )  %>% 
-  #drop geoid and name. we have it via the fips codes
-  dplyr::select(-GEOID, -NAME) %>%  
-  #rename the estimate to explicitly be population,
-  rename(pop_est = estimate, #this is the population estimate in that age-sex group
-         pop_moe = moe) %>% 
-  dplyr::select(contains("fips"), everything()) %>% 
+  tract_bg_common_dplyr_1() %>% 
   #link area measurements to calculate population density
   left_join(lookup_bg_area, by = "bg_fips") %>% 
   mutate( pop_dens_mi2 = pop_est/area_mi2_bg )
   
   
 den_metro_bg_sex_age_wrangle 
+den_metro_bg_sex_age_wrangle %>% 
+  dplyr::select(starts_with("pop")) %>% 
+  View()
+
 setwd(here("data-processed"))
 save(den_metro_bg_sex_age_wrangle , 
      file = "den_metro_bg_sex_age_wrangle.RData")
