@@ -24,6 +24,7 @@ setwd(here("data-processed"))
 load("hia_all.RData")
 names(hia_all)
 table(hia_all$scenario)
+table(hia_all$scenario_sub)
 summary(hia_all$drf_est_log)
 nrow(hia_all)
 # Define bootstrap function-----------

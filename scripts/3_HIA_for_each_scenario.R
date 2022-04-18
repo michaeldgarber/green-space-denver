@@ -1598,14 +1598,12 @@ save(den_bg_int_parcel_ndvi_wide, file = "den_bg_int_parcel_ndvi_wide.RData")
 ## Prep parking buffers--------
 #Parking data managed here: 0_read_denver_parking.R
 setwd(here("data-processed"))
-load("den_prkng_500m.RData") #Note rename from parking to prkng
-den_prkng_res = den_prkng_500m #takes forever to re-create, so just load and rename
+load("den_prkng_res.RData") #Note rename from _500m
 names(den_prkng_res)
-load("den_prkng_marg.RData") #I used to call this sum_union; marg for marginal is more clear to me
-#actually one more difference; above, we use this syntax: den_prkng_tx_marg
-den_prkng_tx_marg = den_prkng_marg #focuses on the fact that it's not the complement or the res
 den_prkng_res = den_prkng_res %>% #for redundancy to be sure find + replace works.
   st_as_sf()
+load("den_prkng_tx_marg.RData") #I used to call this sum_union; marg for marginal is more clear to me
+#actually one more difference; above, we use this syntax: den_prkng_tx_marg
 names(den_prkng_tx_marg)
 load("den_co_osm_wtr_union.RData")
 load("den_co_bg_no_wtr_filtered_geo.RData")
@@ -1937,7 +1935,6 @@ den_bg_int_prkng_alt_all %>%
 #source this script:
 source( here("scripts","0_read_gbd_colorado.R"))  
 names(ihme_co)
-View(ihme_co)
 log(.97)
 log(.96)
 log(.94)
@@ -2059,13 +2056,27 @@ hia_all  = den_co_bg_ndvi_alt_all_nogeo %>% #scenario 1 - all bg
     ndvi_below_native_threshold = case_when( 
       ndvi_quo   < ndvi_native_threshold ~1,
       TRUE ~0
-    )
-  ) %>% 
+    ),
+    #I thought I could get these to sort based on factor order, but nope, sort this way
+    scenario_sort_order = case_when(
+      scenario == "all-bg" & scenario_sub == "100-pct" ~1,
+      scenario == "all-bg" & scenario_sub == "30-pct" ~2,
+      scenario == "all-bg" & scenario_sub == "20-pct" ~3,
+      scenario == "riparian" & scenario_sub == "200-ft" ~4,
+      scenario == "riparian" & scenario_sub == "100-ft" ~5,
+      scenario == "riparian" & scenario_sub == "50-ft" ~6,
+      scenario == "ogi" & scenario_sub == "ogi_proj" ~7,
+      scenario == "ogi" & scenario_sub == "parcel" ~8,
+      scenario == "prkng" & scenario_sub == "100-pct" ~9,
+      scenario == "prkng" & scenario_sub == "50-pct" ~10,
+      scenario == "prkng" & scenario_sub == "20-pct" ~11
+  )) %>% 
   dplyr::select(
     contains("fips"), contains("scenario"), 
     starts_with("pop"), starts_with("area"), contains("area"),
     contains("ndvi"), contains("drf"),
     everything())
+
 
 save(hia_all, file = "hia_all.RData")
 #checks
@@ -2075,6 +2086,11 @@ names(hia_all)
 table(hia_all$ndvi_below_native_threshold)
 nrow(hia_all)
 
+#look up scenario sort order
+lookup_scenario_sort_order = hia_all %>% 
+  distinct(scenario, scenario_sub, scenario_sort_order)
+lookup_scenario_sort_order
+save(lookup_scenario_sort_order, file = "lookup_scenario_sort_order.RData")
 ## Summarize HIA------------
 ### Summarize overall-----------
 hia_all_overall = hia_all %>% 
@@ -2084,7 +2100,8 @@ hia_all_overall = hia_all %>%
     pop_affected = sum(pop_affected, na.rm=TRUE),
     attrib_d = sum(attrib_d, na.rm=TRUE)
   ) %>% 
-  ungroup()
+  ungroup() %>% 
+  arrange(scenario, scenario_sub)
 
 hia_all_overall
 setwd(here("data-processed"))

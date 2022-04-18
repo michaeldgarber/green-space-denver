@@ -335,21 +335,36 @@ mv_prkng_both@map %>%
 
 # Results
 
-We estimated the number of deaths averted under each scenario by following a recent meta-analyses that estimated that for every 0.1 unit increase in exposure to NDVI, the relative risk of death decreases about 4% (pooled risk ratio of 0.96, 95% confidence interval (CI): 0.94, 0.97)[@rojas-rueda2019]. We defined NDVI exposure as that within a 500-meter buffer of the individual's place of residence. We used this risk ratio to estimate the population attributable fraction corresponding to the proposed change in NDVI from the baseline level to the native-plants level for each census block group (first scenario) or the part of the census block group intersecting the proposed intervention area (riparian and parking scenarios). We then estimated the number of deaths prevented considering estimates of population and all-cause mortality rates. We used 5-year American Community Survey Data (2015-2019) to estimate the population in 5-year age groups in each census block group and age-stratified estimates of mortality rates for the state of Colorado from the Global Burden of Disease project. If an intervention area did not cover an entire census block group, we multiplied the population density of the block group in that age group by the area of the block group covered by the intervention area to estimate the total population in the area affected by the intervention. We restricted analyses to adults aged 30 and above following the age range of many of the cohort studies reviewed. We also restricted analyses to those census block groups or census-block-group pieces below the native-plants NDVI threshold.
+We estimated the number of deaths averted under each scenario by following a recent meta-analyses that estimated that for every 0.1 unit increase in exposure to NDVI, the relative risk of death decreases about 4% (pooled risk ratio of 0.96, 95% confidence interval (CI): 0.94, 0.97)[@rojas-rueda2019]. We defined NDVI exposure as that within a 500-meter buffer of the individual's place of residence. We used this risk ratio to estimate the population attributable fraction corresponding to the proposed change in NDVI from the baseline level to the native-plants level for each census block group (first scenario) or the part of the census block group intersecting the proposed intervention area (riparian and parking scenarios). We then estimated the number of deaths prevented considering estimates of population and all-cause mortality rates. We used 5-year American Community Survey Data (2016-2020) to estimate the population in 5-year age groups in each census block group and age-stratified estimates of mortality rates for the state of Colorado from the Global Burden of Disease project. If an intervention area did not cover an entire census block group, we multiplied the population density of the block group in that age group by the area of the block group covered by the intervention area to estimate the total population in the area affected by the intervention.
+
+We restricted analyses to adults aged 30 and above following the age range of many of the cohort studies reviewed. We also restricted analyses to those census block groups or census-block-group pieces below the native-plants NDVI threshold.
+
+The 95% confidence intervals are bootstrapped percentiles and reflect uncertainty in both the population estimates in each block group and the relative risk estimate above (95% CI: 0.94, 0.97).
 
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 load("hia_all_overall.RData")
-hia_all_overall %>%  
-  knitr::kable(digits = 1) #set max digits (after decimal, I guess)
+load("hia_all_overall_s.RData") #bootstrapped version with 95% CI
+load("lookup_scenario_sort_order.RData") #to get it to sort how I want
+hia_all_overall %>% 
+  left_join(lookup_scenario_sort_order, by = c("scenario", "scenario_sub")) %>% 
+  left_join(hia_all_overall_s, by = c("scenario", "scenario_sub")) %>% 
+  dplyr::arrange(scenario_sort_order) %>% 
+  dplyr::select(scenario, scenario_sub, starts_with("pop_affected"), starts_with("attrib_d")) %>% 
+  knitr::kable(
+    col.names = c(
+      "Scenario", "Sub-scenario", 
+      "Pop. affected, est.", "Pop. affected, 95% LL", "Pop. affected, 95% UL",
+      "Attrib. deaths, est.", "Attrib. deaths, 95% LL", "Attrib. deaths, 95% UL"
+      ),
+    digits = 0) #set max digits (after decimal, I guess)
 ```
 
-# Next steps (as of April 4, 2022)
+# Next steps (as of April 18, 2022)
 
 -   Add equity component
 
 -   Add economic-impact attributable to health
 
--   Incorporate uncertainty throughout (via bootstrapping)
 
 # References
