@@ -216,9 +216,13 @@ extract_wrangle_ndvi_bg_int = function(df1, df2){
       #this isn't kept in all but can just remove via select
       ndvi_below_native_threshold = case_when( #whether baseline was above native threshold
         ndvi_mean_wt   < ndvi_native_threshold ~1,
-        TRUE ~0
-      )
-    ) %>% 
+        TRUE ~0)
+      ,
+      #I need a character version of this, too, for plotting
+      ndvi_below_native_threshold_char = case_when(
+        ndvi_below_native_threshold == 1 ~ "Yes",
+        ndvi_below_native_threshold == 0 ~ "No"
+    )) %>% 
     left_join(df2, by = "bg_fips") %>% #link in geo and area measurements
     st_as_sf() #make sf object
 }
@@ -293,9 +297,14 @@ den_co_bg_ndvi_alt_all_nogeo = den_co_bg_ndvi_alt_100_nogeo %>%
   #for example, the office-green-infra polygons are all considered "treatment" areas
   #but only 50% might be vegetated,
   #for the bg intervention, we always say 1
-  mutate(prop_tx_itself_veg=1) #of the area of the actual treatment, what proportion is treated?
+  mutate(prop_tx_itself_veg=1) %>%  #of the area of the actual treatment, what proportion is treated?
+  mutate(   #re-order scenario_sub to be a factor
+    scenario_sub = factor(
+      scenario_sub, 
+      levels = c("100-pct", "30-pct", "20-pct"))
+  )
 
-
+table(den_co_bg_ndvi_alt_all_nogeo$scenario_sub)
 save(den_co_bg_ndvi_alt_all_nogeo, file = "den_co_bg_ndvi_alt_all_nogeo.RData")
 den_co_bg_ndvi_alt_all_nogeo
 names(den_co_bg_ndvi_alt_all_nogeo)
@@ -332,11 +341,6 @@ RColorBrewer::brewer.pal(3, "RdYlGn")[c(1,3)]  %>%   swatch()
 ndvi_below_thresh_pal = RColorBrewer::brewer.pal(3, "RdYlGn")[c(1,3)]  %>% rev()
 ndvi_below_thresh_pal %>% swatch()
 mv_bg_below_native_threshold =den_co_bg_ndvi_geo %>% 
-  mutate(
-  ndvi_below_native_threshold_char = case_when(
-    ndvi_below_native_threshold == 1 ~ "Yes",
-    ndvi_below_native_threshold == 0 ~ "No"
-  )) %>% 
   mapview(
     layer.name = "NDVI below native threhsold",
     zcol = "ndvi_below_native_threshold_char",
@@ -928,8 +932,14 @@ den_bg_int_wtr_ndvi_all_nogeo =den_bg_int_wtr_50ft_ndvi_wide %>%
     #note this will be missing wherever treatment ndvi is missing within a block group; that's okay.
     ndvi_alt_tx_only = prop_tx_itself_veg*ndvi_native_threshold + (1-prop_tx_itself_veg)*ndvi_mean_wt_tx 
   ) %>% 
-  mutate_ndvi_diff_bg_int()
-
+  mutate_ndvi_diff_bg_int() %>% 
+  mutate(   #re-order scenario_sub to be a factor
+    scenario_sub = factor(
+      scenario_sub, 
+      levels = c("200-ft", "100-ft", "50-ft"))
+  )
+  
+table(den_bg_int_wtr_ndvi_all_nogeo$scenario_sub)
 save(den_bg_int_wtr_ndvi_all_nogeo, file = "den_bg_int_wtr_ndvi_all_nogeo.RData")
 den_bg_int_wtr_ndvi_all_nogeo
 
@@ -1204,7 +1214,7 @@ den_bg_int_ogi_proj_ndvi_wide = den_bg_int_ogi_proj_res_ndvi_nogeo %>%
     prop_tx_itself_veg=.75,
     ndvi_alt_tx_only = prop_tx_itself_veg*ndvi_native_threshold + 
       (1-prop_tx_itself_veg)*ndvi_mean_wt_tx ) %>% 
-  mutate_ndvi_diff_bg_int()
+  mutate_ndvi_diff_bg_int()  
 
 #save for use in bootstrap code
 save(den_bg_int_ogi_proj_ndvi_wide, file = "den_bg_int_ogi_proj_ndvi_wide.RData")
@@ -1577,7 +1587,9 @@ den_bg_int_parcel_ndvi_wide = den_bg_int_parcel_res_ndvi_nogeo %>%
     prop_tx_itself_veg=.5,
     ndvi_alt_tx_only = prop_tx_itself_veg*ndvi_native_threshold + 
       (1-prop_tx_itself_veg)*ndvi_mean_wt_tx ) %>% 
-  mutate_ndvi_diff_bg_int() #all one step in contrast with riparian areas
+  mutate_ndvi_diff_bg_int()    #all one step in contrast with riparian areas
+
+table(den_bg_int_parcel_ndvi_wide$sc)
 
 save(den_bg_int_parcel_ndvi_wide, file = "den_bg_int_parcel_ndvi_wide.RData")
 
@@ -1894,11 +1906,16 @@ den_bg_int_prkng_alt_all = den_bg_int_prkng_alt_100 %>%
     den_bg_int_prkng_alt_50,
     den_bg_int_prkng_alt_20
   ) %>% 
-  mutate_ndvi_diff_bg_int() 
+  mutate_ndvi_diff_bg_int() %>% 
+  mutate(   #re-order scenario_sub to be a factor
+    scenario_sub = factor(
+      scenario_sub, 
+      levels = c("100-pct", "50-pct", "20-pct"))
+  )
 
 #save for use in bootstrap code
 save(den_bg_int_prkng_alt_all, file = "den_bg_int_prkng_alt_all.RData")
-
+table(den_bg_int_prkng_alt_all$scenario_sub)
 #confirm ndvi diff differs by sub-scenario
 den_bg_int_prkng_alt_all %>% 
   group_by(scenario_sub) %>% 
@@ -2066,13 +2083,15 @@ hia_all_overall = hia_all %>%
   summarise(
     pop_affected = sum(pop_affected, na.rm=TRUE),
     attrib_d = sum(attrib_d, na.rm=TRUE)
-  )
+  ) %>% 
+  ungroup()
 
 hia_all_overall
+setwd(here("data-processed"))
+save(hia_all_overall, file = "hia_all_overall.RData")
 
 ### Summarize by block group----------
 load("lookup_den_metro_bg_geo.RData") #created 0_import_manage_denver_acs.R
-lookup_den_metro_bg_geo %>% mapview()
 hia_all_bg = hia_all %>% 
   filter(ndvi_below_native_threshold==1) %>% 
   group_by(bg_fips, scenario, scenario_sub) %>% 

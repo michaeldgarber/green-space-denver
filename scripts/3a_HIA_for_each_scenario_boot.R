@@ -55,7 +55,7 @@ bootstrap_hia = function(s_id_val){
 
 # Run bootstrap function----------
 #run the function x times
-n_boot_reps = 10
+n_boot_reps = 500
 s_id_val_list <- seq(from = 1, to = n_boot_reps, by = 1)
 
 hia_all_boot  = s_id_val_list %>% 
@@ -90,4 +90,7 @@ hia_all_overall_s = hia_all_boot %>%
   )
 
 hia_all_overall_s
+#save the summary but not hia_all_boot, as it's too huge and will take up too much space
+setwd(here("data-processed"))
+save(hia_all_overall_s, file = "hia_all_overall_s.RData")
 hia_all_overall

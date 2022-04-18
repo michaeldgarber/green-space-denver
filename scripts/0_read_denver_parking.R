@@ -27,7 +27,9 @@ save(den_prkng, file = "den_prkng.RData")
 #how many square miles of parking in Denver?
 #calculate using the unary union method;
 #call it marg for marginal as I've done elsewhere
-den_prkng_marg =  den_prkng %>% 
+#changed name again 4/18/22 to be consistent with other scenarios and 
+#more easily find and replace with comp
+den_prkng_tx_marg =  den_prkng %>% 
   mutate(dummy=1) %>%
   group_by(dummy) %>%
   summarise(
@@ -36,8 +38,8 @@ den_prkng_marg =  den_prkng %>%
   ungroup() %>% 
   st_as_sf() %>% 
   dplyr::select(-dummy)
-save(den_prkng_marg,  file = "den_prkng_marg.RData")
-object.size(den_prkng_marg)
+save(den_prkng_tx_marg,  file = "den_prkng_tx_marg.RData")
+object.size(den_prkng_tx_marg)
 
 #summarize by type. this will also create a smaller file.
 den_prkng_by_type =  den_prkng %>% 
@@ -59,23 +61,24 @@ den_prkng_sum_pervious_only  = den_prkng_by_type %>%
 den_prkng_sum_pervious_only %>% mapview()
 
 #denver is 154.7 mi2
-den_prkng_marg$area_mi2_prkng/155
+den_prkng_tx_marg$area_mi2_prkng/155
 #so about 9% has been paved for prkng.
-den_prkng_marg %>% mapview()
+den_prkng_tx_marg %>% mapview()
 
 # 500 m buffer--------
 #for some reason, this buffer code is taking forever. 
 setwd(here("data-processed"))
-load("den_prkng_marg.RData")
-den_prkng_marg %>% mapview()
+load("den_prkng_tx_marg.RData")
+den_prkng_tx_marg %>% mapview()
 #500 meters, but we're in feet
 dist_500_m = 500*3.28084
-den_prkng_500m = den_prkng_marg %>% 
+#changed name from den_ prkng_ 500m to den_prkng_res
+den_prkng_res = den_prkng_tx_marg %>% 
   st_union() %>% 
   st_buffer(dist_500_m) %>% #500 meters, but we're in feet
   st_as_sf() #possibly redundant, but seems to work better with this.
 
-save(den_prkng_500m, file = "den_prkng_500m.RData")
-load("den_prkng_500m.RData")
-den_prkng_500m %>% mapview()
-object.size(den_prkng_500m)
+save(den_prkng_res, file = "den_prkng_res.RData")
+load("den_prkng_res.RData")
+den_prkng_res %>% mapview()
+object.size(den_prkng_res)
