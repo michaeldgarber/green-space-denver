@@ -32,8 +32,9 @@ setwd(here("data-processed"))
 #arapahoe 005
 #adams 001
 #denver FIPS code: 031
-## geometry of tract-------------
 
+
+## geometry of tracts-------------
 
 #tracts  
 den_metro_tract_geo  = tidycensus::get_acs(
@@ -89,6 +90,111 @@ den_co_tract_geo = den_metro_tract_geo %>%
 setwd(here("data-processed"))
 save(den_co_tract_geo, file = "den_co_tract_geo.RData")
 
+##geometry of tracts, statewide, 2020
+colorado_tract_geo  = tidycensus::get_acs(  
+  geography = "tract", 
+  year=2020,  
+  cache_table = TRUE,
+  state = "CO",
+  keep_geo_vars = FALSE, 
+  output = "wide", #keep it long form. easier to link with GBD data
+  survey = "acs5", 
+  variables = "B01001_001",
+  geometry = TRUE  #takes a long time so just do this once
+) %>% 
+  #some light renaming, etc.
+  mutate(
+    admin_unit = "tract",
+    tract_fips = str_sub(GEOID, 1,12),
+    tract_fips = str_sub(GEOID, 1,11),#this always works
+    county_fips = str_sub(GEOID, 3,5)
+  ) %>% 
+  dplyr::select(contains("fips"), admin_unit, geometry)%>% 
+  st_transform(2876) %>%   #convert to feet, as we've been doing elsewhere
+  mutate(
+    area_ft2_tract = as.numeric(st_area(geometry)),
+    area_m2_tract = area_ft2_tract/10.764, #meters squared, for informational purposes.
+    area_mi2_tract = area_ft2_tract/(5280**2) #miles squared
+  )
+
+setwd(here("data-processed"))
+save(colorado_tract_geo, file = "colorado_tract_geo.RData")
+colorado_tract_geo %>% mapview(zcol = "area_mi2_tract")
+
+save(colorado_tract_geo, file = "colorado_tract_geo.RData")
+colorado_tract_geo %>% mapview(zcol = "area_mi2_tract")
+
+## geometry of tracts, statewide, 2019----------
+#did the census tract IDs change, too, or just the block groups?
+colorado_tract_2019_geo  = tidycensus::get_acs(  
+  geography = "tract", 
+  year=2019,  
+  cache_table = TRUE,
+  state = "CO",
+  keep_geo_vars = FALSE, 
+  output = "wide", #keep it long form. easier to link with GBD data
+  survey = "acs5", 
+  variables = "B01001_001",
+  geometry = TRUE  #takes a long time so just do this once
+) %>% 
+  #some light renaming, etc.
+  mutate(
+    admin_unit = "tract",
+    tract_fips = str_sub(GEOID, 1,12),
+    tract_fips = str_sub(GEOID, 1,11),#this always works
+    county_fips = str_sub(GEOID, 3,5)
+  ) %>% 
+  dplyr::select(contains("fips"), admin_unit, geometry)%>% 
+  st_transform(2876) %>%   #convert to feet, as we've been doing elsewhere
+  mutate(
+    area_ft2_tract = as.numeric(st_area(geometry)),
+    area_m2_tract = area_ft2_tract/10.764, #meters squared, for informational purposes.
+    area_mi2_tract = area_ft2_tract/(5280**2) #miles squared
+  )
+
+setwd(here("data-processed"))
+save(colorado_tract_2019_geo, file = "colorado_tract_2019_geo.RData")
+colorado_tract_2019_geo %>% mapview(zcol = "area_mi2_tract")
+
+save(colorado_tract_2019_geo, file = "colorado_tract_2019_geo.RData")
+colorado_tract_2019_geo %>% mapview(zcol = "area_mi2_tract")
+
+nrow(colorado_tract_2019_geo) #fewer in 
+nrow(colorado_tract_geo) #yes, more in 2020
+
+### lookup between 2019 and 2020 tracts----------------
+#okay, create a lookup between 2020 and 2019, then, to make sure the neighborhood lookup works
+lookup_colorado_tract_2019_geo = colorado_tract_2019_geo %>% 
+  dplyr::select(tract_fips, geometry) %>% 
+  rename(tract_fips_2019 = tract_fips)
+mv_lookup_colorado_tract_2019_geo = lookup_colorado_tract_2019_geo %>% 
+  mapview(zcol = "tract_fips_2019")
+
+lookup_colorado_tract_2020_geo = colorado_tract_geo %>% 
+  dplyr::select(tract_fips, geometry) %>% 
+  rename(tract_fips_2020 = tract_fips)
+mv_lookup_colorado_tract_2020_geo = lookup_colorado_tract_2020_geo %>% 
+  mapview(zcol = "tract_fips_2020")
+
+mv_lookup_colorado_tract_2019_geo +mv_lookup_colorado_tract_2020_geo
+
+#okay, let's get a look-up table between the two
+lookup_colorado_tract_2020_vs_2019_geo = lookup_colorado_tract_2020_geo %>% 
+  st_join(lookup_colorado_tract_2019_geo, largest = TRUE) %>% 
+  mutate(area_ft2_tract_2020_2019 = as.numeric(st_area(geometry)))
+
+lookup_colorado_tract_2020_vs_2019_geo
+lookup_colorado_tract_2020_vs_2019_nogeo = lookup_colorado_tract_2020_vs_2019_geo %>% 
+  st_set_geometry(NULL) %>% 
+  distinct(tract_fips_2020, tract_fips_2019) %>% 
+  as_tibble()
+
+setwd(here("data-processed"))
+save(lookup_colorado_tract_2020_vs_2019_nogeo, file ="lookup_colorado_tract_2020_vs_2019_nogeo.RData")
+
+n_distinct(lookup_colorado_tract_2020_vs_2019_nogeo$tract_fips_2019)
+nrow(lookup_colorado_tract_2020_vs_2019_geo)
+
 ## geometry of block groups--------
 den_metro_bg_geo  = tidycensus::get_acs( #bg for block group
   geography = "block group", 
@@ -117,10 +223,9 @@ den_metro_bg_geo  = tidycensus::get_acs( #bg for block group
     area_mi2_bg = area_ft2_bg/(5280**2) #miles squared
   )
 
-## geometry of block groups, statewide-------------
+## geometry of block groups, statewide, 2020-------------
 #I use this to visualize the statewide equity index, which I will then filter
 
-## geometry of block groups--------
 colorado_bg_geo  = tidycensus::get_acs( #bg for block group
   geography = "block group", 
   year=2020,  
@@ -154,6 +259,7 @@ colorado_bg_geo %>% mapview(zcol = "area_mi2_bg")
 save(colorado_bg_geo, file = "colorado_bg_geo.RData")
 colorado_bg_geo %>% mapview(zcol = "area_mi2_bg")
 
+## geometry of block groups, statewide, 2019-------------
 #note we need a 2019 version, because the climate equity data are from earlier, I think,
 #and the look-up doesn't entirely work.
 colorado_bg_2019_geo  = tidycensus::get_acs( #bg for block group
@@ -202,6 +308,7 @@ mv_lookup_colorado_bg_2020_geo = lookup_colorado_bg_2020_geo %>%
 
 mv_lookup_colorado_bg_2019_geo +mv_lookup_colorado_bg_2020_geo
 
+### lookup between 2019 and 2020 block groups----------------
 #okay, let's get a look-up table between the two
 lookup_colorado_bg_2020_vs_2019_geo = lookup_colorado_bg_2020_geo %>% 
   st_join(lookup_colorado_bg_2019_geo, largest = TRUE) %>% 
@@ -215,6 +322,10 @@ lookup_colorado_bg_2020_vs_2019_nogeo = lookup_colorado_bg_2020_vs_2019_geo %>%
 
 n_distinct(lookup_colorado_bg_2020_vs_2019_nogeo$bg_fips_2019)
 nrow(lookup_colorado_bg_2020_vs_2019_geo)
+
+setwd(here("data-processed"))
+save(lookup_colorado_bg_2020_vs_2019_nogeo, file ="lookup_colorado_bg_2020_vs_2019_nogeo.RData")
+
 
 ##  geometry of counties--------------
 den_metro_co_geo  = tidycensus::get_acs(
@@ -281,11 +392,22 @@ lookup_den_metro_bg_geo = den_metro_bg_geo %>%
   distinct(bg_fips, geometry)
 save(lookup_den_metro_bg_geo, file = "lookup_den_metro_bg_geo.RData")
 
+
 #county name look up denver metro
 lookup_county_name_den_metro = den_metro_co_geo %>% 
   st_set_geometry(NULL) %>% 
   distinct(county_fips, county_name, county_name_short)%>% 
   as_tibble()
+
+## block-group-tract lookup - statewide
+lookup_colorado_bg_tract = colorado_bg_geo %>% 
+  st_set_geometry(NULL) %>% 
+  distinct(bg_fips, tract_fips)%>% 
+  as_tibble()
+
+lookup_colorado_bg_tract
+save(lookup_colorado_bg_tract, file = "lookup_colorado_bg_tract.RData")
+
 
 ## tract-county lookup-------
 load("den_metro_tract_geo.RData")
@@ -293,6 +415,8 @@ lookup_den_metro_tract_county = den_metro_tract_geo %>%
   st_set_geometry(NULL) %>% 
   distinct(tract_fips, county_fips)%>% 
   as_tibble()
+
+save(lookup_den_metro_tract_county, file = "lookup_den_metro_tract_county.RData")
 
 ## block-group-county-lookup-------
 lookup_den_metro_bg_county = den_metro_bg_geo %>% 

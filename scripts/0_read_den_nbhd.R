@@ -62,7 +62,7 @@ den_nbhd_for_join  = den_nbhd %>%
 setwd(here("data-processed"))
 load("den_co_tract_geo.RData")
 lookup_den_nbhd_tract = den_co_tract_geo %>% 
-  st_join(den_nbhd, largest=TRUE) %>% #ensure only largest
+  st_join(den_nbhd, largest=TRUE) %>% #ensure only largest; note because this is a spatial join, the 2020 tract defs should work
   st_set_geometry(NULL) %>% 
   distinct(tract_fips, nbhd_id) %>% 
   as_tibble()
@@ -71,6 +71,9 @@ lookup_den_nbhd_tract = den_co_tract_geo %>%
 setwd(here("data-processed"))
 save(lookup_den_nbhd_tract, file = "lookup_den_nbhd_tract.RData")
 
+lookup_den_nbhd_tract_geo = lookup_den_nbhd_tract %>% 
+  left_join(den_co_tract_geo, by = "tract_fips") %>% 
+  st_as_sf()
 
-
+lookup_den_nbhd_tract_geo %>% mapview(zcol = "nbhd_id")
 
