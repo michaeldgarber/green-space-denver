@@ -11,12 +11,23 @@ This page presents some work-in-progress updates for the Denver green-space heal
 
 **Project Updates**
 
--   Preliminary HIA results for scenarios (revised Apr. 19, 2022): <https://michaeldgarber.github.io/green-space-denver/hia-results.html>
+-   Preliminary HIA results for scenarios:
 
--   Overview of scenarios for sharing (revised Apr. 18, 2022): <https://michaeldgarber.github.io/green-space-denver/hia-scenarios.html>
+    -   <https://michaeldgarber.github.io/green-space-denver/hia-results.html>
 
--   Summary of NDVI of places and tracts (revised Feb. 7, 2022): <https://michaeldgarber.github.io/green-space-denver/ndvi-of-places-tracts.html>
+    -   Date revised: April 19, 2022
 
+-   Overview of scenarios for sharing
+
+    -   <https://michaeldgarber.github.io/green-space-denver/hia-scenarios.html>
+
+    -   Date revised: April 18, 2022
+
+-   Summary of NDVI of places and tracts
+
+    -   <https://michaeldgarber.github.io/green-space-denver/ndvi-of-places-tracts.html>
+
+    -   Date revised: February 7, 2022
 
 <br>
 
