@@ -117,12 +117,104 @@ den_metro_bg_geo  = tidycensus::get_acs( #bg for block group
     area_mi2_bg = area_ft2_bg/(5280**2) #miles squared
   )
 
+## geometry of block groups, statewide-------------
+#I use this to visualize the statewide equity index, which I will then filter
 
-save(den_metro_bg_geo, file = "den_metro_bg_geo.RData")
-den_metro_bg_geo %>% mapview(zcol = "area_mi2_bg")
-load("den_metro_bg_geo.RData")
-nchar(den_metro_bg_geo$bg_fips)#12 characters
-den_metro_bg_geo %>% mapview()
+## geometry of block groups--------
+colorado_bg_geo  = tidycensus::get_acs( #bg for block group
+  geography = "block group", 
+  year=2020,  
+  cache_table = TRUE,
+  state = "CO",
+  keep_geo_vars = FALSE, 
+  output = "wide", #keep it long form. easier to link with GBD data
+  survey = "acs5", 
+  variables = "B01001_001",
+  geometry = TRUE  #takes a long time so just do this once
+) %>% 
+  #some light renaming, etc.
+  mutate(
+    admin_unit = "block group",
+    bg_fips = str_sub(GEOID, 1,12),
+    tract_fips = str_sub(GEOID, 1,11),#this always works
+    county_fips = str_sub(GEOID, 3,5)
+  ) %>% 
+  dplyr::select(contains("fips"), admin_unit, geometry)%>% 
+  st_transform(2876) %>%   #convert to feet, as we've been doing elsewhere
+  mutate(
+    area_ft2_bg = as.numeric(st_area(geometry)),
+    area_m2_bg = area_ft2_bg/10.764, #meters squared, for informational purposes.
+    area_mi2_bg = area_ft2_bg/(5280**2) #miles squared
+  )
+
+setwd(here("data-processed"))
+save(colorado_bg_geo, file = "colorado_bg_geo.RData")
+colorado_bg_geo %>% mapview(zcol = "area_mi2_bg")
+
+save(colorado_bg_geo, file = "colorado_bg_geo.RData")
+colorado_bg_geo %>% mapview(zcol = "area_mi2_bg")
+
+#note we need a 2019 version, because the climate equity data are from earlier, I think,
+#and the look-up doesn't entirely work.
+colorado_bg_2019_geo  = tidycensus::get_acs( #bg for block group
+  geography = "block group", 
+  year=2019,  
+  cache_table = TRUE,
+  state = "CO",
+  keep_geo_vars = FALSE, 
+  output = "wide", #keep it long form. easier to link with GBD data
+  survey = "acs5", 
+  variables = "B01001_001",
+  geometry = TRUE  #takes a long time so just do this once
+) %>% 
+  #some light renaming, etc.
+  mutate(
+    admin_unit = "block group",
+    bg_fips = str_sub(GEOID, 1,12),
+    tract_fips = str_sub(GEOID, 1,11),#this always works
+    county_fips = str_sub(GEOID, 3,5)
+  ) %>% 
+  dplyr::select(contains("fips"), admin_unit, geometry)%>% 
+  st_transform(2876) %>%   #convert to feet, as we've been doing elsewhere
+  mutate(
+    area_ft2_bg = as.numeric(st_area(geometry)),
+    area_m2_bg = area_ft2_bg/10.764, #meters squared, for informational purposes.
+    area_mi2_bg = area_ft2_bg/(5280**2) #miles squared
+  )
+
+setwd(here("data-processed"))
+save(colorado_bg_2019_geo, file = "colorado_bg_2019_geo.RData")
+colorado_bg_2019_geo %>% mapview(zcol = "area_mi2_bg")
+nrow(colorado_bg_2019_geo) #fewer block groups in 2019
+nrow(colorado_bg_geo)#more block groups in 2020
+
+lookup_colorado_bg_2019_geo = colorado_bg_2019_geo %>% 
+  dplyr::select(bg_fips, geometry) %>% 
+  rename(bg_fips_2019 = bg_fips)
+mv_lookup_colorado_bg_2019_geo = lookup_colorado_bg_2019_geo %>% 
+  mapview(zcol = "bg_fips_2019")
+
+lookup_colorado_bg_2020_geo = colorado_bg_geo %>% 
+  dplyr::select(bg_fips, geometry) %>% 
+  rename(bg_fips_2020 = bg_fips)
+mv_lookup_colorado_bg_2020_geo = lookup_colorado_bg_2020_geo %>% 
+  mapview(zcol = "bg_fips_2020")
+
+mv_lookup_colorado_bg_2019_geo +mv_lookup_colorado_bg_2020_geo
+
+#okay, let's get a look-up table between the two
+lookup_colorado_bg_2020_vs_2019_geo = lookup_colorado_bg_2020_geo %>% 
+  st_join(lookup_colorado_bg_2019_geo, largest = TRUE) %>% 
+  mutate(area_ft2_bg_2020_2019 = as.numeric(st_area(geometry)))
+
+lookup_colorado_bg_2020_vs_2019_geo
+lookup_colorado_bg_2020_vs_2019_nogeo = lookup_colorado_bg_2020_vs_2019_geo %>% 
+  st_set_geometry(NULL) %>% 
+  distinct(bg_fips_2020, bg_fips_2019) %>% 
+  as_tibble()
+
+n_distinct(lookup_colorado_bg_2020_vs_2019_nogeo$bg_fips_2019)
+nrow(lookup_colorado_bg_2020_vs_2019_geo)
 
 ##  geometry of counties--------------
 den_metro_co_geo  = tidycensus::get_acs(
