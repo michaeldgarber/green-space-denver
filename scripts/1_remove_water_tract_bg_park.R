@@ -44,15 +44,15 @@ den_metro_bg_no_wtr_geo %>% mapview(zcol = "county_fips")
 ## area lookups for tracts and block groups without water--------
 lookup_tract_no_wtr_area = den_metro_tract_no_wtr_geo %>% 
   mutate(
-    area_ft2_tract_no_wtr  = as.numeric(st_area(geometry)),
-    area_m2_tract_no_wtr = area_ft2_tract_no_wtr/10.764, #meters squared 
-    area_mi2_tract_no_wtr = area_ft2_tract_no_wtr/(5280**2) #miles squared
+    area_ft2_no_wtr  = as.numeric(st_area(geometry)),
+    area_m2_no_wtr = area_ft2_no_wtr/10.764, #meters squared 
+    area_mi2_no_wtr = area_ft2_no_wtr/(5280**2) #miles squared
   ) %>% 
   st_set_geometry(NULL) %>% 
   distinct(tract_fips, 
-           area_ft2_tract_no_wtr,
-           area_m2_tract_no_wtr, 
-           area_mi2_tract_no_wtr )%>% 
+           area_ft2_no_wtr,
+           area_m2_no_wtr, 
+           area_mi2_no_wtr )%>% 
   as_tibble()
 save(lookup_tract_no_wtr_area, file = "lookup_tract_no_wtr_area.RData")
 nrow(lookup_tract_no_wtr_area)
@@ -61,15 +61,15 @@ nrow(den_metro_tract_geo)
 
 lookup_bg_no_wtr_area = den_metro_bg_no_wtr_geo %>% 
   mutate(
-    area_ft2_bg_no_wtr  = as.numeric(st_area(geometry)),
-    area_m2_bg_no_wtr = area_ft2_bg_no_wtr/10.764, #meters squared, for informational purposes.
-    area_mi2_bg_no_wtr = area_ft2_bg_no_wtr/(5280**2) #miles squared
+    area_ft2_no_wtr  = as.numeric(st_area(geometry)),
+    area_m2_no_wtr = area_ft2_no_wtr/10.764, #meters squared, for informational purposes.
+    area_mi2_no_wtr = area_ft2_no_wtr/(5280**2) #miles squared
   ) %>% 
   st_set_geometry(NULL) %>% 
   distinct(bg_fips, 
-           area_ft2_bg_no_wtr, 
-           area_m2_bg_no_wtr, 
-           area_mi2_bg_no_wtr ) %>% 
+           area_ft2_no_wtr, 
+           area_m2_no_wtr, 
+           area_mi2_no_wtr ) %>% 
   as_tibble()
 
 setwd(here("data-processed"))
@@ -79,7 +79,7 @@ save(lookup_bg_no_wtr_area, file = "lookup_bg_no_wtr_area.RData")
 den_metro_bg_geo %>% 
   filter(county_fips == "031") %>% 
   left_join(lookup_bg_no_wtr_area, by = "bg_fips") %>% 
-  mapview(zcol = "area_mi2_bg_no_wtr") #working as expected in 08031012010
+  mapview(zcol = "area_mi2_no_wtr") #working as expected in 08031012010
 
 
 

@@ -156,6 +156,7 @@ lookup_den_co_bg_no_wtr_geo = den_co_bg_no_wtr_filtered_geo  %>%
 lookup_den_co_bg_no_wtr_geo %>% mapview()
 save(lookup_den_co_bg_no_wtr_geo, file = "lookup_den_co_bg_no_wtr_geo.RData")
 
+  
 
 ### Load zoning data, because we will also exclude the airport zone and
 # the industrial zone, per meeting with DRR 3/7
@@ -259,6 +260,12 @@ den_co_bg_ndvi_alt_100_nogeo = den_co_bg_ndvi_geo %>%
   mutate(
     #I use these vars in subsequent scenarios, so name them the same here, as well
     prop_area_tx = 1, #what proportion of the area (bg, here) is affected?
+    #4/16/22 add this for consistency here
+    #note this is different than prop_area_tx
+    #for example, the office-green-infra polygons are all considered "treatment" areas
+    #but only 50% might be vegetated,
+    #for the bg intervention, we always say 1
+    prop_tx_itself_veg=1,#of the area of the actual treatment, what proportion is treated?
     scenario = "all-bg",
     scenario_sub = "100-pct" ) 
   
@@ -271,6 +278,7 @@ den_co_bg_ndvi_alt_30_nogeo = den_co_bg_ndvi_geo %>%
   mutate(
     #I use these vars in subsequent scenarios, so name them the same here, as well
     prop_area_tx = .3, #what proportion of the area (bg, here) is affected?
+    prop_tx_itself_veg=1,#of the area of the actual treatment, what proportion is treated?
     scenario = "all-bg",
     scenario_sub = "30-pct" ) 
 
@@ -281,28 +289,48 @@ den_co_bg_ndvi_alt_20_nogeo = den_co_bg_ndvi_geo %>%
   mutate(
     #I use these vars in subsequent scenarios, so name them the same here, as well
     prop_area_tx = .2, #what proportion of the area (bg, here) is affected?
+    prop_tx_itself_veg=1,#of the area of the actual treatment, what proportion is treated?
     scenario = "all-bg",
     scenario_sub = "20-pct" ) 
 
-#combine them and final wrangling
+## combine them and final wrangling--------
+#load the lookups between the 2020 vs 2019 definitions of tracts and block groups
+#so you can link in the corresponding definitions of equity
+load("lookup_colorado_tract_2020_vs_2019_nogeo.RData")
+load("lookup_colorado_bg_2020_vs_2019_nogeo.RData")
+#to link 2020 block groups with 2020 census tracts
+load("lookup_colorado_bg_tract.RData")
+load("lookup_den_nbhd_tract.RData") #neighborhood ids in denver linked to tracts
+source(here("scripts", "0_read_equity_indices.R")) #source this to load most recent equity files
+#I use this twice, so make a function
+link_equity_indices= function(df){
+  df %>% 
+    left_join(lookup_colorado_bg_tract, by = "bg_fips") %>% #2020 ok
+    left_join(lookup_den_nbhd_tract, by = "tract_fips") %>%  #link neighbs so can link den equity neighb data; 2020 OK
+    left_join(lookup_equity_nbhd_denver, by = "nbhd_id") %>% #denver neighborhood equity score
+    rename(bg_fips_2020 = bg_fips) %>%    #link the 2019 block-group definition to link the CDPHE equity score
+    left_join(lookup_colorado_bg_2020_vs_2019_nogeo, by = "bg_fips_2020") %>% 
+    left_join(lookup_equity_bg_cdphe_2019, by = "bg_fips_2019") %>% #link block-group level equity; note 2019 bg 
+    rename(bg_fips = bg_fips_2020)      #change name back
+}
 den_co_bg_ndvi_alt_all_nogeo = den_co_bg_ndvi_alt_100_nogeo %>% 
   bind_rows(
     den_co_bg_ndvi_alt_30_nogeo, den_co_bg_ndvi_alt_20_nogeo
   ) %>% 
   mutate_ndvi_diff_bg_itself() %>% 
-  #just keep bg_fips (and not tract or county) to avoid join conflicts
-  dplyr::select(contains("bg_fips"), contains("scenario"), contains("ndvi"), contains("prop_area")) %>% 
-  #4/16/22 add this for consistency here
-  #note this is different than prop_area_tx
-  #for example, the office-green-infra polygons are all considered "treatment" areas
-  #but only 50% might be vegetated,
-  #for the bg intervention, we always say 1
-  mutate(prop_tx_itself_veg=1) %>%  #of the area of the actual treatment, what proportion is treated?
-  mutate(   #re-order scenario_sub to be a factor
+  link_equity_indices() %>% #see above
+  mutate(
+    #re-order scenario_sub to be a factor; this doesn't really work.
     scenario_sub = factor(
       scenario_sub, 
       levels = c("100-pct", "30-pct", "20-pct"))
-  )
+  ) %>% 
+    dplyr::select(
+      contains("bg_fips"), starts_with("tract_fips"),
+      starts_with("equity"),
+      starts_with("nbhd"),
+      contains("scenario"), contains("ndvi"), contains("prop_")
+    )
 
 table(den_co_bg_ndvi_alt_all_nogeo$scenario_sub)
 save(den_co_bg_ndvi_alt_all_nogeo, file = "den_co_bg_ndvi_alt_all_nogeo.RData")
@@ -318,6 +346,23 @@ den_co_bg_ndvi_alt_all_nogeo %>%
   mapview(
     layer.name = "ndvi_diff",
     zcol = "ndvi_diff")
+
+names(den_co_bg_ndvi_alt_all_nogeo)
+den_co_bg_ndvi_alt_all_nogeo %>% 
+  filter(scenario_sub == "20-pct") %>% 
+  left_join(lookup_den_co_bg_no_wtr_geo, by = "bg_fips") %>% 
+  st_as_sf() %>% 
+  mapview(
+    layer.name = "equity_bg_cdphe",
+    zcol = "equity_bg_cdphe")
+
+den_co_bg_ndvi_alt_all_nogeo %>% 
+  filter(scenario_sub == "20-pct") %>% 
+  left_join(lookup_den_co_bg_no_wtr_geo, by = "bg_fips") %>% 
+  st_as_sf() %>% 
+  mapview(
+    layer.name = "equity_nbhd_denver",
+    zcol = "equity_nbhd_denver")
 
 
 
@@ -349,7 +394,170 @@ mv_bg_below_native_threshold =den_co_bg_ndvi_geo %>%
 
 mv_bg_below_native_threshold
 
-# 2. Scenario 2: waterways--------
+# 2. Scenario 2. Green census block groups prioritizing those with highest climate equity scores----------
+#See /scripts/0_read_equity_indices.R
+#Approach: assume we can green x% of Denver. Say 30%. Sort data by equity score,
+#calculate cumulative area, and only green those with the highest climate equity rank
+
+#you should be able to use some of the above analysis without repeating the full workflow.
+#Begin with den_co_bg_no_wtr_filtered_geo, as the northeastern quadrants have already been filtered out.
+
+#what is the total area of this?
+st_crs(den_co_bg_no_wtr_filtered_geo)
+#you already have a look-up table for the area:
+load("lookup_bg_no_wtr_area.RData")
+lookup_bg_no_wtr_area
+## Create a dataset with cumulative area measurements sorted by equity indices-----------
+area_den_co_bg_no_wtr_filtered =den_co_bg_no_wtr_filtered_geo %>% 
+  left_join(lookup_bg_no_wtr_area, by = "bg_fips") %>% 
+  mutate( dummy=1) %>% 
+  st_set_geometry(NULL) %>% 
+  group_by(dummy) %>% 
+  summarise(
+    area_mi2_no_wtr = sum(area_mi2_no_wtr, na.rm=TRUE),
+    area_ft2_no_wtr = sum(area_ft2_no_wtr, na.rm=TRUE)) %>% 
+  dplyr::select(-dummy) %>% 
+  ungroup() %>% 
+  mutate(
+    area_mi2_no_wtr_thirty_percent = .3*area_mi2_no_wtr,
+    area_mi2_no_wtr_twenty_percent = .2*area_mi2_no_wtr)
+
+save(area_den_co_bg_no_wtr_filtered, file = "area_den_co_bg_no_wtr_filtered.RData")
+
+#note this area excludes water and removes the northeastern tracts near the airport we're
+#not intervening upon
+area_den_co_bg_no_wtr_filtered
+thirty_percent_area_study_area = area_den_co_bg_no_wtr_filtered %>% 
+  dplyr::select(area_mi2_no_wtr_thirty_percent) %>% 
+  pull()
+thirty_percent_area_study_area #save b/c use in rmarkdown
+save(thirty_percent_area_study_area, file = "thirty_percent_area_study_area.RData")
+twenty_percent_area_study_area = area_den_co_bg_no_wtr_filtered %>% 
+  dplyr::select(area_mi2_no_wtr_twenty_percent) %>% 
+  pull()
+twenty_percent_area_study_area
+save(twenty_percent_area_study_area, file = "twenty_percent_area_study_area.RData")
+
+#now sort by the climate indices and only apply the intervention to the first 29.24 square miles
+
+den_co_bg_equity_sorted = den_co_bg_no_wtr_filtered_geo %>% 
+  dplyr::select(-county_fips) %>% 
+  link_equity_indices() %>% 
+  left_join(lookup_bg_no_wtr_area, by = "bg_fips") %>% 
+  arrange(desc(equity_bg_cdphe)) %>% #  #sort descending; higher score is worse off
+  mutate(area_mi2_cumsum_equity_bg_cdphe = cumsum(area_mi2_no_wtr)) %>% 
+  arrange(equity_nbhd_denver) %>% #sort acsending; lower score is worse off
+  mutate(area_mi2_cumsum_equity_nbhd_denver = cumsum(area_mi2_no_wtr)) 
+
+#save this so I can use it in rmarkdown
+setwd(here("data-processed"))
+save(den_co_bg_equity_sorted, file = "den_co_bg_equity_sorted.RData")
+
+## Visualize the block groups prioritized by each index----------------
+library(viridis)
+mv_equity_nbhd_denver_first_thirty=den_co_bg_equity_sorted %>% 
+  filter(area_mi2_cumsum_equity_nbhd_denver<thirty_percent_area_study_area) %>% 
+  mapview(
+    layer.name = "Equity, City of Denver; lower is worse off",
+    zcol = "equity_nbhd_denver",
+    col.regions = viridis_pal(direction=1,option="C"))
+
+mv_equity_bg_cdphe_first_thirty = den_co_bg_equity_sorted %>% 
+  filter(area_mi2_cumsum_equity_bg_cdphe<thirty_percent_area_study_area) %>% 
+  mapview(
+    layer.name = "Equity, CDPHE; higher is worse off",
+    zcol = "equity_bg_cdphe",
+    col.regions = viridis_pal(direction=-1,option="D"))
+
+mv_equity_nbhd_denver_first_thirty + mv_equity_bg_cdphe_first_thirty
+
+mv_equity_nbhd_denver_first_twenty=den_co_bg_equity_sorted %>% 
+  filter(area_mi2_cumsum_equity_nbhd_denver<twenty_percent_area_study_area) %>% 
+  mapview(
+    layer.name = "Equity, City of Denver; lower is worse off",
+    zcol = "equity_nbhd_denver",
+    col.regions = viridis_pal(direction=1,option="C"))
+
+mv_equity_bg_cdphe_first_twenty = den_co_bg_equity_sorted %>% 
+  filter(area_mi2_cumsum_equity_bg_cdphe<twenty_percent_area_study_area) %>% 
+  mapview(
+    layer.name = "Equity, CDPHE; higher is worse off",
+    zcol = "equity_bg_cdphe",
+    col.regions = viridis_pal(direction=-1,option="D"))
+
+mv_equity_nbhd_denver_first_twenty + mv_equity_bg_cdphe_first_twenty
+
+## Look-up the relevant variables to link in the summary below----------
+names(den_co_bg_equity_sorted)
+lookup_equity_cumsum_area = den_co_bg_equity_sorted %>% 
+  st_set_geometry(NULL) %>% 
+  dplyr::select(bg_fips, contains("equity"), contains("cumsum")) %>% 
+  as_tibble()
+  
+lookup_equity_cumsum_area
+
+## Define scenarios akin to scenario 1 for eventual rbinding----------
+### Define each sub-scenario-------------
+#One each for 20 percent and one for 30 percent and for CDPHE definition and City of Denver definition
+thirty_percent_area_study_area
+equity_bg_cdphe_alt_30_nogeo = den_co_bg_ndvi_geo %>% 
+  st_set_geometry(NULL) %>% 
+  as_tibble() %>% 
+  left_join(lookup_equity_cumsum_area, by = "bg_fips") %>% 
+  filter(area_mi2_cumsum_equity_bg_cdphe<thirty_percent_area_study_area) %>% 
+  mutate(
+    prop_area_tx = .3, #what proportion of the area (all study area)
+    prop_tx_itself_veg=1,#of the area of the actual treatment, what proportion is treated?
+    scenario = "all-bg-equity",
+    scenario_sub = "cdphe-def-30-pct" ) 
+
+equity_bg_cdphe_alt_20_nogeo = den_co_bg_ndvi_geo %>% 
+  st_set_geometry(NULL) %>% 
+  as_tibble() %>% 
+  left_join(lookup_equity_cumsum_area, by = "bg_fips") %>% 
+  filter(area_mi2_cumsum_equity_bg_cdphe<twenty_percent_area_study_area) %>% 
+  mutate(
+    prop_area_tx = .2, #what proportion of the area (all study area)
+    prop_tx_itself_veg=1,#of the area of the actual treatment, what proportion is treated?
+    scenario = "all-bg-equity",
+    scenario_sub = "cdphe-def-20-pct" ) 
+
+equity_nbhd_denver_alt_30_nogeo = den_co_bg_ndvi_geo %>% 
+  st_set_geometry(NULL) %>% 
+  as_tibble() %>% 
+  left_join(lookup_equity_cumsum_area, by = "bg_fips") %>% 
+  filter(area_mi2_cumsum_equity_nbhd_denver<thirty_percent_area_study_area) %>% 
+  mutate(
+    prop_area_tx = .3, #what proportion of the area (all study area)
+    prop_tx_itself_veg=1,#of the area of the actual treatment, what proportion is treated?
+    scenario = "all-bg-equity",
+    scenario_sub = "denver-def-30-pct" ) 
+
+equity_nbhd_denver_alt_20_nogeo = den_co_bg_ndvi_geo %>% 
+  st_set_geometry(NULL) %>% 
+  as_tibble() %>% 
+  left_join(lookup_equity_cumsum_area, by = "bg_fips") %>% 
+  filter(area_mi2_cumsum_equity_nbhd_denver<twenty_percent_area_study_area) %>% 
+  mutate(
+    prop_area_tx = .2, #what proportion of the area (all study area)
+    prop_tx_itself_veg=1,#of the area of the actual treatment, what proportion is treated?
+    scenario = "all-bg-equity",
+    scenario_sub = "denver-def-20-pct" ) 
+
+### Combine them-----------
+equity_all_nogeo = equity_bg_cdphe_alt_30_nogeo %>% 
+  bind_rows(
+    equity_bg_cdphe_alt_20_nogeo,
+    equity_nbhd_denver_alt_30_nogeo,
+    equity_nbhd_denver_alt_20_nogeo
+  ) %>% 
+  mutate_ndvi_diff_bg_itself() #don't forget this
+
+names(equity_all_nogeo)
+table(equity_all_nogeo$scenario)
+table(equity_all_nogeo$scenario_sub)
+equity_all_nogeo
+# 3. Scenario 3: waterways--------
 
 ## Create various buffers around the waterways from OSM-----
 setwd(here("data-processed"))
@@ -829,6 +1037,8 @@ den_bg_int_wtr_200ft_ndvi_wide = den_bg_int_wtr_200ft_ndvi_nogeo %>%
     scenario_sub = "200-ft"
   )
 
+#note this is where area_mi2_bg_int_tx is created; via pivot_wider, not directly
+#named in the script
 den_bg_int_wtr_200ft_ndvi_wide
 
 den_bg_int_wtr_100ft_ndvi_wide = den_bg_int_wtr_100ft_ndvi_nogeo %>% 
@@ -947,7 +1157,7 @@ den_bg_int_wtr_ndvi_all_nogeo
 
 
 
-# 3. Scenario 3. Office of Green Infrastructure initiatives---------------
+# 4. Scenario 4. Office of Green Infrastructure initiatives---------------
 
 ## Per conversations with CB @ OGI, we consider 3 sub-scenarios.
 #1. Regional projects
@@ -1236,6 +1446,7 @@ names(den_bg_int_ogi_proj_ndvi_wide)
 
 #Assume green streets can occur on all road types except motorway and trunk
 #randomly sample a cumulative sum of just below one mile
+setwd(here("data-processed"))
 load("den_osm_roads.RData") #see for definitions
 #~/0_load_denver_osm_roads.R
 den_osm_roads_shuffle = den_osm_roads %>% 
@@ -1594,7 +1805,7 @@ table(den_bg_int_parcel_ndvi_wide$sc)
 save(den_bg_int_parcel_ndvi_wide, file = "den_bg_int_parcel_ndvi_wide.RData")
 
 
-# 4. Scenario 4: Parking -----------
+# 5. Scenario 5: Parking -----------
 ## Prep parking buffers--------
 #Parking data managed here: 0_read_denver_parking.R
 setwd(here("data-processed"))
@@ -2021,32 +2232,68 @@ n_distinct(den_bg_int_ogi_proj_ndvi_wide$bg_fips) #193 bgs affected
 n_distinct(den_bg_int_wtr_ndvi_all_nogeo$bg_fips)#405 bgs affected
 #actually, just stack them all, link den_co_bg, and use case_when to define vars
 names(den_bg_int_ogi_proj_ndvi_wide)
-table( den_co_bg_ndvi_alt_all_nogeo$scenario)
-hia_all  = den_co_bg_ndvi_alt_all_nogeo %>% #scenario 1 - all bg
+table(den_co_bg_ndvi_alt_all_nogeo$scenario)
+table(equity_all_nogeo$scenario)
+table(equity_all_nogeo$scenario_sub)
+names(den_bg_int_wtr_ndvi_all_nogeo)
+names(den_bg_int_ogi_proj_ndvi_wide)
+names(equity_all_nogeo)
+names(den_co_bg_ndvi_alt_all_nogeo)
+names(den_co_bg_sex_age_gbd_wrangle)
+lookup_bg_no_wtr_area #link in area to define the treatment area for
+#whole-block-group scenarios
+mutate_part_of_hia = function(df){ #make a function out of it since 
+  df %>%    #I use it again in the bootstrap
+    mutate(
+      rr_alt = drf_est**(ndvi_diff/drf_increment), #calc. risk ratios per dose-response funct
+      paf =(rr_alt -1)/rr_alt , #pop_est attrib fraction
+      #attributable deaths
+      #rate is per 100,000 so first divide by 100,000 before multiplying by the pop_est. in age group
+      #marginal totals were filtered out above, so it's just the joint sex-by-age categories
+      #could generalize from d to o for outcome if we include other outcomes rather than just death
+      attrib_d = paf*(rate_per_100k_est/100000)*pop_affected, #attrib deaths. note divide by 100000
+      deaths_prevented = attrib_d*-1,
+      deaths_prevented_per_pop = deaths_prevented/pop_affected #pp is per person
+    )
+}
+hia_all  = den_co_bg_ndvi_alt_all_nogeo %>% #scenario all bg
   bind_rows(
-    den_bg_int_wtr_ndvi_all_nogeo, #scenario 2 - riparian
-    den_bg_int_ogi_proj_ndvi_wide, #scenario 3 - ogi proj
-    den_bg_int_parcel_ndvi_wide, #scenario 3 - ogi parcel
-    den_bg_int_prkng_alt_all #scenario 4 - parking
+    equity_all_nogeo, #equity scenarios
+    den_bg_int_wtr_ndvi_all_nogeo, #  riparian
+    den_bg_int_ogi_proj_ndvi_wide, # ogi proj
+    den_bg_int_parcel_ndvi_wide, #  ogi parcel
+    den_bg_int_prkng_alt_all # parking
   ) %>% #link pop data here
+  #make sure tract_fips and county_fips aren't here
+  dplyr::select(-contains("tract_fips"), -contains("county_fips")) %>% 
   left_join(den_co_bg_sex_age_gbd_wrangle, by = "bg_fips") %>% 
   mutate(
     pop_affected = case_when(
-      scenario == "all-bg" ~ pop_est, #for scenario 1, it's just the pop of the bg
+      scenario == "all-bg" ~ pop_est, #for the complete bg scenarios, it's just pop of the bg
+      scenario == "all-bg-equity" ~ pop_est, #for the complete bg scenarios, it's just pop of the bg
       TRUE ~ area_mi2_bg_int_res*pop_dens_mi2 #for other scenarios, multiply area by pop dens
           ),
     pop_affected_type = case_when(
       scenario == "all-bg" ~ "bg", #to keep track of how calculated
+      scenario == "all-bg-equity" ~ "bg", #to keep track of how calculated
       TRUE ~   "res-buffer" #residential buffer otherwise
+    )) %>% 
+  mutate_part_of_hia() %>% 
+  left_join(lookup_bg_no_wtr_area, by = "bg_fips") %>% #link area for first 2 scenarios
+  mutate(
+    #for easier summary, rename the area variable for the block-group-level scenarios
+    #to be the same as that of those scenarios that intersect the block groups.
+    #the treated area and the residential area will be the same.
+    area_mi2_bg_int_tx = case_when(
+      scenario == "all-bg" ~ area_mi2_no_wtr, 
+      scenario == "all-bg-equity" ~ area_mi2_no_wtr, 
+      TRUE ~ area_mi2_bg_int_tx 
     ),
-    #now conduct HIA
-    rr_alt = drf_est**(ndvi_diff/drf_increment), #calc. risk ratios per dose-response funct
-    paf =(rr_alt -1)/rr_alt , #pop_est attrib fraction
-    #attributable deaths
-    #rate is per 100,000 so first divide by 100,000 before multiplying by the pop_est. in age group
-    #marginal totals were filtered out above, so it's just the joint sex-by-age categories
-    #could generalize from d to o for outcome if we include other outcomes rather than just death
-    attrib_d = paf*(rate_per_100k_est/100000)*pop_affected, #attrib deaths. note divide by 100000
+    area_mi2_bg_int_res = case_when(
+      scenario == "all-bg" ~ area_mi2_no_wtr, 
+      scenario == "all-bg-equity" ~ area_mi2_no_wtr, 
+      TRUE ~ area_mi2_bg_int_res 
+    ),
     
     #one thing to check is whether we've limited to ndvi_below_threshold and how
     #does it make sense to simply not intervene upon any block group that has a ndvi above threshold?
@@ -2062,19 +2309,24 @@ hia_all  = den_co_bg_ndvi_alt_all_nogeo %>% #scenario 1 - all bg
       scenario == "all-bg" & scenario_sub == "100-pct" ~1,
       scenario == "all-bg" & scenario_sub == "30-pct" ~2,
       scenario == "all-bg" & scenario_sub == "20-pct" ~3,
-      scenario == "riparian" & scenario_sub == "200-ft" ~4,
-      scenario == "riparian" & scenario_sub == "100-ft" ~5,
-      scenario == "riparian" & scenario_sub == "50-ft" ~6,
-      scenario == "ogi" & scenario_sub == "ogi_proj" ~7,
-      scenario == "ogi" & scenario_sub == "parcel" ~8,
-      scenario == "prkng" & scenario_sub == "100-pct" ~9,
-      scenario == "prkng" & scenario_sub == "50-pct" ~10,
-      scenario == "prkng" & scenario_sub == "20-pct" ~11
+      scenario == "all-bg-equity" & scenario_sub == "cdphe-def-30-pct" ~4,
+      scenario == "all-bg-equity" & scenario_sub == "cdphe-def-20-pct" ~5,
+      scenario == "all-bg-equity" & scenario_sub == "denver-def-30-pct" ~6,
+      scenario == "all-bg-equity" & scenario_sub == "denver-def-20-pct" ~7,
+      scenario == "riparian" & scenario_sub == "200-ft" ~8,
+      scenario == "riparian" & scenario_sub == "100-ft" ~9,
+      scenario == "riparian" & scenario_sub == "50-ft" ~10,
+      scenario == "ogi" & scenario_sub == "ogi_proj" ~11,
+      scenario == "ogi" & scenario_sub == "parcel" ~12,
+      scenario == "prkng" & scenario_sub == "100-pct" ~13,
+      scenario == "prkng" & scenario_sub == "50-pct" ~14,
+      scenario == "prkng" & scenario_sub == "20-pct" ~15
   )) %>% 
   dplyr::select(
     contains("fips"), contains("scenario"), 
     starts_with("pop"), starts_with("area"), contains("area"),
     contains("ndvi"), contains("drf"),
+    contains("equity"),
     everything())
 
 
@@ -2085,7 +2337,7 @@ table(hia_all$scenario_sub)
 names(hia_all)
 table(hia_all$ndvi_below_native_threshold)
 nrow(hia_all)
-
+hia_all
 #look up scenario sort order
 lookup_scenario_sort_order = hia_all %>% 
   distinct(scenario, scenario_sub, scenario_sort_order)
@@ -2093,29 +2345,43 @@ lookup_scenario_sort_order
 save(lookup_scenario_sort_order, file = "lookup_scenario_sort_order.RData")
 ## Summarize HIA------------
 ### Summarize overall-----------
+#write a function for the summarise since it's used so often
+summarise_ungroup_hia = function(df){
+  df %>% 
+    summarise(
+      pop_affected = sum(pop_affected, na.rm=TRUE),
+      attrib_d = sum(attrib_d, na.rm=TRUE),
+      deaths_prevented = sum(deaths_prevented, na.rm=TRUE),
+      area_mi2_bg_int_tx = sum(area_mi2_bg_int_tx, na.rm=TRUE),
+      area_mi2_bg_int_res = sum(area_mi2_bg_int_res, na.rm=TRUE)
+    ) %>% 
+    ungroup() %>% 
+    mutate(#this has to be in its own separate mutate by order of operations
+      deaths_prevented_per_pop = deaths_prevented/pop_affected,
+      deaths_prevented_per_pop_100k = deaths_prevented_per_pop*100000
+    ) 
+}
 hia_all_overall = hia_all %>% 
   filter(ndvi_below_native_threshold==1) %>% 
   group_by(scenario, scenario_sub) %>% 
-  summarise(
-    pop_affected = sum(pop_affected, na.rm=TRUE),
-    attrib_d = sum(attrib_d, na.rm=TRUE)
-  ) %>% 
-  ungroup() %>% 
-  arrange(scenario, scenario_sub)
+  summarise_ungroup_hia() %>% 
+  left_join(lookup_scenario_sort_order, by = c("scenario", "scenario_sub")) %>% 
+  arrange(scenario_sort_order) %>% 
+  dplyr::select(
+    contains("scenario"), starts_with("pop"), 
+    starts_with("death"),
+    starts_with("area"),
+    everything())
 
 hia_all_overall
 setwd(here("data-processed"))
 save(hia_all_overall, file = "hia_all_overall.RData")
-
 ### Summarize by block group----------
 load("lookup_den_metro_bg_geo.RData") #created 0_import_manage_denver_acs.R
 hia_all_bg = hia_all %>% 
   filter(ndvi_below_native_threshold==1) %>% 
   group_by(bg_fips, scenario, scenario_sub) %>% 
-  summarise(
-    pop_affected = sum(pop_affected, na.rm=TRUE),
-    attrib_d = sum(attrib_d, na.rm=TRUE)
-  )
+  summarise_ungroup_hia() 
 hia_all_bg
 
 hia_all_bg %>% 
@@ -2123,11 +2389,16 @@ hia_all_bg %>%
   filter(scenario_sub == "100-pct") %>% 
   left_join(lookup_den_metro_bg_geo, by = "bg_fips") %>% 
   st_as_sf() %>% 
-  mapview(zcol = "attrib_d")
+  mapview(zcol = "deaths_prevented_per_100k")
   
 ### Summarize by age group
-#todo
+table(hia_all$age_group_acs)
+hia_all_age = hia_all %>% 
+  filter(ndvi_below_native_threshold==1) %>% 
+  group_by(age_group_acs, scenario, scenario_sub) %>% 
+  summarise_ungroup_hia() 
 
+hia_all_age
 
 #final note: nice work, mike. this is much more streamlined and ready for
 #bootstrapping

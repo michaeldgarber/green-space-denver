@@ -21,15 +21,18 @@ den_equity_ind_2020 = st_read(dsn ="equity-index-2020") %>%
     nbhd_morbidity = MORBIDITY_,
     nbhd_mortality = MORTALITY_,
     nbhd_built_env = BUILTENV_S,
-    nbhd_overall_equity = OVERALLEQU #lower score is worse off
+    #rename this to specify it's the denver city version
+    #nbhd for neighborhood level and denver to denote that it's just a city-level score
+    equity_nbhd_denver  = OVERALLEQU #lower score means worse
   ) %>% #link a neighborhood id
   mutate(
     #change the name of stapleton to central park, per 2020 change
     nbhd_name_pre_2020 = nbhd_name,
     nbhd_name = case_when(
       nbhd_name_pre_2020 == "Stapleton" ~ "Central Park",
-      TRUE ~nbhd_name_pre_2020
-    )
+      TRUE ~nbhd_name_pre_2020),
+      #make it into quartiles; cut_number is a quantile function from ggplot2
+      equity_nbhd_denver_quartile  = cut_number(equity_nbhd_denver, 4)
   ) %>% 
   left_join(lookup_den_nbhd_name_id, by ="nbhd_name") %>% 
   dplyr::select(starts_with("nbhd_n"), starts_with("nbhd_i"), everything())
@@ -37,16 +40,18 @@ den_equity_ind_2020 = st_read(dsn ="equity-index-2020") %>%
 names(den_equity_ind_2020)
 setwd(here("data-processed"))
 save(den_equity_ind_2020, file = "den_equity_ind_2020.RData")
-mapview(den_equity_ind_2020)
-den_equity_ind_2020 %>% mapview(zcol = "nbhd_overall_equity")
+den_equity_ind_2020 %>% mapview(zcol = "equity_nbhd_denver_quartile")
+den_equity_ind_2020 %>% mapview(zcol = "equity_nbhd_denver") #lower, worse off
 den_equity_ind_2020 %>% mapview(zcol = "nbhd_id")
+den_equity_ind_2020 %>% ggplot()+
+  geom_histogram(aes(equity_nbhd_denver))
 
 #lookup the overall equity score
 den_equity_ind_2020
-lookup_nbhd_overall_equity = den_equity_ind_2020 %>% 
-  distinct(nbhd_id, nbhd_overall_equity) %>% 
+lookup_equity_nbhd_denver = den_equity_ind_2020 %>% 
+  distinct(nbhd_id, equity_nbhd_denver, equity_nbhd_denver_quartile) %>% 
   as_tibble()
-save(lookup_nbhd_overall_equity, file = "lookup_nbhd_overall_equity.RData")
+save(lookup_equity_nbhd_denver, file = "lookup_equity_nbhd_denver.RData")
 #it's by neighborhood. interesting.
 #note we read in the denver neighborhoods here: scripts/0_read_den_nbhd.R
 mv_den_equity_ind_2020= den_equity_ind_2020 %>% 
@@ -86,44 +91,45 @@ setwd(here("data-input", "climate-equity-co-statewide"))
 cdphe_equity = read_csv("CEDV_Scores.csv") %>% 
   rename(
     bg_fips = BGFIPS,
-    climate_equity_score = CE_Score) %>% 
+    #bg for block-group level, and state to denote that it's colorado wide, done by CDPHE
+    equity_bg_cdphe = CE_Score) %>% #rename so it parallels above naming conventions
   #categorize climate equity into quartiles
   mutate(
-    climate_equity_quartile_state = cut_number(climate_equity_score, 4)
+    equity_bg_cdphe_quartile_state = cut_number(equity_bg_cdphe, 4)
   )
 
 #what about a climate equity quartile for denver, only?
-lookup_climate_equity_quartile_state = cdphe_equity %>% 
+lookup_equity_bg_cdphe_quartile_state = cdphe_equity %>% 
   filter(COUNTY_NAME == "DENVER") %>% 
   mutate(
-    climate_equity_quartile_den = cut_number(climate_equity_score, 4)
+    equity_bg_cdphe_quartile_den = cut_number(equity_bg_cdphe, 4)
   ) %>% 
-  distinct(bg_fips, climate_equity_quartile_den)
+  distinct(bg_fips, equity_bg_cdphe_quartile_den)
 
-lookup_climate_equity_cdphe = cdphe_equity %>% 
-  left_join(lookup_climate_equity_quartile_state, by = "bg_fips") %>% 
-  distinct(bg_fips, climate_equity_score, climate_equity_quartile_state, climate_equity_quartile_den)
-save(lookup_climate_equity_cdphe, file = "lookup_climate_equity_cdphe.RData")
-table(lookup_climate_equity_quartile_state$climate_equity_quartile_den)
-table(cdphe_equity$climate_equity_quartile_state)
-summary(cdphe_equity$climate_equity_score)
+lookup_equity_bg_cdphe = cdphe_equity %>% 
+  left_join(lookup_equity_bg_cdphe_quartile_state, by = "bg_fips") %>% 
+  distinct(bg_fips, equity_bg_cdphe, equity_bg_cdphe_quartile_state, equity_bg_cdphe_quartile_den)
+save(lookup_equity_bg_cdphe, file = "lookup_equity_bg_cdphe.RData")
+table(lookup_equity_bg_cdphe_quartile_state$equity_bg_cdphe_quartile_den)
+table(cdphe_equity$equity_bg_cdphe_quartile_state)
+summary(cdphe_equity$equity_bg_cdphe)
 cdphe_equity %>% ggplot()+
-  geom_histogram(aes(climate_equity_score))
+  geom_histogram(aes(equity_bg_cdphe))
 
 names(cdphe_equity)
 #link with geometry and visualize
-cdphe_equity_geo = lookup_climate_equity_cdphe %>% 
+cdphe_equity_geo = lookup_equity_bg_cdphe %>% 
   left_join(colorado_bg_2019_geo, by = "bg_fips") %>% 
   st_as_sf()
 
-cdphe_equity_geo %>% mapview(zcol = "climate_equity_score")
-cdphe_equity_geo %>% mapview(zcol = "climate_equity_quartile_den")
+cdphe_equity_geo %>% mapview(zcol = "equity_bg_cdphe")
+cdphe_equity_geo %>% mapview(zcol = "equity_bg_cdphe_quartile_den")
 #create a lookup for the CE score
 #I'm including the 2019 to remind myself that it's based on the 2019 bgs
-lookup_cdphe_equity_bg_2019 = lookup_climate_equity_cdphe %>%
+lookup_equity_bg_cdphe_2019 = lookup_equity_bg_cdphe %>%
   rename(bg_fips_2019 = bg_fips) %>% 
-  distinct(bg_fips_2019, climate_equity_score, climate_equity_quartile_state, climate_equity_quartile_den)
+  distinct(bg_fips_2019, equity_bg_cdphe, equity_bg_cdphe_quartile_state, equity_bg_cdphe_quartile_den)
   
-lookup_cdphe_equity_bg_2019
+lookup_equity_bg_cdphe_2019
 setwd(here("data-processed"))
-save(lookup_cdphe_equity_bg_2019, file = "lookup_cdphe_equity_bg_2019.RData")
+save(lookup_equity_bg_cdphe_2019, file = "lookup_equity_bg_cdphe_2019.RData")
