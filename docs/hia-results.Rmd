@@ -490,8 +490,11 @@ hia_all_overall %>%
 
 # Next steps
 As of April 21, 2022:
+
 -   Sensitivity analyses varying NDVI of native plants (i.e., 0.3 or 0.4 rather than just 0.5)
+
 -   Add green streets HIA
+
 -   Add economic-impact attributable to health
 
 
