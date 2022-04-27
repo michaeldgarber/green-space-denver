@@ -880,8 +880,6 @@ save(den_bg_int_wtr_res_ndvi,
      file = "den_bg_int_wtr_res_ndvi.RData")
 den_bg_int_wtr_res_ndvi %>% 
   mapview(zcol = "ndvi_mean_wt")
-den_bg_int_wtr_res_ndvi %>% 
-  mapview(zcol = "ndvi_below_native_threshold")
 
 
 ### complement polygons--------
