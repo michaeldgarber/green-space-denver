@@ -1,7 +1,7 @@
 ---
 title: "Preliminary health-impact assessment results"
 author: "Michael D Garber"
-date: "Revised April 20 2022"
+date: "Revised April 27 2022"
 output: 
   html_document:
     toc: true  
@@ -45,7 +45,7 @@ We aim to estimate the number of premature deaths that would be prevented by the
 
 ## Measurement of existing green space and definition of native-plants
 
-We measured existing green space in the City of Denver by the normalized difference vegetation index (NDVI) measured by the Landsat-8 satellite at a spatial resolution of 30 square meters. To define native-plants greenness, we measured the NDVI of a 100% native zone in the Denver Botanic Gardens on several cloud-free spring and summer days. Over the course of these days in this area, the NDVI value was about 0.5. The NDVI of native vegetation may vary by ecosystem conditions and level of maintenance, so we will also consider lower NDVI values in sensitivity analyses.
+We measured existing green space in the City of Denver by the normalized difference vegetation index (NDVI) measured by the Landsat-8 satellite at a spatial resolution of 30 square meters. To define native-plants greenness, we measured the NDVI of areas in Denver that are mostly native, including the Denver Botanic Gardens and a few other locations on several cloud-free spring and summer days in 2021. Over the course of these days in these areas, the NDVI values tended to range between 0.4 and 0.5 (details [here](https://michaeldgarber.github.io/green-space-denver/ndvi-of-places-tracts.html)). The NDVI of native vegetation may vary by ecosystem conditions and level of maintenance. To accommodate this uncertainty and assess the sensitivity of results to the NDVI-based definition of native plants, we conducted analyses defining the NDVI of native plants at both 0.4 and 0.5.
 
 ## Stakeholder engagement to develop policy scenarios
 
@@ -110,25 +110,53 @@ mv_den_co_bg_ndvi@map %>%
   addFullscreenControl()
 ```
 
-We excluded census block whose baseline NDVI was above the native-plant threshold:
+For each definition of native-plants NDVI, We excluded census blocks whose baseline NDVI was above the threshold. This map visualizes the NDVI threshold at 0.4.
 
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 library(RColorBrewer)
 setwd(here("data-processed"))
+load("den_co_bg_ndvi_alt_all_nogeo.RData")
+load("lookup_den_co_bg_no_wtr_geo.RData")
 ndvi_below_thresh_pal = RColorBrewer::brewer.pal(3, "RdYlGn")[c(1,3)]  %>% rev()
-mv_bg_below_native_threshold =den_co_bg_ndvi_geo %>% 
-  dplyr::select(bg_fips, ndvi_below_native_threshold_char) %>% 
+mv_bg_below_native_threshold_04 =den_co_bg_ndvi_alt_all_nogeo %>% 
+  filter(ndvi_native_threshold<0.41) %>% #can pick either side of this.
+  filter(scenario_sub == "20-pct") %>% 
+  left_join(lookup_den_co_bg_no_wtr_geo, by = "bg_fips") %>% 
+  st_as_sf() %>% 
   mapview(
     layer.name = "NDVI below native threhsold",
     zcol = "ndvi_below_native_threshold_char",
     col.regions = ndvi_below_thresh_pal
   )
 
-mv_bg_below_native_threshold@map %>% 
+mv_bg_below_native_threshold_04@map %>% 
   addFullscreenControl()
 ```
+
+And this one defines the native-plants threshold at 0.5.
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+library(RColorBrewer)
+setwd(here("data-processed"))
+load("den_co_bg_ndvi_alt_all_nogeo.RData")
+load("lookup_den_co_bg_no_wtr_geo.RData")
+ndvi_below_thresh_pal = RColorBrewer::brewer.pal(3, "RdYlGn")[c(1,3)]  %>% rev()
+mv_bg_below_native_threshold_05 =den_co_bg_ndvi_alt_all_nogeo %>% 
+  filter(ndvi_native_threshold>0.45) %>% #can pick either side of this.
+  filter(scenario_sub == "20-pct") %>% 
+  left_join(lookup_den_co_bg_no_wtr_geo, by = "bg_fips") %>% 
+  st_as_sf() %>% 
+  mapview(
+    layer.name = "NDVI below native threhsold",
+    zcol = "ndvi_below_native_threshold_char",
+    col.regions = ndvi_below_thresh_pal
+  )
+
+mv_bg_below_native_threshold_05@map %>% 
+  addFullscreenControl()
+```
+
 ### Scenario 2: add native plants prioritizing census block groups with most health-equity need
-Under this set of scenarios, we assumed we had a "budget" of greening of either 30% or 20% of Denver's area, and we applied that budget to thoes with most need from a health-equity standpoint based on the CDPHE and DDPHE definitions, described above. As the below maps show, the two health-equity definitions from the State and from the City overlap considerably.
+Under this set of scenarios, we assumed we had a "budget" of greening of either 30% or 20% of Denver's area, and we applied that budget to those with most need from a health-equity standpoint based on the CDPHE and DDPHE definitions, described above. As the below maps show, the two health-equity definitions from the State and from the City overlap considerably.
 
 
 #### 30% of area prioritizing block groups of greatest need according to two health-equity definitions
@@ -442,16 +470,18 @@ load("hia_all_overall.RData")
 load("hia_all_overall_s.RData") #bootstrapped version with 95% CI
 load("lookup_scenario_sort_order.RData") #to get it to sort how I want
 hia_all_overall %>% 
-  left_join(hia_all_overall_s, by = c("scenario", "scenario_sub")) %>% 
+  left_join(hia_all_overall_s, by = c("scenario", "scenario_sub", "ndvi_native_threshold")) %>% 
   arrange(scenario_sort_order) %>% 
   dplyr::select(
-    scenario, scenario_sub, 
+    scenario, scenario_sub,
+        ndvi_native_threshold,
     starts_with("area_mi2_bg_int_tx"),
     starts_with("area_mi2_bg_int_res"),
     starts_with("pop_affected")) %>%
   knitr::kable(
     col.names = c(
       "Scenario", "Sub-scenario", 
+      "NDVI, native",
       "Area, treatment (mi^2^)",
       "Area, residential buffer (mi^2^)",
       "Pop. affected, est.", 
@@ -459,7 +489,9 @@ hia_all_overall %>%
       "Pop. affected, 95% UL"
       ),
     format.args = list(big.mark = ","),
-    digits = 0) #set max digits (after decimal, I guess)
+    #set max digits in order -
+    #see https://stackoverflow.com/questions/24896923/kable-displays-different-number-of-digits-in-each-column
+    digits = c(0, 0, 1, 0, 0, 0, 0, 0))  
 ```
 The second table shows, for each scenario, the estimated number of deaths prevented and the number of deaths prevented per 100,000 people affected.
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
@@ -468,15 +500,17 @@ load("hia_all_overall.RData")
 load("hia_all_overall_s.RData") #bootstrapped version with 95% CI
 load("lookup_scenario_sort_order.RData") #to get it to sort how I want
 hia_all_overall %>% 
-  left_join(hia_all_overall_s, by = c("scenario", "scenario_sub")) %>% 
+  left_join(hia_all_overall_s, by = c("scenario", "scenario_sub", "ndvi_native_threshold")) %>% 
   arrange(scenario_sort_order) %>% 
   dplyr::select(
     scenario, scenario_sub, 
+      ndvi_native_threshold,
     deaths_prevented, deaths_prevented_ll, deaths_prevented_ul, #have to hard code
     starts_with("deaths_prevented_per_pop_10")) %>%
   knitr::kable(
     col.names = c(
       "Scenario", "Sub-scenario", 
+      "NDVI, native",
       "Deaths prevented, est.", 
       "Deaths prevented, 95% LL", 
       "Deaths prevented, 95% UL",
@@ -485,13 +519,11 @@ hia_all_overall %>%
       "Deaths prevented per 100k, 95% UL"
       ),
     format.args = list(big.mark = ","),
-    digits = 0) #set max digits (after decimal, I guess)
+    digits = c(0, 0, 1, 0, 0, 0, 0, 0,0)) #set max digits (after decimal, I guess)
 ```
 
 # Next steps
-As of April 21, 2022:
-
--   Sensitivity analyses varying NDVI of native plants (i.e., 0.3 or 0.4 rather than just 0.5)
+As of April 27, 2022:
 
 -   Add green streets HIA
 

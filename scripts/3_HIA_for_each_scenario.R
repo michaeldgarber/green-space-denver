@@ -172,8 +172,6 @@ save(lookup_den_co_bg_no_wtr_geo, file = "lookup_den_co_bg_no_wtr_geo.RData")
 ####################################################-
 #1. Scenario 1: homogenous greening in each census block group---------
 ## Extract NDVI in those block groups on that day--------
-#define native threshold 
-ndvi_native_threshold = .5
 #update 3/16/22 removing the date from the filename. it gets too long,
 #and it's in the columns.
 class(ndvi_den_co_20210704)
@@ -213,17 +211,8 @@ extract_wrangle_ndvi_bg_int = function(df1, df2){
     ) %>% 
     ungroup() %>% 
     mutate(
-      ndvi_mean_wt =ndvi_wt_int/sum_of_wts, #weighted mean
-      #this isn't kept in all but can just remove via select
-      ndvi_below_native_threshold = case_when( #whether baseline was above native threshold
-        ndvi_mean_wt   < ndvi_native_threshold ~1,
-        TRUE ~0)
-      ,
-      #I need a character version of this, too, for plotting
-      ndvi_below_native_threshold_char = case_when(
-        ndvi_below_native_threshold == 1 ~ "Yes",
-        ndvi_below_native_threshold == 0 ~ "No"
-    )) %>% 
+      ndvi_mean_wt =ndvi_wt_int/sum_of_wts #weighted mean
+    ) %>% 
     left_join(df2, by = "bg_fips") %>% #link in geo and area measurements
     st_as_sf() #make sf object
 }
@@ -241,16 +230,21 @@ save(den_co_bg_ndvi_geo, file = "den_co_bg_ndvi_geo.RData")
 
 #make a function like for the bg_int scenarios
 #bg itself vs bg intersection below
+#define native threshold 
 mutate_ndvi_diff_bg_itself = function(df){
   df %>% 
     mutate(
-        prop_area_comp = 1-prop_area_tx, #paradoxically, take 1 minus this now
-        ndvi_alt_avg = prop_area_tx*ndvi_native_threshold+(1-prop_area_tx)*ndvi_mean_wt,
-        ndvi_quo = ndvi_mean_wt, #rename this to _quo to be consistent with other scenarios
-        ndvi_diff = ndvi_alt_avg-ndvi_quo
+      #I need a character version of this, too, for plotting
+      ndvi_below_native_threshold_char = case_when(
+        ndvi_below_native_threshold == 1 ~ "Yes",
+        ndvi_below_native_threshold == 0 ~ "No"
+      ),
+      prop_area_comp = 1-prop_area_tx, #paradoxically, take 1 minus this now
+      ndvi_alt_avg = prop_area_tx*ndvi_native_threshold+(1-prop_area_tx)*ndvi_mean_wt,
+      ndvi_quo = ndvi_mean_wt, #rename this to _quo to be consistent with other scenarios
+      ndvi_diff = ndvi_alt_avg-ndvi_quo
   )
 }
-
 
 ## Define scenarios-----------
 #100 percent native
@@ -313,25 +307,44 @@ link_equity_indices= function(df){
     left_join(lookup_equity_bg_cdphe_2019, by = "bg_fips_2019") %>% #link block-group level equity; note 2019 bg 
     rename(bg_fips = bg_fips_2020)      #change name back
 }
-den_co_bg_ndvi_alt_all_nogeo = den_co_bg_ndvi_alt_100_nogeo %>% 
-  bind_rows(
-    den_co_bg_ndvi_alt_30_nogeo, den_co_bg_ndvi_alt_20_nogeo
-  ) %>% 
-  mutate_ndvi_diff_bg_itself() %>% 
-  link_equity_indices() %>% #see above
-  mutate(
-    #re-order scenario_sub to be a factor; this doesn't really work.
-    scenario_sub = factor(
-      scenario_sub, 
-      levels = c("100-pct", "30-pct", "20-pct"))
-  ) %>% 
-    dplyr::select(
-      contains("bg_fips"), starts_with("tract_fips"),
-      starts_with("equity"),
-      starts_with("nbhd"),
-      contains("scenario"), contains("ndvi"), contains("prop_")
-    )
 
+map_over_native_ndvi_all_bg = function(ndvi_native_threshold_val){
+  df = den_co_bg_ndvi_alt_100_nogeo %>% 
+    bind_rows(
+      den_co_bg_ndvi_alt_30_nogeo, 
+      den_co_bg_ndvi_alt_20_nogeo
+    ) %>% 
+    mutate(
+      #add the native-plants NDVI value here instead of above so I can loop it through
+      #various possible values 
+      ndvi_native_threshold = ndvi_native_threshold_val, #define it here as a variable
+      ndvi_below_native_threshold = case_when( #whether baseline was above native threshold
+        ndvi_mean_wt   < ndvi_native_threshold ~1,
+        TRUE ~0)
+    ) %>% 
+    mutate_ndvi_diff_bg_itself() %>% 
+    link_equity_indices() %>% #see above
+    mutate(
+      #re-order scenario_sub to be a factor; this doesn't really work.
+      scenario_sub = factor(
+        scenario_sub, 
+        levels = c("100-pct", "30-pct", "20-pct"))
+    ) %>% 
+      dplyr::select(
+        contains("bg_fips"), starts_with("tract_fips"),
+        starts_with("equity"),
+        starts_with("nbhd"),
+        contains("scenario"), contains("ndvi"), contains("prop_")
+      )
+}
+
+#iterate over two values of ndvi for native plants
+ndvi_native_threshold_values = c(0.4, 0.5)
+den_co_bg_ndvi_alt_all_nogeo = ndvi_native_threshold_values %>% 
+  map_dfr(map_over_native_ndvi_all_bg)
+
+table(den_co_bg_ndvi_alt_all_nogeo$ndvi_native_threshold)
+class(den_co_bg_ndvi_alt_all_nogeo$ndvi_below_native_threshold)
 table(den_co_bg_ndvi_alt_all_nogeo$scenario_sub)
 save(den_co_bg_ndvi_alt_all_nogeo, file = "den_co_bg_ndvi_alt_all_nogeo.RData")
 den_co_bg_ndvi_alt_all_nogeo
@@ -340,6 +353,7 @@ names(den_co_bg_ndvi_alt_all_nogeo)
 ## intermediate mapviews--------
 ### visualize ndvi diff for one scenario------------
 den_co_bg_ndvi_alt_all_nogeo %>% 
+  filter(ndvi_native_threshold<0.41) %>% 
   filter(scenario_sub == "20-pct") %>% 
   left_join(lookup_den_co_bg_no_wtr_geo, by = "bg_fips") %>% 
   st_as_sf() %>% 
@@ -349,6 +363,7 @@ den_co_bg_ndvi_alt_all_nogeo %>%
 
 names(den_co_bg_ndvi_alt_all_nogeo)
 den_co_bg_ndvi_alt_all_nogeo %>% 
+  filter(ndvi_native_threshold<0.41) %>% 
   filter(scenario_sub == "20-pct") %>% 
   left_join(lookup_den_co_bg_no_wtr_geo, by = "bg_fips") %>% 
   st_as_sf() %>% 
@@ -357,6 +372,7 @@ den_co_bg_ndvi_alt_all_nogeo %>%
     zcol = "equity_bg_cdphe")
 
 den_co_bg_ndvi_alt_all_nogeo %>% 
+  filter(ndvi_native_threshold<0.41) %>% 
   filter(scenario_sub == "20-pct") %>% 
   left_join(lookup_den_co_bg_no_wtr_geo, by = "bg_fips") %>% 
   st_as_sf() %>% 
@@ -385,7 +401,11 @@ library(RColorBrewer)
 RColorBrewer::brewer.pal(3, "RdYlGn")[c(1,3)]  %>%   swatch()
 ndvi_below_thresh_pal = RColorBrewer::brewer.pal(3, "RdYlGn")[c(1,3)]  %>% rev()
 ndvi_below_thresh_pal %>% swatch()
-mv_bg_below_native_threshold =den_co_bg_ndvi_geo %>% 
+mv_bg_below_native_threshold =den_co_bg_ndvi_alt_all_nogeo %>% 
+  filter(ndvi_native_threshold<0.41) %>% #can pick either side of this.
+  filter(scenario_sub == "20-pct") %>% 
+  left_join(lookup_den_co_bg_no_wtr_geo, by = "bg_fips") %>% 
+  st_as_sf() %>% 
   mapview(
     layer.name = "NDVI below native threhsold",
     zcol = "ndvi_below_native_threshold_char",
@@ -545,15 +565,31 @@ equity_nbhd_denver_alt_20_nogeo = den_co_bg_ndvi_geo %>%
     scenario_sub = "denver-def-20-pct" ) 
 
 ### Combine them-----------
-equity_all_nogeo = equity_bg_cdphe_alt_30_nogeo %>% 
-  bind_rows(
-    equity_bg_cdphe_alt_20_nogeo,
-    equity_nbhd_denver_alt_30_nogeo,
-    equity_nbhd_denver_alt_20_nogeo
-  ) %>% 
-  mutate_ndvi_diff_bg_itself() #don't forget this
+map_over_native_ndvi_all_bg_equity = function(ndvi_native_threshold_val){
+  df = equity_bg_cdphe_alt_30_nogeo %>% 
+    bind_rows(
+      equity_bg_cdphe_alt_20_nogeo,
+      equity_nbhd_denver_alt_30_nogeo,
+      equity_nbhd_denver_alt_20_nogeo
+    ) %>% 
+    mutate(
+      #add the native-plants NDVI value here instead of above so I can loop it through
+      #various possible values 
+      ndvi_native_threshold = ndvi_native_threshold_val, #define it here as a variable
+      ndvi_below_native_threshold = case_when( #whether baseline was above native threshold
+        ndvi_mean_wt   < ndvi_native_threshold ~1,
+        TRUE ~0)
+    ) %>% 
+    mutate_ndvi_diff_bg_itself() #don't forget this
+}
 
+#we've already defined the two native NDVI values above
+ndvi_native_threshold_values
+equity_all_nogeo = ndvi_native_threshold_values %>% 
+  map_dfr(map_over_native_ndvi_all_bg_equity)
+  
 names(equity_all_nogeo)
+table(equity_all_nogeo$ndvi_native_threshold)
 table(equity_all_nogeo$scenario)
 table(equity_all_nogeo$scenario_sub)
 equity_all_nogeo
@@ -1130,31 +1166,44 @@ mutate_ndvi_diff_bg_int = function(df){
 }
 
 names(den_bg_int_wtr_50ft_ndvi_wide)
-den_bg_int_wtr_ndvi_all_nogeo =den_bg_int_wtr_50ft_ndvi_wide %>% 
-  bind_rows(den_bg_int_wtr_100ft_ndvi_wide, den_bg_int_wtr_200ft_ndvi_wide ) %>% 
-  mutate(
-    prop_tx_itself_veg=1, #of the area of the actual treatment, what proportion is treated?
-                          #note this is different than prop_area_tx
-                          #for example, the office-green-infra polygons are all considered "treatment" areas
-                          #but only 50% might be vegetated
-    #set what the ndvi_alt_tx_only should be
-    #in this case, it's just 0.5, but write as a weighted average to more easily generalize
-    #note this will be missing wherever treatment ndvi is missing within a block group; that's okay.
-    ndvi_alt_tx_only = prop_tx_itself_veg*ndvi_native_threshold + (1-prop_tx_itself_veg)*ndvi_mean_wt_tx 
-  ) %>% 
-  mutate_ndvi_diff_bg_int() %>% 
-  mutate(   #re-order scenario_sub to be a factor
-    scenario_sub = factor(
-      scenario_sub, 
-      levels = c("200-ft", "100-ft", "50-ft"))
-  )
-  
+#rip for riparian
+map_over_native_ndvi_rip = function(ndvi_native_threshold_val){
+  df =den_bg_int_wtr_50ft_ndvi_wide %>% 
+    bind_rows(
+      den_bg_int_wtr_100ft_ndvi_wide, 
+      den_bg_int_wtr_200ft_ndvi_wide ) %>% 
+    mutate(
+      #add the native-plants NDVI value here instead of above so I can loop it through
+      #various possible values 
+      ndvi_native_threshold = ndvi_native_threshold_val, #define it here as a variable
+      #whether treatment area was above native threshold. note this is different than the scenarios
+      #at the block-group level
+      ndvi_below_native_threshold = case_when( 
+        ndvi_mean_wt_tx   < ndvi_native_threshold ~1,
+        TRUE ~0),
+      prop_tx_itself_veg=1, #of the area of the actual treatment, what proportion is treated?
+                            #note this is different than prop_area_tx
+                            #for example, the office-green-infra polygons are all considered "treatment" areas
+                            #but only 50% might be vegetated
+      #set what the ndvi_alt_tx_only should be
+      #in this case, it's just 0.5, but write as a weighted average to more easily generalize
+      #note this will be missing wherever treatment ndvi is missing within a block group; that's okay.
+      ndvi_alt_tx_only = prop_tx_itself_veg*ndvi_native_threshold + (1-prop_tx_itself_veg)*ndvi_mean_wt_tx 
+    ) %>% 
+    mutate_ndvi_diff_bg_int() %>% 
+    mutate(   #re-order scenario_sub to be a factor
+      scenario_sub = factor(
+        scenario_sub, 
+        levels = c("200-ft", "100-ft", "50-ft"))
+    )
+}
+
+den_bg_int_wtr_ndvi_all_nogeo = ndvi_native_threshold_values %>% 
+  map_dfr(map_over_native_ndvi_rip)
+table(den_bg_int_wtr_ndvi_all_nogeo$ndvi_native_threshold)
 table(den_bg_int_wtr_ndvi_all_nogeo$scenario_sub)
 save(den_bg_int_wtr_ndvi_all_nogeo, file = "den_bg_int_wtr_ndvi_all_nogeo.RData")
 den_bg_int_wtr_ndvi_all_nogeo
-
-
-
 
 
 # 4. Scenario 4. Office of Green Infrastructure initiatives---------------
@@ -1405,28 +1454,41 @@ den_bg_int_ogi_proj_tx_ndvi_nogeo = den_bg_int_ogi_proj_tx_ndvi %>%
 
 ### pivot_wider ndvi and area within sub-scenario------------------
 #keep it long by sub-scenario (just one, here) but wide by intervention vs complement 
-den_bg_int_ogi_proj_ndvi_wide = den_bg_int_ogi_proj_res_ndvi_nogeo %>% 
-  bind_rows(
-    den_bg_int_ogi_proj_comp_ndvi_nogeo, #the residential buffer
-    den_bg_int_ogi_proj_tx_ndvi_nogeo) %>% 
-  dplyr::select(bg_fips, ndvi_mean_wt, area_mi2_bg_int, buff_type) %>% 
-  pivot_wider(
-    # note some block groups will be covered by the comp but not by the tx
-    names_from = buff_type,
-    values_from = c(ndvi_mean_wt, area_mi2_bg_int)
-  ) %>% 
-  mutate(#add this info now
-    scenario = "ogi",
-    scenario_sub = "ogi_proj"
-  ) %>% 
-  #all be one step here
-  mutate(#expect about 75% to be landscaped w native
-    prop_tx_itself_veg=.75,
-    ndvi_alt_tx_only = prop_tx_itself_veg*ndvi_native_threshold + 
-      (1-prop_tx_itself_veg)*ndvi_mean_wt_tx ) %>% 
-  mutate_ndvi_diff_bg_int()  
+map_over_native_ndvi_all_ogi_proj = function(ndvi_native_threshold_val){
+  df = den_bg_int_ogi_proj_res_ndvi_nogeo %>% 
+    bind_rows(
+      den_bg_int_ogi_proj_comp_ndvi_nogeo, #the residential buffer
+      den_bg_int_ogi_proj_tx_ndvi_nogeo) %>% 
+    dplyr::select(bg_fips, ndvi_mean_wt, area_mi2_bg_int, buff_type) %>% 
+    pivot_wider(
+      # note some block groups will be covered by the comp but not by the tx
+      names_from = buff_type,
+      values_from = c(ndvi_mean_wt, area_mi2_bg_int)
+    ) %>% 
+    mutate(#add this info now
+      scenario = "ogi",
+      scenario_sub = "ogi_proj"
+    ) %>% 
+    mutate(
+      #add the native-plants NDVI value here instead of above so I can loop it through
+      #various possible values 
+      ndvi_native_threshold = ndvi_native_threshold_val, #define it here as a variable
+      #whether treatment area was above native threshold. note this is different than the scenarios
+      #at the block-group level
+      ndvi_below_native_threshold = case_when( 
+        ndvi_mean_wt_tx   < ndvi_native_threshold ~1,
+        TRUE ~0),
+      #expect about 75% to be landscaped w native
+      prop_tx_itself_veg=.75,
+      ndvi_alt_tx_only = prop_tx_itself_veg*ndvi_native_threshold + 
+        (1-prop_tx_itself_veg)*ndvi_mean_wt_tx ) %>% 
+    mutate_ndvi_diff_bg_int()  
+}
 
 #save for use in bootstrap code
+den_bg_int_ogi_proj_ndvi_wide = ndvi_native_threshold_values %>% 
+  map_dfr(map_over_native_ndvi_all_ogi_proj)
+table(den_bg_int_ogi_proj_ndvi_wide$ndvi_native_threshold)
 save(den_bg_int_ogi_proj_ndvi_wide, file = "den_bg_int_ogi_proj_ndvi_wide.RData")
 den_bg_int_ogi_proj_ndvi_wide
 names(den_bg_int_ogi_proj_ndvi_wide)
@@ -1522,7 +1584,7 @@ parcel_by_size  = den_landuse_sample %>%
   summarise(
     area_ft2_parcel = sum(area_ft2_parcel),
     area_ac_parcel  = sum(area_ac_parcel),
-    area_mi2_parcel = sum(area_mi2_parcel)  ,
+    area_mi2_parcel = sum(area_mi2_parcel) 
   ) %>% 
   ungroup() %>% 
   st_as_sf() 
@@ -1781,27 +1843,41 @@ den_bg_int_parcel_tx_ndvi_nogeo = den_bg_int_parcel_tx_ndvi %>%
 
 ### pivot_wider ndvi and area within sub-scenario------------------
 #keep it long by sub-scenario (just one, here) but wide by intervention vs complement 
-den_bg_int_parcel_ndvi_wide = den_bg_int_parcel_res_ndvi_nogeo %>% 
-  bind_rows(
-    den_bg_int_parcel_comp_ndvi_nogeo, #the residential buffer
-    den_bg_int_parcel_tx_ndvi_nogeo) %>% 
-  dplyr::select(bg_fips, ndvi_mean_wt, area_mi2_bg_int, buff_type) %>% 
-  pivot_wider(
-    names_from = buff_type,
-    values_from = c(ndvi_mean_wt, area_mi2_bg_int)
-  ) %>% 
-  mutate(#add this info now
-    scenario = "ogi",
-    scenario_sub = "parcel"
-  ) %>% 
-  mutate(  #say about 50% of the new dev't is landscaped; may not be that high.
-    prop_tx_itself_veg=.5,
-    ndvi_alt_tx_only = prop_tx_itself_veg*ndvi_native_threshold + 
-      (1-prop_tx_itself_veg)*ndvi_mean_wt_tx ) %>% 
-  mutate_ndvi_diff_bg_int()    #all one step in contrast with riparian areas
+map_over_native_ndvi_all_ogi_parcel = function(ndvi_native_threshold_val){
+  df = den_bg_int_parcel_res_ndvi_nogeo %>% 
+    bind_rows(
+      den_bg_int_parcel_comp_ndvi_nogeo, #the residential buffer
+      den_bg_int_parcel_tx_ndvi_nogeo) %>% 
+    dplyr::select(bg_fips, ndvi_mean_wt, area_mi2_bg_int, buff_type) %>% 
+    pivot_wider(
+      names_from = buff_type,
+      values_from = c(ndvi_mean_wt, area_mi2_bg_int)
+    ) %>% 
+    mutate(#add this info here
+      scenario = "ogi",
+      scenario_sub = "parcel"
+    ) %>% 
+    mutate(  
+      #add the native-plants NDVI value here instead of above so I can loop it through
+      #various possible values 
+      ndvi_native_threshold = ndvi_native_threshold_val, #define it here as a variable
+      #whether treatment area was above native threshold. note this is different than the scenarios
+      #at the block-group level
+      ndvi_below_native_threshold = case_when( 
+        ndvi_mean_wt_tx   < ndvi_native_threshold ~1,
+        TRUE ~0),
+      #say about 50% of the new dev't is landscaped; may not be that high.
+      prop_tx_itself_veg=.5,
+      ndvi_alt_tx_only = prop_tx_itself_veg*ndvi_native_threshold + 
+        (1-prop_tx_itself_veg)*ndvi_mean_wt_tx ) %>% 
+    mutate_ndvi_diff_bg_int()    #all one step in contrast with riparian areas
+}
 
-table(den_bg_int_parcel_ndvi_wide$sc)
 
+den_bg_int_parcel_ndvi_wide = ndvi_native_threshold_values %>% 
+  map_dfr(map_over_native_ndvi_all_ogi_parcel)
+table(den_bg_int_parcel_ndvi_wide$scenario)
+table(den_bg_int_ogi_proj_ndvi_wide$ndvi_native_threshold)
 save(den_bg_int_parcel_ndvi_wide, file = "den_bg_int_parcel_ndvi_wide.RData")
 
 
@@ -2089,39 +2165,53 @@ den_bg_int_prkng_alt_100 = den_bg_int_prkng_ndvi_wide %>%
   mutate(
     scenario = "prkng",
     scenario_sub = "100-pct",
-    prop_tx_itself_veg=1,
-    ndvi_alt_tx_only = prop_tx_itself_veg*ndvi_native_threshold + 
-      (1-prop_tx_itself_veg)*ndvi_mean_wt_tx 
+    prop_tx_itself_veg=1
     ) 
 den_bg_int_prkng_alt_50 = den_bg_int_prkng_ndvi_wide %>% 
   mutate(
     scenario = "prkng",
     scenario_sub = "50-pct",
-    prop_tx_itself_veg=.5,
-    ndvi_alt_tx_only = prop_tx_itself_veg*ndvi_native_threshold + 
-      (1-prop_tx_itself_veg)*ndvi_mean_wt_tx 
+    prop_tx_itself_veg=.5
   ) 
 den_bg_int_prkng_alt_20 = den_bg_int_prkng_ndvi_wide %>% 
   mutate(
     scenario = "prkng",
     scenario_sub = "20-pct",
-    prop_tx_itself_veg=.2,
-    ndvi_alt_tx_only = prop_tx_itself_veg*ndvi_native_threshold + 
-      (1-prop_tx_itself_veg)*ndvi_mean_wt_tx 
+    prop_tx_itself_veg=.2
   ) 
 
-den_bg_int_prkng_alt_all = den_bg_int_prkng_alt_100 %>% 
-  bind_rows(
-    den_bg_int_prkng_alt_50,
-    den_bg_int_prkng_alt_20
-  ) %>% 
-  mutate_ndvi_diff_bg_int() %>% 
-  mutate(   #re-order scenario_sub to be a factor
-    scenario_sub = factor(
-      scenario_sub, 
-      levels = c("100-pct", "50-pct", "20-pct"))
-  )
+### Combine them all here----------
+map_over_native_ndvi_all_ogi_prkng = function(ndvi_native_threshold_val){
+  df = den_bg_int_prkng_alt_100 %>% 
+    bind_rows(
+      den_bg_int_prkng_alt_50,
+      den_bg_int_prkng_alt_20
+    ) %>% 
+    mutate(
+      #re-order scenario_sub to be a factor
+      scenario_sub = factor(
+        scenario_sub, 
+        levels = c("100-pct", "50-pct", "20-pct")),
+      
+      #add the native-plants NDVI value here instead of above so I can loop it through
+      #various possible values 
+      ndvi_native_threshold = ndvi_native_threshold_val, #define it here as a variable
+      #whether treatment area was above native threshold. note this is different than the scenarios
+      #at the block-group level
+      ndvi_below_native_threshold = case_when( 
+        ndvi_mean_wt_tx   < ndvi_native_threshold ~1,
+        TRUE ~0),
+    
+      #this works here rather than in each constituent scenario's data frame.
+      ndvi_alt_tx_only = prop_tx_itself_veg*ndvi_native_threshold + 
+        (1-prop_tx_itself_veg)*ndvi_mean_wt_tx
+      )%>% 
+      mutate_ndvi_diff_bg_int() 
+}
 
+den_bg_int_prkng_alt_all = ndvi_native_threshold_values %>% 
+  map_dfr(map_over_native_ndvi_all_ogi_prkng)
+table(den_bg_int_prkng_alt_all$ndvi_native_threshold)
 #save for use in bootstrap code
 save(den_bg_int_prkng_alt_all, file = "den_bg_int_prkng_alt_all.RData")
 table(den_bg_int_prkng_alt_all$scenario_sub)
@@ -2256,6 +2346,7 @@ mutate_part_of_hia = function(df){ #make a function out of it since
       deaths_prevented_per_pop = deaths_prevented/pop_affected #pp is per person
     )
 }
+names(den_co_bg_ndvi_alt_all_nogeo)
 hia_all  = den_co_bg_ndvi_alt_all_nogeo %>% #scenario all bg
   bind_rows(
     equity_all_nogeo, #equity scenarios
@@ -2323,7 +2414,8 @@ hia_all  = den_co_bg_ndvi_alt_all_nogeo %>% #scenario all bg
       scenario == "prkng" & scenario_sub == "20-pct" ~15
   )) %>% 
   dplyr::select(
-    contains("fips"), contains("scenario"), 
+    contains("fips"), starts_with("scenario") ,
+    starts_with("ndvi_native_threshold"),
     starts_with("pop"), starts_with("area"), contains("area"),
     contains("ndvi"), contains("drf"),
     contains("equity"),
@@ -2363,12 +2455,14 @@ summarise_ungroup_hia = function(df){
 }
 hia_all_overall = hia_all %>% 
   filter(ndvi_below_native_threshold==1) %>% 
-  group_by(scenario, scenario_sub) %>% 
+  group_by(scenario, scenario_sub, ndvi_native_threshold) %>% 
   summarise_ungroup_hia() %>% 
   left_join(lookup_scenario_sort_order, by = c("scenario", "scenario_sub")) %>% 
   arrange(scenario_sort_order) %>% 
   dplyr::select(
-    contains("scenario"), starts_with("pop"), 
+    contains("scenario"), 
+    starts_with("ndvi_native_threshold"),
+    starts_with("pop"), 
     starts_with("death"),
     starts_with("area"),
     everything())
@@ -2380,7 +2474,7 @@ save(hia_all_overall, file = "hia_all_overall.RData")
 load("lookup_den_metro_bg_geo.RData") #created 0_import_manage_denver_acs.R
 hia_all_bg = hia_all %>% 
   filter(ndvi_below_native_threshold==1) %>% 
-  group_by(bg_fips, scenario, scenario_sub) %>% 
+  group_by(bg_fips, scenario, scenario_sub, ndvi_native_threshold) %>% 
   summarise_ungroup_hia() 
 hia_all_bg
 
@@ -2395,7 +2489,7 @@ hia_all_bg %>%
 table(hia_all$age_group_acs)
 hia_all_age = hia_all %>% 
   filter(ndvi_below_native_threshold==1) %>% 
-  group_by(age_group_acs, scenario, scenario_sub) %>% 
+  group_by(age_group_acs, scenario, scenario_sub, ndvi_native_threshold) %>% 
   summarise_ungroup_hia() 
 
 hia_all_age

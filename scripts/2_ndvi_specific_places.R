@@ -93,6 +93,7 @@ native_places_ndvi_day_geo = native_places_ndvi %>%
   left_join(lookup_date_is_valid_all, by = "date") %>% #valid dates
   st_as_sf()  #we have geometry so might as well use it.
 
+native_places_ndvi_day_geo
 #save and make a no-geo version for speed
 setwd(here("data-processed"))
 save(native_places_ndvi_day_geo, file = "native_places_ndvi_day_geo.RData")
