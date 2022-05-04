@@ -94,24 +94,6 @@ mv_den_co_bg_ndvi@map %>%
   addFullscreenControl()
 ```
 
-We excluded census block whose baseline NDVI was above the native-plant threshold:
-
-```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
-library(RColorBrewer)
-setwd(here("data-processed"))
-ndvi_below_thresh_pal = RColorBrewer::brewer.pal(3, "RdYlGn")[c(1,3)]  %>% rev()
-mv_bg_below_native_threshold =den_co_bg_ndvi_geo %>% 
-  dplyr::select(bg_fips, ndvi_below_native_threshold_char) %>% 
-  mapview(
-    layer.name = "NDVI below native threhsold",
-    zcol = "ndvi_below_native_threshold_char",
-    col.regions = ndvi_below_thresh_pal
-  )
-
-mv_bg_below_native_threshold@map %>% 
-  addFullscreenControl()
-```
-
 ### Scenario 2: add native-plants buffers to riparian areas
 
 We measured NDVI in a 200-foot buffer, a 100-foot buffer, and a 50-foot buffer around all bodies of water in Denver. We downloaded bodies of water from OpenStreetMap (code [here](https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_load_denver_osm_parks_water.R)). We defined residential exposure to these riparian areas as those individuals living within a 500-meter buffer thereof. The below map depicts mean NDVI in the portions of census block groups that intersect a 200-foot buffer as well as those pieces that intersect the part of the 500 m buffer that would not be intervened upon, i.e., the part between the 200-foot buffer and the edge of the 500 m buffer.
