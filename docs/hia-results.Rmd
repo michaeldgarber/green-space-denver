@@ -132,7 +132,7 @@ mv_den_co_bg_ndvi@map %>%
   addFullscreenControl()
 ```
 
-For each definition of native-plants NDVI, We excluded census blocks whose baseline NDVI was above the threshold. This map visualizes the cutoff if the NDVI threshold is the lower of the two values, that of the Denver Botanic Gardens Green Roof.
+For each definition of native-plants NDVI, We excluded census blocks whose baseline NDVI was above the threshold. This map visualizes the NDVI cutoffs both for lower of the two values, that of the Denver Botanic Gardens Green Roof, and the higher of the two, that of Denver Botanic Gardens Native Plot.
 
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 library(RColorBrewer)
@@ -140,40 +140,32 @@ setwd(here("data-processed"))
 load("den_co_bg_ndvi_alt_all_nogeo.RData")
 load("lookup_den_co_bg_no_wtr_geo.RData")
 ndvi_below_thresh_pal = RColorBrewer::brewer.pal(3, "RdYlGn")[c(1,3)]  %>% rev()
-mv_bg_below_native_threshold_04 =den_co_bg_ndvi_alt_all_nogeo %>% 
+mv_bg_below_native_threshold_low =den_co_bg_ndvi_alt_all_nogeo %>% 
   filter(ndvi_native_threshold<0.41) %>% #can pick either side of this.
   filter(scenario_sub == "20-pct") %>% 
   left_join(lookup_den_co_bg_no_wtr_geo, by = "bg_fips") %>% 
   st_as_sf() %>% 
   mapview(
-    layer.name = "NDVI below native threhsold",
+    layer.name = "NDVI below lower native NDVI value",
     zcol = "ndvi_below_native_threshold_char",
     col.regions = ndvi_below_thresh_pal
   )
 
-mv_bg_below_native_threshold_04@map %>% 
-  addFullscreenControl()
-```
-
-And this one defines the native-plants threshold at a higher value, that of Denver Botanic Gardens Native Plot.
-```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
-library(RColorBrewer)
-setwd(here("data-processed"))
-load("den_co_bg_ndvi_alt_all_nogeo.RData")
-load("lookup_den_co_bg_no_wtr_geo.RData")
-ndvi_below_thresh_pal = RColorBrewer::brewer.pal(3, "RdYlGn")[c(1,3)]  %>% rev()
-mv_bg_below_native_threshold_05 =den_co_bg_ndvi_alt_all_nogeo %>% 
+mv_bg_below_native_threshold_high =den_co_bg_ndvi_alt_all_nogeo %>% 
   filter(ndvi_native_threshold>0.45) %>% #can pick either side of this.
   filter(scenario_sub == "20-pct") %>% 
   left_join(lookup_den_co_bg_no_wtr_geo, by = "bg_fips") %>% 
   st_as_sf() %>% 
   mapview(
-    layer.name = "NDVI below native threhsold",
+    layer.name = "NDVI below higher native NDVI value",
     zcol = "ndvi_below_native_threshold_char",
     col.regions = ndvi_below_thresh_pal
   )
 
-mv_bg_below_native_threshold_05@map %>% 
+mv_both_thresholds = mv_bg_below_native_threshold_high +
+  mv_bg_below_native_threshold_low
+
+mv_both_thresholds@map %>% 
   addFullscreenControl()
 ```
 
