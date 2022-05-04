@@ -15,6 +15,7 @@ library(ggmap)
 library(lubridate)
 library(stringr)
 
+#Last ran 5/3/22
 
 # Load data--------------
 ## Load specific places provided by Michael Guidi----------
@@ -41,7 +42,9 @@ load("lookup_date_is_valid_all.RData")
 lookup_date_is_valid_all
 ## create long-form dataset of NDVI by place over time--------
 native_places_ndvi = ndvi_den_metro_terr_5_yr %>% 
-  terra::extract(vect(places_native_geo)) %>% #for every day
+  terra::extract(
+    weights = TRUE, #approximate proportion of cell covered by polygon
+    y = vect(places_native_geo)) %>% #for every day
   as_tibble() %>% 
   pivot_longer(
     cols = contains("20"),#contains a year that begins with 20..flexible 

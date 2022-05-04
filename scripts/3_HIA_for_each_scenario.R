@@ -338,8 +338,14 @@ map_over_native_ndvi_all_bg = function(ndvi_native_threshold_val){
       )
 }
 
+# define NDVI of native plants-----------
+# note in meeting on May 2, 2022 we decided we would use
+#https://michaeldgarber.github.io/green-space-denver/ndvi-of-places-tracts.html
+# 0.3228 for a lower value
+# 0.4909 for denver botanic gardens
+
 #iterate over two values of ndvi for native plants
-ndvi_native_threshold_values = c(0.4, 0.5)
+ndvi_native_threshold_values = c(0.3228, 0.4909)
 den_co_bg_ndvi_alt_all_nogeo = ndvi_native_threshold_values %>% 
   map_dfr(map_over_native_ndvi_all_bg)
 
@@ -1361,9 +1367,6 @@ den_bg_int_ogi_proj_res_ndvi %>%
   mapview(
     zcol = "ndvi_mean_wt",
     col.regions = pal_terrain)
-den_bg_int_ogi_proj_res_ndvi %>% 
-  mapview(
-    zcol = "ndvi_below_native_threshold")
 
 
 ### complement polygons 

@@ -72,6 +72,7 @@ den_metro_park_resolved = den_metro_park_polygons %>%
     osm_value = "park"
   )
 
+
 #den_metro_park_resolved %>% mapview()
 
 #do the same for the nature reserve
@@ -89,7 +90,7 @@ den_metro_nature_reserve_resolved = den_metro_nature_reserve_polygons %>%
     osm_key = "leisure",
     osm_value = "nature_reserve"
   )
-#den_metro_nature_reserve_resolved %>% mapview()
+den_metro_nature_reserve_resolved %>% mapview(zcol = "osm_value")
 
 den_metro_protected_area_polygons = den_metro_protected_area$osm_polygons %>% 
   mutate(osm_origin_feature_type = "polygon")
@@ -114,7 +115,6 @@ st_crs(den_metro_park_resolved)
 #note name change to specify that it's just these two counties
 #update to change to green space (omit the word public for brevity)
 den_jeff_co_green_space =den_metro_park_resolved %>% 
-  st_transform(2876) %>% 
   bind_rows(
     den_metro_nature_reserve_resolved,
     den_metro_protected_area_resolved
@@ -122,6 +122,7 @@ den_jeff_co_green_space =den_metro_park_resolved %>%
   st_make_valid() %>% #needed because there are some duplicate vertices
   #restrict to just the bounding box, as it was picking up many features
   #that extend far beyond the metro area
+  st_transform(2876) %>% 
   st_intersection(
     den_jeff_co_geo
   ) %>% 

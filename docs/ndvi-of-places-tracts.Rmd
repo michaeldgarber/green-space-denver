@@ -1,7 +1,7 @@
 ---
 title: "Preliminary NDVI analyses, Denver area"
 author: "Michael D Garber"
-date: "February 7, 2022"
+date: "Revised May 3, 2022"
 output: 
   html_document: 
     toc: true #include the table of contents at the sub-page level instead of yml
@@ -9,9 +9,7 @@ output:
     number_sections: yes
 ---
 
-Updated March 21 with new filename.
-
-This document presents some preliminary analyses characterizing the NDVI of certain places and census tracts throughout the Denver area. 
+This document presents preliminary analyses characterizing the NDVI of certain places and census tracts throughout the Denver area. 
 
 First, load packages used in this Rmarkdown doc.
 ```{r loadpackages, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
@@ -49,12 +47,12 @@ https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/1b_wrangl
 Here is the NDVI over the study area on a cloud-free day, July 4, 2021:
 ```{r terragoodmo, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
-pal_viridis_trunc=viridis::viridis_pal(end=.9) #trunc for truncated
+pal_terrain_col = rev(terrain.colors(100)) 
 ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
 mv_good_date =ndvi_den_metro_terr_5_yr$`20210704_NDVI` %>% 
   raster::raster() %>%  
   mapview(
-    col.regions = pal_viridis_trunc,
+    col.regions = pal_terrain_col,
     layer.name = "NDVI, July 4, 2021")
 mv_good_date
 ```
@@ -259,37 +257,29 @@ native_places_ndvi_day_nogeo %>%
 
 
 # NDVI of census tracts
-The goal of this section is to summarize NDVI for census tracts in Denver County and Jefferson Counties. Before characterizing NDVI of each census tract, we removed bodies of water. NDVI values of water approach -1, and we did not want to "penalize" a census tract for having large amounts of water.
+In this section, we summarize NDVI for census tracts in Denver County. Before characterizing NDVI of each census tract, we removed bodies of water. NDVI values of water approach -1, and we did not want to "penalize" a census tract for having large amounts of water.
 
-We download census tracts using the tidycensus package in this script:
-https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_import_manage_denver_acs.R
-
-We downloaded bodies of water using the osmdata package in this script:
-https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_load_denver_osm_parks_water.R
-
-We then removed bodies of water from the census tract here:
-https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/1_merge_tracts_with_water.R
 
 Here is a map of the median NDVI of the census tracts in the area on 2021-07-04:
 ```{r ndvitracts2021-07-04, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE, fig.width=10}
 #4/8/22 note I used to have another code chunk above this one showing a different day (2021-06-10), but the code was breaking.
+library(here)
 setwd(here("data-processed"))
-load("den_metro_tract_ndvi_day_wrangle_geo.RData")
-den_metro_tract_ndvi_day_wrangle_geo %>% 
+load("den_co_tract_ndvi_day_geo.RData")
+pal_terrain_col = rev(terrain.colors(100)) 
+#I have a version with "tracts" saved. If I re-run the code, "tract" should work.
+den_co_tract_ndvi_day_geo %>% 
   filter(date == "2021-07-04") %>% 
-  st_intersection(den_metro_bbox_custom_sf) %>% 
   mapview(
     layer.name = "NDVI, Median",
-     col.regions = pal_viridis_trunc,
+     col.regions = pal_terrain_col,
     zcol = "ndvi_med" 
     )
 ```
 
 Here is a histogram of the distribution of median NDVI for these census tracts on June 10, 2021:
 ```{r ndvitractshisto2021-06-10, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
-setwd(here("data-processed"))
-load("den_metro_tracts_ndvi_day_wrangle_nogeo.RData")
-den_metro_tracts_ndvi_day_wrangle_nogeo %>% 
+den_co_tract_ndvi_day_geo %>% 
   filter(date == "2021-06-10") %>% 
   ggplot(aes(ndvi_med))+
   geom_histogram()
@@ -307,7 +297,8 @@ den_jeff_co_green_space_public %>%
   mapview(zcol = "osm_value", layer.name = "Green space type")
 ```
 
-Like with census tracts, we removed bodies of water from these green spaces before measuring NDVI. Here is the NDVI on June 10, 2021:
+Like with census tracts, we removed bodies of water from these green spaces before measuring NDVI. 
+Here is the NDVI on June 10, 2021:
 ```{r ndviparks2021-06-10, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
 setwd(here("data-processed"))
 load("den_metro_green_space_ndvi_day_wrangle_geo.RData")
@@ -338,11 +329,12 @@ mv_den_metro_green_space_ndvi_day_geo+mv_den_jeff_co_geo
 Most parks are in the city, and most protected areas are in the mountains. Summarize NDVI by type of green space:
 ```{r summarise_by_park_type, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, results = 'asis'}
 setwd(here("data-processed"))
+library(knitr)
 load("den_metro_green_space_ndvi_day_wrangle_nogeo.RData")
 den_metro_green_space_ndvi_day_wrangle_nogeo %>% 
   filter(date_is_valid_all==1) %>% 
   group_by(osm_value) %>% 
   summarise(ndvi_med = median(ndvi_med, na.rm=TRUE) ) %>% 
   ungroup() %>% 
-  kable()
+  knitr::kable()
 ```

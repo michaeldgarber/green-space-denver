@@ -15,7 +15,7 @@ This page presents some work-in-progress updates for the Denver green-space heal
 
     -   <https://michaeldgarber.github.io/green-space-denver/hia-results.html>
 
-    -   Date revised: April 27, 2022
+    -   Date revised: May 3, 2022
 
 -   Overview of scenarios for sharing
 
@@ -27,7 +27,7 @@ This page presents some work-in-progress updates for the Denver green-space heal
 
     -   <https://michaeldgarber.github.io/green-space-denver/ndvi-of-places-tracts.html>
 
-    -   Date revised: February 7, 2022
+    -   Date revised: May 3, 2022
 
 <br>
 

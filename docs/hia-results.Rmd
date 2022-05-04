@@ -1,7 +1,7 @@
 ---
 title: "Preliminary health-impact assessment results"
 author: "Michael D Garber"
-date: "Revised April 27 2022"
+date: "Revised May 3, 2022"
 output: 
   html_document:
     toc: true  
@@ -45,7 +45,9 @@ We aim to estimate the number of premature deaths that would be prevented by the
 
 ## Measurement of existing green space and definition of native-plants
 
-We measured existing green space in the City of Denver by the normalized difference vegetation index (NDVI) measured by the Landsat-8 satellite at a spatial resolution of 30 square meters. To define native-plants greenness, we measured the NDVI of areas in Denver that are mostly native, including the Denver Botanic Gardens and a few other locations on several cloud-free spring and summer days in 2021. Over the course of these days in these areas, the NDVI values tended to range between 0.4 and 0.5 (details [here](https://michaeldgarber.github.io/green-space-denver/ndvi-of-places-tracts.html)). The NDVI of native vegetation may vary by ecosystem conditions and level of maintenance. To accommodate this uncertainty and assess the sensitivity of results to the NDVI-based definition of native plants, we conducted analyses defining the NDVI of native plants at both 0.4 and 0.5.
+We measured existing green space in the City of Denver by the normalized difference vegetation index (NDVI) measured by the Landsat-8 satellite at a spatial resolution of 30 square meters. To define native-plants greenness, we measured the NDVI of several places in Denver (places listed [here](https://michaeldgarber.github.io/green-space-denver/ndvi-of-places-tracts.html#22_Load_places_of_interest))comprised of various levels of native and adapted plants during cloud-free summer (May, June, July, August) days over five years (2016-2021). Over these days in these areas, the [median NDVI](https://michaeldgarber.github.io/green-space-denver/ndvi-of-places-tracts.html#25_Simple_summary_(median)_of_NDVI_for_these_places) was as low as 0.3228098 at the Denver Botanic Gardens Green Roof, which is a mix of native and other plant types and exists in an urban environment and as high as 0.704 in City Park, which is 0% native and consists of more watered turf. A plot in Denver Botanic Gardens that is 100% native plants had a median NDVI of 0.49. 
+
+To acknowledge the lack of precision in these NDVI estimates and the range of NDVI levels that may correspond to a native-plants intervention, we defined NDVI using 0.49 (Denver Botanic Gardens 100% native plot) as the primary analysis and 0.322 (Denver Botanic Gardens Green Roof) as an alternative value.
 
 ## Stakeholder engagement to develop policy scenarios
 
@@ -491,7 +493,7 @@ hia_all_overall %>%
     format.args = list(big.mark = ","),
     #set max digits in order -
     #see https://stackoverflow.com/questions/24896923/kable-displays-different-number-of-digits-in-each-column
-    digits = c(0, 0, 1, 0, 0, 0, 0, 0))  
+    digits = c(0, 0, 2, 0, 0, 0, 0, 0))  
 ```
 The second table shows, for each scenario, the estimated number of deaths prevented and the number of deaths prevented per 100,000 people affected.
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
@@ -519,7 +521,7 @@ hia_all_overall %>%
       "Deaths prevented per 100k, 95% UL"
       ),
     format.args = list(big.mark = ","),
-    digits = c(0, 0, 1, 0, 0, 0, 0, 0,0)) #set max digits (after decimal, I guess)
+    digits = c(0, 0, 2, 0, 0, 0, 0, 0,0)) #set max digits (after decimal, I guess)
 ```
 
 # Next steps

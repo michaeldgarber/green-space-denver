@@ -87,6 +87,7 @@ den_metro_bg_geo %>%
 #from ~/scripts/0_load_denver_osm_parks_water.R
 setwd(here("data-processed"))
 load("den_jeff_co_green_space.RData")  
+den_jeff_co_green_space %>% mapview(zcol = "osm_value")
 #and this, which includes 10-foot buffers around rivers and streams 
 #if they are not originally represented as polygons. Load the unioned version
 load("den_osm_water_poly_both.RData")
