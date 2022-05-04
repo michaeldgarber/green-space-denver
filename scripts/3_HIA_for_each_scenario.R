@@ -339,8 +339,13 @@ map_over_native_ndvi_all_bg = function(ndvi_native_threshold_val){
 }
 
 # define NDVI of native plants-----------
-# note in meeting on May 2, 2022 we decided we would use
+# note in meeting on May 2, 2022 we decided we would use the lower value
+#corresponding to the NDVI of the denver botanic gardens green roof
+#and the upper value corresponding to the lager native plot in denver botanic gardens
+#visualized here:
 #https://michaeldgarber.github.io/green-space-denver/ndvi-of-places-tracts.html
+#pull out the actual values here
+
 # 0.3228 for a lower value
 # 0.4909 for denver botanic gardens
 

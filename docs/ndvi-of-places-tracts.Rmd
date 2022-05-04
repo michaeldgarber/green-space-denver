@@ -247,12 +247,18 @@ native_places_ndvi_day_nogeo %>%
 
 ## Simple summary (median) of NDVI for these places
 ```{r summariseoverall, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, results = 'asis'}
+setwd(here("data-processed"))
+load("places_native_nogeo.RData")
+load("native_places_ndvi_day_nogeo.RData")
 native_places_ndvi_day_nogeo %>% 
   filter(date_is_valid_all==1) %>% 
   group_by(place_type, place_name_fac) %>% 
-  summarise(ndvi_med = median(ndvi_med, na.rm=TRUE) ) %>% 
+  summarise(
+    ndvi_25th = quantile(ndvi_med, probs =c(0.25), na.rm=TRUE),
+    ndvi_med = median(ndvi_med, na.rm=TRUE),
+    ndvi_75th = quantile(ndvi_med, probs =c(0.75), na.rm=TRUE) ) %>% 
   ungroup() %>% 
-  kable()
+  kable(digits = 3)
 ```
 
 
@@ -334,7 +340,11 @@ load("den_metro_green_space_ndvi_day_wrangle_nogeo.RData")
 den_metro_green_space_ndvi_day_wrangle_nogeo %>% 
   filter(date_is_valid_all==1) %>% 
   group_by(osm_value) %>% 
-  summarise(ndvi_med = median(ndvi_med, na.rm=TRUE) ) %>% 
+  summarise(
+    ndvi_25th = quantile(ndvi_med, probs =c(0.25), na.rm=TRUE),
+    ndvi_med = median(ndvi_med, na.rm=TRUE),
+    ndvi_75th = quantile(ndvi_med, probs =c(0.75), na.rm=TRUE),
+    ) %>% 
   ungroup() %>% 
   knitr::kable()
 ```

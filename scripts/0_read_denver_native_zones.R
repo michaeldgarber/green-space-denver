@@ -245,7 +245,11 @@ places_native_geo = den_botanic_native_100 %>%
   st_make_valid() %>% #for measuring area. doesn't work for all
   mutate(
 #    area_m2 = as.numeric(st_area(geometry)), #see above
-    place_id = row_number()) 
+    place_id = row_number(),
+    #and elsewhere, for generality, we need this to also be
+    id_row_number = place_id #yes, same thing. oh well. backwards compatibility.
+    
+    ) 
 
 mapviewOptions(fgb = TRUE)
 places_native_geo %>% 
