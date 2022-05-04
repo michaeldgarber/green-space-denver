@@ -16,19 +16,20 @@ library(terra)
 library(mapview)
 library(sf)
 library(here)
+
+# Read in (load) raster and other data--------
 setwd(here("data-processed"))
 load("den_metro_tract_no_wtr_geo.RData")
+#from scripts/1b_wrangle_check_landsat_ndvi_denver.R
+load("lookup_date_is_valid_all.RData")
+lookup_date_is_valid_all
+load("den_metro_co_nogeo.RData")
 
-# Read in (load) data raster-------
-
-setwd(here("data-processed"))
-getwd()
 #read raster data. see for additional discussion on the nuances of reading and writing raster data
 #created and managed in these two scripts: 
 #~/1a_get_landsat_ndvi_denver.R
 #~/1b_wrangle_check_landsat_ndvi_denver.R
 ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
-
 # Compare raster bounding box with administrative boundaries
 load("den_metro_bbox_custom_sf.RData") #load bounding box
 names(den_metro_tract_no_wtr_geo)
@@ -39,11 +40,6 @@ mv_den_metro_tract_no_wtr_geo  = den_metro_tract_no_wtr_geo   %>%
 mv_den_metro_bbox_custom = den_metro_bbox_custom_sf %>% 
   mapview(col.regions = "coral", layer.name = "bbox")
 mv_den_metro_tract_no_wtr_geo + mv_den_metro_bbox_custom
-
-
-#from scripts/1b_wrangle_check_landsat_ndvi_denver.R
-load("lookup_date_is_valid_all.RData")
-lookup_date_is_valid_all
 
 
 # Summarize NDVI by census tract for 5 years
@@ -73,42 +69,9 @@ den_co_tract_geo_w_extract_id = den_co_tract_no_wtr_4326 %>%
   st_transform(4326) %>% 
   mutate(id_row_number=row_number()) 
 
-#note this step is super slow because it's 5 years of data
-den_co_tract_ndvi_long =ndvi_den_metro_terr_5_yr  %>% 
-  #this creates a data frame with a row id for each intersecting polygon, 
-  #presumably sorted by their order of appearance
-  #note have to convert to vector first
-  #must convert to the terra package's version of vector first
-  terra::extract(
-    weights = TRUE, #approximate proportion of cell covered by polygon
-    y =  terra::vect(den_co_tract_no_wtr_4326)) %>% 
-  as_tibble() %>% 
-  pivot_longer( #make long form
-    cols = contains("20"),#contains a year that begins with 20..flexible
-    names_to = "date_ndvi",
-    values_to = "ndvi"
-  ) %>% 
-  rename(
-    wt_area = weight, #the area weight, as a proportion
-    id_row_number = ID #make less ambiguous but general enough to shaer between this and parks
-  ) %>% 
-  mutate(
-    date_fixed_char = substr(date_ndvi, 1,8), #extract the date
-    date = lubridate::as_date(date_fixed_char)
-  ) %>% 
-  dplyr::select(id_row_number, ndvi, wt_area, date) 
-
-#don't save this. too huge.
-nrow(den_co_tract_ndvi_long)# wow. almost a billion observations!
-nrow(den_co_tract_ndvi_long)
-
-
-
 den_co_tract_geo_w_extract_id 
-load("den_metro_co_nogeo.RData")
 
 ##write a function to summarize the NDVI by day because it's used three times in this code
-
 extract_wrangle_ndvi_over_time= function(df1, df2){
   df1 %>% 
     #this creates a data frame with a row id for each intersecting polygon, 
@@ -129,10 +92,10 @@ extract_wrangle_ndvi_over_time= function(df1, df2){
       id_row_number = ID #make less ambiguous but general enough to shaer between this and parks
     ) %>% 
     mutate(
+      ndvi_wt_int = ndvi*wt_area, #for use in the weighted average
       date_fixed_char = substr(date_ndvi, 1,8), #extract the date
       date = lubridate::as_date(date_fixed_char)
     ) %>% 
-    dplyr::select(id_row_number, ndvi, wt_area, date) %>% 
     group_by(id_row_number, date) %>% 
     summarise(
       sum_of_wts = sum(wt_area, na.rm=TRUE),
@@ -291,7 +254,7 @@ den_metro_green_space_ndvi_day_wrangle_geo %>%
   )
 
 
-# Specific places of interest for nativity-------------
+# Places of interest for nativity-------------
 
 #Last ran 5/3/22
 
@@ -310,15 +273,16 @@ load("lookup_date_is_valid_all.RData")
 
 native_places_ndvi_day_geo = ndvi_den_metro_terr_5_yr %>% 
   extract_wrangle_ndvi_over_time( df2 = places_native_geo) %>% 
-  left_join(places_native_nogeo, by = "place_id") %>%    #link in the place names
+  left_join(places_native_geo, by = "id_row_number") %>%    #link in the place names
   left_join(lookup_date_is_valid_all, by = "date")  %>%  #link valid dates
   st_as_sf()  #we have geometry so might as well use it.
 
-native_places_ndvi_day_geo
+
+names(native_places_ndvi_day_geo)
 #save and make a no-geo version for speed
 setwd(here("data-processed"))
 save(native_places_ndvi_day_geo, file = "native_places_ndvi_day_geo.RData")
-
+names(native_places_ndvi_day_geo)
 native_places_ndvi_day_nogeo = native_places_ndvi_day_geo %>% 
   st_set_geometry(NULL) %>% 
   as_tibble()
@@ -331,9 +295,9 @@ pal_viridis_trunc=viridis::viridis_pal(end=.9) #trunc for truncated
 native_places_ndvi_day_geo %>% 
   filter(date == "2016-06-09") %>% 
   mapview(
-    layer.name = "NDVI, Median",
+    layer.name = "NDVI, Mean",
     col.regions = pal_viridis_trunc,
-    zcol = "ndvi_med" 
+    zcol = "ndvi_mean_wt" 
   )
 
 ## ggplot - line graph of NDVI over time with median, 25th, and 75th as ribbon by area-------

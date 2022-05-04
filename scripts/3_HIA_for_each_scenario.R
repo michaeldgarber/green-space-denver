@@ -346,11 +346,29 @@ map_over_native_ndvi_all_bg = function(ndvi_native_threshold_val){
 #https://michaeldgarber.github.io/green-space-denver/ndvi-of-places-tracts.html
 #pull out the actual values here
 
+load("native_places_ndvi_day_nogeo.RData")
+ndvi_native_places_summary = native_places_ndvi_day_nogeo %>% 
+  filter(date_is_valid_all==1) %>% 
+  group_by(place_type, place_name_fac) %>% 
+  summarise(
+    ndvi_mean = mean(ndvi_mean_wt, na.rm=TRUE), # mean of means
+    ndvi_25th = quantile(ndvi_med, probs =c(0.25), na.rm=TRUE), #percentile of medians
+    ndvi_med = median(ndvi_med, na.rm=TRUE), #percentile of medians
+    ndvi_75th = quantile(ndvi_med, probs =c(0.75), na.rm=TRUE) ) %>% #percentile of medians
+  ungroup() 
 # 0.3228 for a lower value
 # 0.4909 for denver botanic gardens
 
 #iterate over two values of ndvi for native plants
-ndvi_native_threshold_values = c(0.3228, 0.4909)
+ndvi_native_threshold_values = ndvi_native_places_summary %>% 
+  filter( 
+    place_name_fac == "Denver Botanic Gardens Green Roof" |
+      place_name_fac == "Denver Botanic Gardens, 100% Native") %>% 
+  dplyr::select(ndvi_mean) %>% 
+  pull()
+
+ndvi_native_threshold_values
+ 
 den_co_bg_ndvi_alt_all_nogeo = ndvi_native_threshold_values %>% 
   map_dfr(map_over_native_ndvi_all_bg)
 
@@ -2483,13 +2501,14 @@ hia_all_bg = hia_all %>%
   group_by(bg_fips, scenario, scenario_sub, ndvi_native_threshold) %>% 
   summarise_ungroup_hia() 
 hia_all_bg
+names(hia_all_bg)
 
 hia_all_bg %>% 
   filter(scenario == "all-bg") %>% 
   filter(scenario_sub == "100-pct") %>% 
   left_join(lookup_den_metro_bg_geo, by = "bg_fips") %>% 
   st_as_sf() %>% 
-  mapview(zcol = "deaths_prevented_per_100k")
+  mapview(zcol = "deaths_prevented_per_pop_100k")
   
 ### Summarize by age group
 table(hia_all$age_group_acs)

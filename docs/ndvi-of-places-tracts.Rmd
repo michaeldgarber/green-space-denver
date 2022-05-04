@@ -245,7 +245,7 @@ native_places_ndvi_day_nogeo %>%
 ```
 
 
-## Simple summary (median) of NDVI for these places
+## Summary (mean, median) of NDVI for these places
 ```{r summariseoverall, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, results = 'asis'}
 setwd(here("data-processed"))
 load("places_native_nogeo.RData")
@@ -254,11 +254,14 @@ native_places_ndvi_day_nogeo %>%
   filter(date_is_valid_all==1) %>% 
   group_by(place_type, place_name_fac) %>% 
   summarise(
-    ndvi_25th = quantile(ndvi_med, probs =c(0.25), na.rm=TRUE),
-    ndvi_med = median(ndvi_med, na.rm=TRUE),
-    ndvi_75th = quantile(ndvi_med, probs =c(0.75), na.rm=TRUE) ) %>% 
+    ndvi_mean = mean(ndvi_mean_wt, na.rm=TRUE), # mean of means
+    ndvi_25th = quantile(ndvi_med, probs =c(0.25), na.rm=TRUE), #percentile of medians
+    ndvi_med = median(ndvi_med, na.rm=TRUE), #percentile of medians
+    ndvi_75th = quantile(ndvi_med, probs =c(0.75), na.rm=TRUE) ) %>% #percentile of medians
   ungroup() %>% 
-  kable(digits = 3)
+  knitr::kable(
+        col.names = c("Place type", "Place name", "NDVI, mean", "NDVI, 25th-ile", "NDVI, 50th-ile", "NDVI, 75th-ile"),
+    digits=2)
 ```
 
 
@@ -307,7 +310,7 @@ Like with census tracts, we removed bodies of water from these green spaces befo
 Here is the NDVI on June 10, 2021:
 ```{r ndviparks2021-06-10, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
 setwd(here("data-processed"))
-load("den_metro_green_space_ndvi_day_wrangle_geo.RData")
+load("den_metro_green_space_ndvi_day_geo.RData")
 load("den_jeff_co_geo.RData")
 pal_viridis_trunc=viridis::viridis_pal(end=.9) #trunc for truncated
 mv_den_jeff_co_geo = den_jeff_co_geo %>%  
@@ -317,7 +320,7 @@ mv_den_jeff_co_geo = den_jeff_co_geo %>%
     col.regions = c("red", "orange"),
     lwd=2,
     zcol = "county_name_short", alpha.regions = 0)
-mv_den_metro_green_space_ndvi_day_geo = den_metro_green_space_ndvi_day_wrangle_geo %>%
+mv_den_metro_green_space_ndvi_day_geo = den_metro_green_space_ndvi_day_geo %>%
   dplyr::select( #limit some of the variables before mapview
     starts_with("osm"),
     starts_with("ndvi"),
@@ -336,8 +339,8 @@ Most parks are in the city, and most protected areas are in the mountains. Summa
 ```{r summarise_by_park_type, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, results = 'asis'}
 setwd(here("data-processed"))
 library(knitr)
-load("den_metro_green_space_ndvi_day_wrangle_nogeo.RData")
-den_metro_green_space_ndvi_day_wrangle_nogeo %>% 
+load("den_metro_green_space_ndvi_day_nogeo.RData")
+den_metro_green_space_ndvi_day_nogeo %>% 
   filter(date_is_valid_all==1) %>% 
   group_by(osm_value) %>% 
   summarise(
