@@ -46,6 +46,7 @@ We aim to estimate the number of premature deaths that would be prevented by the
 ## Measurement of existing green space and definition of native-plants
 
 We measured existing green space in the City of Denver by the normalized difference vegetation index (NDVI) measured by the Landsat-8 satellite at a spatial resolution of 30 square meters. To define native-plants greenness, we measured the NDVI of several places in Denver (places described in more detail [here](https://michaeldgarber.github.io/green-space-denver/ndvi-of-places-tracts.html#22_Load_places_of_interest)) comprised of various levels of native and adapted plants during cloud-free summer (May, June, July, August) days over five years (2016-2021). Over these days in these areas, the mean NDVI was as low as 0.35 at the Denver Botanic Gardens Green Roof and as high as 0.67 in City Park, which is 0% native and consists of more watered turf. A plot in Denver Botanic Gardens that is 100% native plants had a mean NDVI of 0.54 over these days.
+
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 load("places_native_geo.RData")
@@ -66,7 +67,6 @@ native_places_ndvi_day_nogeo %>%
 
 ```
 
-
 To acknowledge the lack of precision in these NDVI estimates and the range of NDVI levels that may correspond to a native-plants intervention, we defined NDVI using the mean of the Denver Botanic Gardens as as the primary analysis and that of the Denver Botanic Gardens Green Roof as an alternative value.
 
 ## Stakeholder engagement to develop policy scenarios
@@ -75,7 +75,7 @@ We conducted ten interviews with local stakeholders who are actively engaged in 
 
 1.  **Homogenous native-plants greening:** Under the first set of scenarios, we consider adding native plants homogenously across all block groups, without respect to the specific location. Specifically, we consider two scenarios:
 
-    -   Set 30% of the block group's area to be as green as native plants, corresponding with a goal set by some scientists and advocatess to protect 30% of lands and oceans by 2030[\@dinerstein2019];
+    -   Set 30% of the block group's area to be as green as native plants, corresponding with a goal set by some scientists and advocates to protect 30% of lands and oceans by 2030[@dinerstein2019a];
 
     -   Set 20% of the block group's area to be as green as native plants, a level that, according to some of our interviewees is sufficient to support pollinator health.
 
@@ -170,10 +170,11 @@ mv_both_thresholds@map %>%
 ```
 
 ### Scenario 2: add native plants prioritizing census block groups with most health-equity need
+
 Under this set of scenarios, we assumed we had a "budget" of greening of either 30% or 20% of Denver's area, and we applied that budget to those with most need from a health-equity standpoint based on the CDPHE and DDPHE definitions, described above. As the below maps show, the two health-equity definitions from the State and from the City overlap considerably.
 
-
 #### 30% of area prioritizing block groups of greatest need according to two health-equity definitions
+
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 library(viridis)
 setwd(here("data-processed"))
@@ -200,6 +201,7 @@ mv_equity_thirty_both@map %>%
 ```
 
 #### 20% of area prioritizing block groups of greatest need according to two health-equity definitions
+
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 library(viridis)
 setwd(here("data-processed"))
@@ -223,12 +225,11 @@ mv_equity_bg_cdphe_first_twenty = den_co_bg_equity_sorted %>%
 mv_equity_twenty_both = mv_equity_nbhd_denver_first_twenty + mv_equity_bg_cdphe_first_twenty
 mv_equity_twenty_both@map %>% 
   addFullscreenControl()
-
 ```
 
 ### Scenario 3: add native-plants buffers to riparian areas
 
-We measured NDVI in a 200-foot buffer, a 100-foot buffer, and a 50-foot buffer around all bodies of water in Denver. We downloaded bodies of water from OpenStreetMap (code [here](https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_load_denver_osm_parks_water.R)). We defined residential exposure to these riparian areas as those individuals living within a 500-meter buffer, following research on green-space and health that have defined green-space exposure based on residential proximity. [@rojas-rueda2019] We estimated the number of people in this buffer by multiplying the population density of the census block group by the intersecting area.
+We measured NDVI in a 200-foot buffer, a 100-foot buffer, and a 50-foot buffer around all bodies of water in Denver. We downloaded bodies of water from OpenStreetMap (code [here](https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_load_denver_osm_parks_water.R)). We defined residential exposure to these riparian areas as those individuals living within a 500-meter buffer, following research on green-space and health that have defined green-space exposure based on residential proximity.[@rojas-rueda2019] We estimated the number of people in this buffer by multiplying the population density of the census block group by the intersecting area.
 
 The below map depicts mean NDVI in the portions of census block groups that intersect a 200-foot buffer as well as those pieces that intersect the part of the 500 m buffer that would not be intervened upon, i.e., the part between the 200-foot buffer and the edge of the 500 m buffer.
 
@@ -507,7 +508,9 @@ hia_all_overall %>%
     #see https://stackoverflow.com/questions/24896923/kable-displays-different-number-of-digits-in-each-column
     digits = c(0, 0, 2, 0, 0, 0, 0, 0))  
 ```
+
 The second table shows, for each scenario, the estimated number of deaths prevented and the number of deaths prevented per 100,000 people affected.
+
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 load("hia_all_overall.RData")
@@ -537,11 +540,11 @@ hia_all_overall %>%
 ```
 
 # Next steps
+
 As of April 27, 2022:
 
 -   Add green streets HIA
 
 -   Add economic-impact attributable to health
-
 
 # References
