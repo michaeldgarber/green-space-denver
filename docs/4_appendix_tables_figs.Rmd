@@ -1,0 +1,96 @@
+---
+title: "NATURGREEN results tables-figures-supplement"
+author: "Michael D Garber"
+date: '2022-05-10'
+#always_allow_html: true
+#note word doesn't seem to render unless I render the whole site ()rmarkdown::render_site(encoding = 'UTF-8')
+output:
+  bookdown::html_document2:
+    toc: true
+    toc_float: true
+    toc_depth: 4
+    include: 
+      after_body: footer.html
+  bookdown::word_document2:
+    toc: true 
+---
+
+Filename: 4_appendix_tables_figs
+
+The purpose of this script is to output tables and  figures that can be pasted into the Word Doc of the manuscript.
+I'm separating this from the supplement because I will render the supplement to html until Word or PDF is needed.
+
+
+Divide the paper into those used for the main text and those used for the supplement.
+
+# Native-plants polygons
+
+## Map of native-plants polygons
+```{r mapviewplacesnative, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+#I need a version that is just points because the polygons are hard to see on the map
+library(here)
+library(tidyverse)
+library(sf)
+library(terra)
+library(raster) 
+library(mapview)
+library(knitr) #to make sure kable works
+library(viridis)
+library(scales)
+library(lubridate) #for ggplot
+setwd(here("data-processed"))
+load("places_native_geo.RData")
+load("places_native_nogeo.RData")
+load("native_places_ndvi_day_nogeo.RData")
+sf::sf_use_s2(FALSE) 
+places_native_geo_points = places_native_geo %>% 
+  st_make_valid() %>% 
+  st_centroid()
+
+mv_places_native_polygons = places_native_geo %>% 
+  mapview(zcol = "place_type",
+          layer.name = "Place category (as polygons)")
+
+mv_places_native_points = places_native_geo_points %>% 
+  mapview(zcol = "place_type",
+          layer.name = "Place category (as points)")
+
+library(leaflet)
+library(leaflet.extras)
+mv_places_polygons_points =mv_places_native_points+
+  mv_places_native_polygons
+
+mv_places_polygons_points@map %>% 
+  addFullscreenControl()
+
+```
+
+\newpage
+
+## NDVI of native-plants polygons
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+library(here)
+library(tidyverse)
+library(rmarkdown)
+library(sf)
+setwd(here("data-processed"))
+load("places_native_geo.RData")
+load("places_native_nogeo.RData")
+load("native_places_ndvi_day_nogeo.RData")
+native_places_ndvi_day_nogeo %>% 
+  filter(date_is_valid_all==1) %>% 
+  group_by(place_type, place_name_fac) %>% 
+  summarise(
+    ndvi_mean = mean(ndvi_mean_wt, na.rm=TRUE), # mean of means
+    ndvi_25th = quantile(ndvi_med, probs =c(0.25), na.rm=TRUE), #percentile of medians
+    ndvi_med = median(ndvi_med, na.rm=TRUE), #percentile of medians
+    ndvi_75th = quantile(ndvi_med, probs =c(0.75), na.rm=TRUE) ) %>% #percentile of medians
+  ungroup() %>% 
+  as_tibble() %>% 
+  knitr::kable(
+    booktabs = TRUE,
+    caption = "NDVI of selected places of varying levels of plant nativity on selected cloud-free summer (May, June, July, August) days over five years (2016-2021)",
+        col.names = c("Place type", "Place name", "NDVI, mean", "NDVI, 25th-ile", "NDVI, 50th-ile", "NDVI, 75th-ile"),
+    digits=2)
+```
+

@@ -2,12 +2,7 @@
 title: "Preliminary health-impact assessment results"
 author: "Michael D Garber"
 date: "Revised May 3, 2022"
-output: 
-  html_document:
-    number_sections: true
-    toc: true  
-    toc_float: true
-    toc_depth: 4
+output: bookdown::html_document2 #the rest will get picked up from the _site.yml
 bibliography: references.bib
 csl: american-medical-association.csl
 link-citations: true

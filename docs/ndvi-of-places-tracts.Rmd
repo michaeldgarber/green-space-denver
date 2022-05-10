@@ -1,12 +1,7 @@
 ---
 title: "Preliminary NDVI analyses, Denver area"
 author: "Michael D Garber"
-date: "Revised May 3, 2022"
-output: 
-  html_document: 
-    toc: true #include the table of contents at the sub-page level instead of yml
-    toc_float: true
-    number_sections: yes
+output: bookdown::html_document2 #the rest will get picked up from the _site.yml
 ---
 
 This document presents preliminary analyses characterizing the NDVI of certain places and census tracts throughout the Denver area. 
@@ -189,7 +184,7 @@ mv_places_polygons_points@map %>%
 #This works, but I don't need to run every time.
 #setwd(here("results"))
 #getwd()
-#mapshot(mv_places_polygons_points, file = "mv_places_polygons_points.png")
+mapshot(mv_places_polygons_points, file = "mv_places_polygons_points.png")
 
 ```
 
@@ -288,7 +283,7 @@ native_places_ndvi_day_nogeo %>%
 ```
 
 
-## Summary (mean, median) of NDVI for these places
+## Summary of NDVI for these places
 ```{r summariseoverall, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, results = 'asis'}
 setwd(here("data-processed"))
 load("places_native_nogeo.RData")
@@ -302,7 +297,9 @@ native_places_ndvi_day_nogeo %>%
     ndvi_med = median(ndvi_med, na.rm=TRUE), #percentile of medians
     ndvi_75th = quantile(ndvi_med, probs =c(0.75), na.rm=TRUE) ) %>% #percentile of medians
   ungroup() %>% 
+  as_tibble() %>% 
   knitr::kable(
+          booktabs = TRUE,
         col.names = c("Place type", "Place name", "NDVI, mean", "NDVI, 25th-ile", "NDVI, 50th-ile", "NDVI, 75th-ile"),
     digits=2)
 ```

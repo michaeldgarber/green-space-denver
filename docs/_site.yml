@@ -8,7 +8,9 @@ navbar:
     - text: "green-space-denver"
       href: index.html
 output:
-  html_document: 
-    highlight: textmate #omit table of contents here; include elsewhere
-    include:
+  bookdown::html_document2:
+    toc: true 
+    toc_float: true
+    toc_depth: 4
+    include: 
       after_body: footer.html

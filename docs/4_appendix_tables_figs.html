@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Michael D Garber" />
+
+<meta name="date" content="2022-05-10" />
+
+<title>NATURGREEN results tables-figures-supplement</title>
+
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<script src="site_libs/htmlwidgets-1.5.4/htmlwidgets.js"></script>
+<link href="site_libs/leaflet-1.3.1/leaflet.css" rel="stylesheet" />
+<script src="site_libs/leaflet-1.3.1/leaflet.js"></script>
+<link href="site_libs/leafletfix-1.0.0/leafletfix.css" rel="stylesheet" />
+<script src="site_libs/proj4-2.6.2/proj4.min.js"></script>
+<script src="site_libs/Proj4Leaflet-1.0.1/proj4leaflet.js"></script>
+<link href="site_libs/rstudio_leaflet-1.3.1/rstudio_leaflet.css" rel="stylesheet" />
+<script src="site_libs/leaflet-binding-2.1.1/leaflet.js"></script>
+<script src="site_libs/leaflet-providers-1.9.0/leaflet-providers_1.9.0.js"></script>
+<script src="site_libs/leaflet-providers-plugin-2.1.1/leaflet-providers-plugin.js"></script>
+<link href="site_libs/HomeButton-0.0.1/home-button.css" rel="stylesheet" />
+<script src="site_libs/HomeButton-0.0.1/home-button.js"></script>
+<script src="site_libs/HomeButton-0.0.1/easy-button-src.min.js"></script>
+<script src="site_libs/clipboard-0.0.1/setClipboardText.js"></script>
+<link href="site_libs/mapviewCSS-0.0.1/mapview-popup.css" rel="stylesheet" />
+<link href="site_libs/mapviewCSS-0.0.1/mapview.css" rel="stylesheet" />
+<link href="site_libs/lfx-fullscreen-1.0.2/lfx-fullscreen-prod.css" rel="stylesheet" />
+<script src="site_libs/lfx-fullscreen-1.0.2/lfx-fullscreen-prod.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html"></a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="https://michaeldgarber.github.io/">
+    <span class="fa fa-home"></span>
+     
+    MDG
+  </a>
+</li>
+<li>
+  <a href="index.html">green-space-denver</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">NATURGREEN results tables-figures-supplement</h1>
+<h4 class="author">Michael D Garber</h4>
+<h4 class="date">2022-05-10</h4>
+
+</div>
+
+
+<p>Filename: 4_appendix_tables_figs</p>
+<p>The purpose of this script is to output tables and figures that can be pasted into the Word Doc of the manuscript.
+I’m separating this from the supplement because I will render the supplement to html until Word or PDF is needed.</p>
+<p>Divide the paper into those used for the main text and those used for the supplement.</p>
+<div id="native-plants-polygons" class="section level1" number="1">
+<h1><span class="header-section-number">1</span> Native-plants polygons</h1>
+<div id="map-of-native-plants-polygons" class="section level2" number="1.1">
+<h2><span class="header-section-number">1.1</span> Map of native-plants polygons</h2>
+<div id="htmlwidget-6b5695b6d287aca24f0d" style="width:672px;height:480px;" class="leaflet html-widget"></div>
+<script type="application/json" data-for="htmlwidget-6b5695b6d287aca24f0d">{"x":{"options":{"minZoom":1,"maxZoom":52,"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}},"preferCanvas":false,"bounceAtZoomLimits":false,"maxBounds":[[[-90,-370]],[[90,370]]],"fullscreenControl":{"position":"topleft","pseudoFullscreen":false}},"calls":[{"method":"addProviderTiles","args":["CartoDB.Positron","CartoDB.Positron","CartoDB.Positron",{"errorTileUrl":"","noWrap":false,"detectRetina":false,"pane":"tilePane"}]},{"method":"addProviderTiles","args":["CartoDB.DarkMatter","CartoDB.DarkMatter","CartoDB.DarkMatter",{"errorTileUrl":"","noWrap":false,"detectRetina":false,"pane":"tilePane"}]},{"method":"addProviderTiles","args":["OpenStreetMap","OpenStreetMap","OpenStreetMap",{"errorTileUrl":"","noWrap":false,"detectRetina":false,"pane":"tilePane"}]},{"method":"addProviderTiles","args":["Esri.WorldImagery","Esri.WorldImagery","Esri.WorldImagery",{"errorTileUrl":"","noWrap":false,"detectRetina":false,"pane":"tilePane"}]},{"method":"addProviderTiles","args":["OpenTopoMap","OpenTopoMap","OpenTopoMap",{"errorTileUrl":"","noWrap":false,"detectRetina":false,"pane":"tilePane"}]},{"method":"createMapPane","args":["point",440]},{"method":"addCircleMarkers","args":[[39.7319203839694,39.6553789143593,39.6980559073238,39.5938792434185,39.5894783735332,39.5936195653522,39.5523281422766,39.7460870743446,39.5493338435949,39.5508812597306,39.7507654528795,39.7323051164484,39.6825503498458],[-104.963574298969,-104.733406286708,-105.173330427855,-105.150924788271,-105.128573339707,-105.107213006066,-105.101925336292,-104.956086323943,-105.097216096218,-105.099374273637,-104.957055268349,-104.959426713523,-105.104271114471],6,null,"Place category (as points)",{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}},"pane":"point","stroke":true,"color":"#333333","weight":1,"opacity":[0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9],"fill":true,"fillColor":["#FDE333","#FDE333","#FDE333","#FDE333","#FDE333","#FDE333","#FDE333","#FDE333","#4B0055","#4B0055","#4B0055","#4B0055","#4B0055"],"fillOpacity":[0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6]},null,null,["<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>1&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td>100&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>Denver Botanic Gardens, 100% Native&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>Denver Botanic G. Native Zone&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>native spectrum&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>mainly native prairie vegetation&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>Denver Botanic Gardens, 100% Native&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POINT&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td> 1&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td> 1&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>2&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td>100&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>Plains Conservation Center, 100% Native&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>Plains Cons. Center&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>native spectrum&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>Plains Conservation Center, 100% Native&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POINT&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td> 2&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td> 2&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>3&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td> 85&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>Green Mountain Park, 85% Native&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>Green Mountain&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>native spectrum&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>Green Mountain Park, 85% Native&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POINT&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td> 3&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td> 3&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>4&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td> 75&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>Hogback along C-470, 75% Native&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>Hogback along C-470&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>native spectrum&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>Hogback along C-470, 75% Native&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POINT&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td> 4&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td> 4&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>5&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td> 50&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>Suburban Open Space 1, Chatfield H.S., 50% Native&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>Suburban Open Space 1&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>native spectrum&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>Suburban Open Space 1, Chatfield H.S., 50% Native&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POINT&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td> 5&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td> 5&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>6&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td> 30&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>Suburban Open Space 2, Columbine Hills Church, 30% Native&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>Suburban Open Space 2&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>native spectrum&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>Suburban Open Space 2, Columbine Hills Church, 30% Native&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POINT&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td> 6&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td> 6&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>7&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td> 10&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>Denver Botanic Gardens at Chatfield, 10% Native&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>Denver Botanic G., Chatfield&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>native spectrum&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>Denver Botanic Gardens at Chatfield, 10% Native&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POINT&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td> 7&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td> 7&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>8&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td>  0&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>City Park, 0% Native&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>City Park&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>native spectrum&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>City Park, 0% Native&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POINT&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td> 8&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td> 8&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>9&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>Chatfield Meadow Restoration&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>Chatfield Meadow&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>high diversity&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>Chatfield Meadow Restoration&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POINT&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td> 9&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td> 9&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>10&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>Chatfield Prairie Garden&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>Chatfield Prairie Garden&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>high diversity&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>Chatfield Prairie Garden&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POINT&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td>10&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td>10&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>11&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>City Park Greenhouses&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>City Park Greenhouses&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>high diversity&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>City Park Greenhouses&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POINT&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td>11&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td>11&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>12&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>Denver Botanic Gardens Green Roof&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>Denver Botanic G. Green Roof&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>high diversity&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>Denver Botanic Gardens Green Roof&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POINT&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td>12&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td>12&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>13&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>Kenderick Lake Xeriscape Garden&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>Kenderick Lake Xeriscape Garden&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>high diversity&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>Kenderick Lake Xeriscape Garden&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POINT&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td>13&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td>13&emsp;<\/td><\/tr><\/table><\/div>"],{"maxWidth":800,"minWidth":50,"autoPan":true,"keepInView":false,"closeButton":true,"closeOnClick":true,"className":""},["native spectrum","native spectrum","native spectrum","native spectrum","native spectrum","native spectrum","native spectrum","native spectrum","high diversity","high diversity","high diversity","high diversity","high diversity"],{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},null]},{"method":"addScaleBar","args":[{"maxWidth":100,"metric":true,"imperial":true,"updateWhenIdle":true,"position":"bottomleft"}]},{"method":"addHomeButton","args":[-105.173330427855,39.5493338435949,-104.733406286708,39.7507654528795,true,"Place category (as points)","Zoom to Place category (as points)","<strong> Place category (as points) <\/strong>","bottomright"]},{"method":"addLegend","args":[{"colors":["#4B0055","#FDE333"],"labels":["high diversity","native spectrum"],"na_color":null,"na_label":"NA","opacity":1,"position":"topright","type":"factor","title":"Place category (as points)","extra":null,"layerId":null,"className":"info legend","group":"Place category (as points)"}]},{"method":"createMapPane","args":["polygon",420]},{"method":"addPolygons","args":[[[[{"lng":[-104.9634854,-104.9637226,-104.9638106,-104.963821,-104.963694,-104.9635743,-104.9632864,-104.9632434,-104.9633941,-104.9634328,-104.9634854],"lat":[39.732231,39.7322296,39.7321583,39.7319809,39.731803,39.7316062,39.731491,39.7315337,39.7315918,39.7321314,39.732231]}]],[[{"lng":[-104.7323187,-104.732342,-104.7323274,-104.7323001,-104.732244,-104.7321377,-104.7320635,-104.731999,-104.7319781,-104.7319293,-104.7319144,-104.7318699,-104.7318581,-104.7318359,-104.7318188,-104.7318065,-104.7317863,-104.7317785,-104.7317501,-104.7317405,-104.7317418,-104.731741,-104.7317622,-104.7317975,-104.7318556,-104.7319165,-104.731932,-104.7319673,-104.7319839,-104.7319807,-104.7319738,-104.7321172,-104.7321517,-104.7322223,-104.7322809,-104.7323277,-104.732385,-104.7324318,-104.7324651,-104.7325916,-104.7327424,-104.7328232,-104.7329163,-104.7330098,-104.7330686,-104.7331393,-104.7331869,-104.7332457,-104.7333397,-104.7333879,-104.7334366,-104.7335346,-104.7335845,-104.7336478,-104.7336988,-104.7337253,-104.7337622,-104.7338587,-104.7338949,-104.7339796,-104.7340273,-104.7340983,-104.7341575,-104.7341941,-104.7342555,-104.7343526,-104.7343767,-104.7344125,-104.7344603,-104.7345207,-104.7345811,-104.7346416,-104.7347018,-104.7347495,-104.7347853,-104.7348204,-104.7348434,-104.7348655,-104.7348762,-104.7348753,-104.7348746,-104.734874,-104.7348736,-104.7348837,-104.734883,-104.7348824,-104.7348816,-104.7348803,-104.7348791,-104.7348783,-104.7348776,-104.7348773,-104.7348981,-104.7349193,-104.7349185,-104.7349288,-104.7349264,-104.7349244,-104.7349233,-104.7349114,-104.7348997,-104.7348768,-104.7348439,-104.7348113,-104.7347893,-104.7347783,-104.7347663,-104.7347657,-104.7347653,-104.7347545,-104.7347541,-104.7347128,-104.7346098,-104.7344865,-104.7344351,-104.7343837,-104.7343221,-104.7342604,-104.7342192,-104.7340442,-104.7338597,-104.7336965,-104.7335537,-104.7334619,-104.73339,-104.7333078,-104.7332556,-104.7332138,-104.7331711,-104.7330863,-104.7330322,-104.732979,-104.7328507,-104.7327865,-104.7327014,-104.7326586,-104.7324901,-104.7324163,-104.7323617,-104.7323187],"lat":[39.6542221,39.6542059,39.6541656,39.6541415,39.6541659,39.6541746,39.6541827,39.6541912,39.6541985,39.654239,39.6542634,39.6543948,39.6544613,39.6545281,39.6546215,39.6546899,39.6547417,39.6547851,39.6548815,39.6549346,39.6549879,39.6551217,39.65525,39.655378,39.6555751,39.6557671,39.6558156,39.6560342,39.6562285,39.656323,39.6563655,39.6564478,39.6564581,39.6564678,39.6564777,39.6564876,39.6565081,39.6565182,39.656531,39.6565825,39.6566349,39.6566675,39.6567001,39.6567329,39.6567541,39.6567762,39.6567873,39.6568094,39.6568535,39.6568634,39.6568634,39.6568524,39.6568306,39.656786,39.6567415,39.6566972,39.6566857,39.6566849,39.6566845,39.6566823,39.656702,39.6567457,39.6567894,39.6567782,39.656734,39.6567003,39.6567003,39.6567224,39.6567665,39.6567766,39.6567757,39.6567534,39.6567093,39.6566541,39.6566216,39.6565464,39.6564726,39.6563374,39.6562643,39.6562021,39.6561506,39.6561097,39.6560791,39.6559785,39.6559292,39.6558801,39.6558226,39.6557338,39.6556562,39.6555985,39.6555517,39.6555237,39.6554117,39.6553465,39.6553006,39.655255,39.6551111,39.6549952,39.6549335,39.6548722,39.6548115,39.6547255,39.6546659,39.6546152,39.6545396,39.6544896,39.6543167,39.6542436,39.6541952,39.6541392,39.6540994,39.6540679,39.65406,39.654052,39.6540519,39.6540519,39.6540518,39.6540517,39.6540521,39.6540451,39.654037,39.654021,39.6540055,39.6539978,39.6539979,39.6540053,39.6540133,39.6540212,39.6540371,39.6540609,39.6540848,39.6541006,39.6541403,39.6541564,39.6541726,39.6541735,39.6541897,39.6541977,39.654214,39.6542221]},{"lng":[-104.7322498,-104.7322732,-104.7323187,-104.732307,-104.732272,-104.7322707,-104.7322498],"lat":[39.6542628,39.6542465,39.6542221,39.6542302,39.6542546,39.6542628,39.6542628]}]],[[{"lng":[-105.1521206,-105.1519271,-105.1518825,-105.1518465,-105.151929,-105.1521216,-105.1521961,-105.1521694,-105.1522531,-105.1527267,-105.1532806,-105.1537286,-105.1542987,-105.1548849,-105.1555979,-105.1561686,-105.1565058,-105.1569451,-105.1572865,-105.157858,-105.1582089,-105.158505,-105.158844,-105.159062,-105.1593832,-105.159602,-105.1599204,-105.1601432,-105.1603838,-105.1604853,-105.1605942,-105.1611983,-105.1616587,-105.1621233,-105.1628284,-105.1632994,-105.1637775,-105.1643718,-105.1650795,-105.1653094,-105.1658015,-105.166283,-105.1666456,-105.1671332,-105.1677468,-105.1683666,-105.1689855,-105.1694807,-105.1699756,-105.1707198,-105.1717155,-105.1722162,-105.1728401,-105.1732187,-105.1735985,-105.1744737,-105.1755923,-105.1763283,-105.1771646,-105.1776385,-105.1784148,-105.1788097,-105.1790741,-105.179707,-105.1804574,-105.1810699,-105.1819212,-105.1824214,-105.1830429,-105.1836888,-105.1841868,-105.1848366,-105.1854888,-105.1858398,-105.1860463,-105.1861266,-105.1864474,-105.1867688,-105.1872718,-105.1878907,-105.1885098,-105.1889998,-105.1896189,-105.1900777,-105.190481,-105.1909064,-105.1909681,-105.1909212,-105.1910115,-105.1910729,-105.1910141,-105.1909265,-105.1909151,-105.1907193,-105.1906749,-105.1905015,-105.1904053,-105.1900929,-105.1899485,-105.1896756,-105.1894136,-105.1892553,-105.1892231,-105.1894295,-105.1898759,-105.1904311,-105.190644,-105.1908491,-105.1908132,-105.1905277,-105.1900146,-105.1896457,-105.1889018,-105.1883848,-105.1876214,-105.1869806,-105.1861154,-105.1853868,-105.1842886,-105.1834348,-105.1825993,-105.1820961,-105.1815044,-105.1806266,-105.1797844,-105.1793249,-105.1788698,-105.1784133,-105.1778472,-105.1770628,-105.1763864,-105.1750574,-105.1737388,-105.1720999,-105.1705777,-105.1679736,-105.166562,-105.165258,-105.1642793,-105.1639502,-105.1629571,-105.1627327,-105.1625059,-105.1621657,-105.1620442,-105.1618133,-105.161693,-105.1614585,-105.1612232,-105.1610997,-105.1608722,-105.1605458,-105.1600028,-105.1596714,-105.1594284,-105.1590698,-105.1589406,-105.1587,-105.1579907,-105.1571656,-105.1568146,-105.1563613,-105.1559085,-105.1550756,-105.1539831,-105.1530109,-105.1525308,-105.1521206],"lat":[39.6935664,39.6939498,39.694401,39.6947637,39.6951257,39.6955785,39.6960355,39.6963121,39.6966799,39.6968458,39.697126,39.6973134,39.6974972,39.6977541,39.6980872,39.6986192,39.6988935,39.6994473,39.6997205,39.7002622,39.7006997,39.701133,39.7015073,39.7018886,39.702476,39.7028633,39.7035581,39.7041245,39.7044778,39.7048743,39.7050776,39.7052475,39.7055671,39.7059726,39.7065715,39.7068862,39.7071833,39.7076898,39.7082557,39.7086069,39.708967,39.7093982,39.7096322,39.7098669,39.7100994,39.7100845,39.7101699,39.7101512,39.7104588,39.7107691,39.7111918,39.7115083,39.7117062,39.7120231,39.7123409,39.7125307,39.7125035,39.712354,39.7120301,39.7118578,39.7122487,39.7125961,39.7128286,39.7129498,39.7129547,39.7129241,39.7128712,39.712968,39.7130571,39.7131996,39.7131978,39.713434,39.7136711,39.7135328,39.7130853,39.7126389,39.7120915,39.7116426,39.7114751,39.7112943,39.7111134,39.7109247,39.7107438,39.7103321,39.7094906,39.7087772,39.7082547,39.7078406,39.7074457,39.7067518,39.7061524,39.7052595,39.7045377,39.7037545,39.70327,39.7027786,39.7018999,39.7013085,39.7011113,39.7007311,39.7003608,39.6997185,39.6992583,39.6988023,39.6983518,39.6977243,39.6973644,39.6969143,39.6965473,39.6960858,39.6955431,39.6952745,39.6947338,39.6941913,39.6932175,39.6924211,39.6915463,39.6908533,39.6897321,39.6888743,39.6881934,39.687679,39.6870105,39.6865221,39.686096,39.6857657,39.6855186,39.6851903,39.6847818,39.6842939,39.6838075,39.6834055,39.6831665,39.6830094,39.6830123,39.6830171,39.683019,39.6830208,39.6830221,39.6830222,39.6831029,39.6832638,39.6835058,39.6838293,39.6842346,39.6845602,39.6848864,39.6852958,39.6857066,39.6861182,39.6865291,39.6869367,39.6875878,39.6879969,39.6883338,39.6885919,39.6888468,39.6890203,39.6892879,39.6897227,39.6900621,39.6905633,39.6910645,39.6917559,39.6923837,39.6928399,39.6929382,39.6935664]}]],[[{"lng":[-105.1486077,-105.1486581,-105.1486906,-105.1487231,-105.148745,-105.1487856,-105.1488215,-105.1488324,-105.1488148,-105.1487899,-105.1488334,-105.1488336,-105.1488607,-105.148876,-105.1488875,-105.1488949,-105.1489282,-105.1489572,-105.1490078,-105.1490367,-105.1490765,-105.1491164,-105.1491569,-105.1491753,-105.1492047,-105.1492483,-105.1492557,-105.1493748,-105.149493,-105.1496434,-105.1497184,-105.1497935,-105.1499588,-105.1500485,-105.1501131,-105.150149,-105.1502312,-105.1502635,-105.1503243,-105.1503536,-105.1503755,-105.1503975,-105.150402,-105.1504203,-105.1503426,-105.1503609,-105.1504357,-105.150468,-105.1505039,-105.1505288,-105.1505573,-105.1506144,-105.1506429,-105.1506963,-105.1507431,-105.1507577,-105.1507868,-105.1508014,-105.1508271,-105.1508454,-105.1508812,-105.1509455,-105.1509739,-105.1510518,-105.1511012,-105.1511828,-105.1512112,-105.1513177,-105.1513498,-105.1514098,-105.1514341,-105.1514936,-105.1515299,-105.1515447,-105.1515756,-105.1516444,-105.1516549,-105.1517106,-105.151759,-105.1518207,-105.1519094,-105.1519978,-105.1521066,-105.1522337,-105.1522579,-105.1523476,-105.1524094,-105.1525046,-105.1526214,-105.1527545,-105.1528912,-105.1529578,-105.1530466,-105.1531196,-105.1531761,-105.1532139,-105.1531692,-105.1531222,-105.1530774,-105.1530586,-105.1530398,-105.1529896,-105.1529583,-105.1529287,-105.1529006,-105.1528861,-105.1528552,-105.1528168,-105.1527896,-105.1527435,-105.1526555,-105.1526068,-105.1525958,-105.1525834,-105.152575,-105.1525315,-105.1525224,-105.1524756,-105.1524578,-105.1524359,-105.1523941,-105.1523834,-105.1523383,-105.1522801,-105.1522658,-105.152233,-105.1521984,-105.1521875,-105.1521529,-105.1521111,-105.1520713,-105.1520458,-105.152024,-105.1520058,-105.1519875,-105.151972,-105.151954,-105.151936,-105.1518869,-105.1518378,-105.1517445,-105.1517191,-105.1516966,-105.1516749,-105.1516865,-105.1516555,-105.151634,-105.1516159,-105.1515834,-105.151569,-105.1515257,-105.1514832,-105.1514411,-105.151386,-105.1513619,-105.1513027,-105.1512714,-105.1512368,-105.151186,-105.1511516,-105.1511303,-105.1510959,-105.1510706,-105.1510562,-105.1510346,-105.1510058,-105.150952,-105.1509173,-105.1508825,-105.1508071,-105.1507485,-105.150704,-105.1505979,-105.1505397,-105.1504644,-105.1504239,-105.1503663,-105.1502877,-105.1501671,-105.1500494,-105.1499624,-105.149875,-105.1496992,-105.1495933,-105.1495048,-105.1493947,-105.149245,-105.1490593,-105.1488953,-105.1486793,-105.1486077],"lat":[39.5910802,39.5911295,39.5911813,39.5912332,39.5913147,39.5913952,39.5914603,39.5915008,39.5915736,39.5916194,39.591782,39.5918524,39.59202,39.5921454,39.5922573,39.5922846,39.5924076,39.5924461,39.5925658,39.592604,39.5926831,39.5927623,39.5929124,39.5929806,39.5930898,39.5931826,39.5932099,39.5933058,39.5934009,39.5935476,39.5936208,39.5936939,39.5938951,39.5940225,39.5941255,39.5941905,39.5942906,39.594342,39.5944313,39.5945399,39.5946212,39.5947028,39.5947874,39.5948554,39.59484,39.594908,39.5949807,39.595032,39.595097,39.5951211,39.5951589,39.5952343,39.595272,39.5953337,39.5954391,39.5954933,39.5956014,39.5956555,39.5957506,39.5958185,39.5958833,39.5959855,39.5960231,39.5961082,39.5961561,39.5962549,39.5962926,39.596416,39.5964672,39.5965548,39.596578,39.5966647,39.5967305,39.596785,39.5968338,39.5969577,39.5969972,39.5970702,39.5971163,39.5971453,39.5971408,39.5971362,39.5971415,39.5972146,39.5972381,39.5973051,39.5973353,39.5973581,39.5973327,39.5973037,39.597289,39.5972752,39.5972829,39.5972951,39.597311,39.5972599,39.5970994,39.5969273,39.5967572,39.5966903,39.5966234,39.5965066,39.5964566,39.59633,39.5962827,39.5962296,39.5961799,39.5961034,39.5960671,39.5959532,39.5958073,39.5957492,39.5957091,39.5956101,39.5955827,39.5954452,39.5954176,39.5952456,39.5951795,39.5951,39.5950104,39.5949708,39.5948681,39.5947815,39.5947286,39.594678,39.5946148,39.5945752,39.5945119,39.5944223,39.5942768,39.5941843,39.594105,39.594039,39.593973,39.5939202,39.5938543,39.5937884,39.5936725,39.5935565,39.5934063,39.5933141,39.5932356,39.5931567,39.5930729,39.5930228,39.592944,39.5928784,39.5927604,39.592708,39.5925509,39.5924624,39.5923734,39.5922997,39.592276,39.5921899,39.5921403,39.592077,39.5920148,39.5919508,39.5918719,39.5918079,39.5917166,39.5916646,39.5915866,39.5914827,39.5912876,39.5912246,39.5911616,39.5910753,39.5909869,39.5909513,39.5908816,39.5908608,39.5908424,39.5908866,39.5909323,39.5909667,39.5909781,39.5910024,39.5910103,39.591018,39.5910343,39.5910453,39.5910547,39.591053,39.5910423,39.5910367,39.5910445,39.5910702,39.5910802]}]],[[{"lng":[-105.1270561,-105.1270386,-105.1270207,-105.1270004,-105.1269905,-105.1269868,-105.1269795,-105.1269717,-105.1269522,-105.1269413,-105.1269428,-105.1269441,-105.1269553,-105.1269735,-105.1269842,-105.1269929,-105.1270019,-105.127007,-105.1270067,-105.1270077,-105.127009,-105.1270144,-105.1270364,-105.1270514,-105.1270777,-105.127097,-105.1271253,-105.1271504,-105.127183,-105.127213,-105.1272465,-105.1272823,-105.1273295,-105.1274051,-105.1274386,-105.127455,-105.1274929,-105.1275138,-105.1275385,-105.1275555,-105.1276105,-105.1276362,-105.1276791,-105.1276961,-105.1277601,-105.1278119,-105.1278767,-105.1279413,-105.128054,-105.1281147,-105.1281319,-105.1281579,-105.1282219,-105.1282518,-105.1282816,-105.1283158,-105.1283586,-105.1283799,-105.1284184,-105.1284697,-105.1285296,-105.1285895,-105.1286658,-105.1287251,-105.1287972,-105.1288268,-105.1288479,-105.1288563,-105.1288772,-105.128919,-105.1289518,-105.1289809,-105.1290224,-105.1291281,-105.1292053,-105.1292697,-105.1293208,-105.129415,-105.1295041,-105.1295926,-105.1296782,-105.1297501,-105.1298087,-105.1298464,-105.1298587,-105.1298832,-105.1299088,-105.1299272,-105.1299426,-105.1299487,-105.1299569,-105.12997,-105.1299683,-105.1299628,-105.1299256,-105.1298898,-105.1298712,-105.129853,-105.1298321,-105.1298119,-105.1297923,-105.1297539,-105.1297243,-105.1296984,-105.1296856,-105.129665,-105.1296533,-105.1296184,-105.1296036,-105.12953,-105.1294719,-105.1294473,-105.1294235,-105.1293662,-105.1293315,-105.1293004,-105.1292476,-105.1292154,-105.1292158,-105.1291777,-105.1291549,-105.1291168,-105.1290716,-105.1290299,-105.128981,-105.1289277,-105.1289013,-105.1288485,-105.1287876,-105.1287265,-105.1286538,-105.1286151,-105.1285335,-105.1284905,-105.1284276,-105.1283528,-105.1282659,-105.1281717,-105.1280815,-105.1279868,-105.1279148,-105.1278631,-105.1278316,-105.1277958,-105.1277559,-105.1277114,-105.1276674,-105.1275825,-105.1275298,-105.1274394,-105.1273431,-105.1272188,-105.1271441,-105.1270999,-105.1270738,-105.1270484,-105.1270561],"lat":[39.5894511,39.5894547,39.5894615,39.5894615,39.5894684,39.5894853,39.5895022,39.5895192,39.589533,39.5895498,39.5895634,39.5895772,39.5895985,39.5896186,39.589632,39.5896465,39.589661,39.5896754,39.5896969,39.5897178,39.5897354,39.5897532,39.5897777,39.5897917,39.5898099,39.5898209,39.5898348,39.5898383,39.5898459,39.5898522,39.5898591,39.5898676,39.5898674,39.5898684,39.589869,39.5898697,39.5898703,39.5898708,39.5898717,39.5898718,39.5898727,39.5898727,39.5898727,39.589873,39.5898702,39.5898667,39.5898563,39.5898462,39.5898113,39.5897803,39.5897735,39.589763,39.5897631,39.5897665,39.5897733,39.5897769,39.5897767,39.5897769,39.5897772,39.5897743,39.5897672,39.5897592,39.5897396,39.5897254,39.5897086,39.5897049,39.5897047,39.5897045,39.5896941,39.58968,39.5896652,39.5896546,39.5896472,39.5896508,39.5896587,39.5896694,39.5896761,39.5896868,39.5896868,39.5896864,39.5896869,39.5896804,39.5896702,39.5896667,39.5896632,39.5896314,39.5895908,39.5895523,39.5894908,39.589471,39.589444,39.589377,39.5893135,39.5892738,39.589159,39.5890836,39.5890558,39.5890346,39.5890196,39.5890047,39.5889928,39.588975,39.5889663,39.5889575,39.5889546,39.5889517,39.5889517,39.5889516,39.5889544,39.5889686,39.5889857,39.5889944,39.5890032,39.5890384,39.5890561,39.5890711,39.5890982,39.5891162,39.5891193,39.5891222,39.5891252,39.5891281,39.5891313,39.5891344,39.5891436,39.5891526,39.5891615,39.5891799,39.5892011,39.5892225,39.5892479,39.5892576,39.5892678,39.5892748,39.5892817,39.5892915,39.5892982,39.5893011,39.5893068,39.5893163,39.5893261,39.5893325,39.5893324,39.5893327,39.589336,39.5893426,39.5893459,39.5893559,39.5893625,39.58937,39.5893781,39.5894028,39.5894237,39.5894375,39.5894444,39.5894479,39.5894511]}]],[[{"lng":[-105.1058249,-105.1058056,-105.1057921,-105.1057939,-105.1057755,-105.1057679,-105.1057551,-105.1057365,-105.1057206,-105.1057373,-105.1057612,-105.1057694,-105.1057891,-105.1058053,-105.1058194,-105.1058138,-105.1058088,-105.1057939,-105.1057668,-105.1057535,-105.1057484,-105.1057327,-105.1057214,-105.1057178,-105.1057211,-105.1057379,-105.1057662,-105.1057757,-105.1057843,-105.1057899,-105.1057966,-105.1058364,-105.1058757,-105.1059263,-105.1059708,-105.1060695,-105.1061131,-105.1061446,-105.1061761,-105.1061967,-105.106224,-105.1062732,-105.1062896,-105.1063173,-105.1063449,-105.1063824,-105.1064272,-105.106449,-105.1064709,-105.1064872,-105.1065598,-105.1066104,-105.1066441,-105.1066551,-105.1067003,-105.1067452,-105.1067729,-105.106812,-105.1068456,-105.1068844,-105.1069175,-105.1069722,-105.106999,-105.1070474,-105.1070792,-105.1071212,-105.1071421,-105.1071789,-105.1072163,-105.1072485,-105.1072916,-105.1073185,-105.1073724,-105.1074048,-105.1074643,-105.1074967,-105.1075399,-105.1075671,-105.1076,-105.1076165,-105.1077373,-105.1077923,-105.1078641,-105.1079034,-105.1079261,-105.1079545,-105.1079829,-105.1080165,-105.1080841,-105.1081455,-105.1081904,-105.1082351,-105.1082738,-105.1083133,-105.108341,-105.1084027,-105.1084249,-105.1084579,-105.1084799,-105.1085194,-105.1085522,-105.1085907,-105.1085832,-105.1085747,-105.1085721,-105.1085685,-105.1085661,-105.1085623,-105.1085593,-105.1085618,-105.1085641,-105.108562,-105.1085592,-105.1085612,-105.108562,-105.1085645,-105.1085691,-105.10857,-105.1085683,-105.1085652,-105.1085618,-105.1085626,-105.10856,-105.1085625,-105.1085726,-105.1085746,-105.1085778,-105.1085745,-105.1085575,-105.108538,-105.1085198,-105.1084978,-105.1084762,-105.1084446,-105.1084296,-105.1084091,-105.1083888,-105.1083637,-105.1083386,-105.108303,-105.1082671,-105.1082321,-105.1081971,-105.1081565,-105.1081057,-105.1080799,-105.1080442,-105.1080036,-105.1079586,-105.107914,-105.1078744,-105.1078447,-105.107815,-105.1077955,-105.1077806,-105.1077554,-105.1077204,-105.1076407,-105.1075958,-105.107541,-105.1074912,-105.1074364,-105.1073814,-105.1073213,-105.1072764,-105.1071368,-105.107077,-105.1070372,-105.1069674,-105.1069073,-105.106857,-105.1068111,-105.1067852,-105.1067644,-105.1067347,-105.1067152,-105.1066911,-105.1066469,-105.1066273,-105.1066031,-105.1065691,-105.1065207,-105.1064722,-105.1064237,-105.1063889,-105.1063442,-105.1062949,-105.1062347,-105.106186,-105.106046,-105.1060008,-105.1059656,-105.1059359,-105.1059062,-105.1058709,-105.1058517,-105.1058316,-105.1058249],"lat":[39.5932621,39.5932788,39.5932915,39.5933072,39.5933263,39.5933416,39.593357,39.5933795,39.5934043,39.5934127,39.5934157,39.593437,39.5934571,39.5934805,39.5935095,39.5935251,39.5935466,39.5935765,39.5936118,39.5936369,39.5936524,39.5936837,39.5937228,39.5937335,39.5937619,39.5937839,39.5937982,39.5938195,39.5938455,39.5938823,39.5939357,39.5939511,39.5939496,39.5939442,39.5939429,39.5939419,39.5939419,39.5939473,39.5939527,39.5939581,39.5939581,39.5939581,39.5939581,39.5939573,39.5939568,39.5939581,39.5939559,39.5939559,39.5939559,39.5939559,39.5939451,39.5939343,39.5939283,39.5939279,39.5939165,39.5939054,39.5939,39.5938894,39.5938788,39.5938683,39.5938586,39.5938479,39.5938477,39.5938469,39.5938518,39.5938667,39.5938767,39.5938915,39.5939007,39.5939056,39.5939098,39.5939106,39.5939152,39.5939192,39.5939182,39.5939162,39.5939281,39.5939367,39.5939502,39.5939579,39.5939621,39.5939636,39.5939771,39.5939964,39.5940109,39.5940298,39.5940445,39.5940531,39.594072,39.594077,39.594082,39.5940862,39.5940856,39.5940943,39.5940938,39.5940953,39.594095,39.5940905,39.5940863,39.5940874,39.594079,39.5940745,39.5940557,39.5940276,39.5940077,39.593982,39.5939626,39.5939296,39.5939057,39.5938818,39.5938578,39.5938395,39.5938163,39.5937885,39.5937518,39.5937324,39.5936864,39.5936544,39.593641,39.5936148,39.5935917,39.5935602,39.5935421,39.5935241,39.5934813,39.5934593,39.5934463,39.5934244,39.5933804,39.5933505,39.5933293,39.5933166,39.5933077,39.5932986,39.5932988,39.5932948,39.5932944,39.5932944,39.5932944,39.5932902,39.5932852,39.5932853,39.5932855,39.5932777,39.5932692,39.5932603,39.5932517,39.5932427,39.5932418,39.5932457,39.5932494,39.5932538,39.5932611,39.5932767,39.5932803,39.5932719,39.5932682,39.5932652,39.593261,39.5932609,39.5932614,39.5932583,39.5932596,39.5932611,39.5932579,39.593254,39.5932537,39.5932535,39.5932567,39.5932603,39.5932676,39.5932792,39.5932909,39.5933021,39.5933014,39.593297,39.5932923,39.5932877,39.5932871,39.5932859,39.5932811,39.593279,39.5932773,39.5932757,39.5932757,39.5932757,39.5932752,39.5932696,39.5932653,39.5932567,39.593254,39.5932544,39.5932511,39.5932478,39.5932482,39.5932476,39.5932478,39.5932621]}]],[[{"lng":[-105.1012632,-105.1012762,-105.1012956,-105.1013335,-105.1013461,-105.1013707,-105.1013831,-105.1014008,-105.1014193,-105.1014373,-105.1014547,-105.1014837,-105.101512,-105.1015349,-105.1015513,-105.1015734,-105.1015851,-105.1016068,-105.1016238,-105.1016405,-105.1016682,-105.1016747,-105.1016862,-105.1017028,-105.1017416,-105.1017469,-105.1017831,-105.1018138,-105.1018237,-105.1018385,-105.1018537,-105.1018686,-105.1018736,-105.1018934,-105.1019079,-105.1019222,-105.101946,-105.1019888,-105.1020078,-105.1020266,-105.1020361,-105.1020549,-105.1020735,-105.102092,-105.1021196,-105.1021471,-105.1021699,-105.1021789,-105.1022109,-105.1022248,-105.1022711,-105.1022896,-105.1023129,-105.1023455,-105.1023641,-105.102397,-105.1024112,-105.1024396,-105.102449,-105.1024769,-105.1025048,-105.1025239,-105.102548,-105.1025666,-105.1025899,-105.1026228,-105.1026469,-105.1026624,-105.1026726,-105.102674,-105.1026708,-105.1026676,-105.1026592,-105.1026417,-105.1026242,-105.1026066,-105.1025888,-105.1025712,-105.1025622,-105.1025348,-105.1025212,-105.1025077,-105.1024951,-105.1024821,-105.1024689,-105.1024647,-105.1024369,-105.1024134,-105.1023893,-105.1023562,-105.1023468,-105.1023277,-105.1023183,-105.1023088,-105.1022946,-105.1022899,-105.1022807,-105.1022761,-105.1022769,-105.1022723,-105.1022681,-105.1022632,-105.1022588,-105.1022388,-105.1022287,-105.1022239,-105.1022137,-105.1021933,-105.1021673,-105.1021253,-105.1020987,-105.102072,-105.1020558,-105.1020504,-105.1020342,-105.1020178,-105.1020013,-105.1019736,-105.1019569,-105.1019513,-105.1019287,-105.1019115,-105.1019056,-105.1018996,-105.1018878,-105.10187,-105.1018464,-105.1018226,-105.1018048,-105.1017758,-105.1017473,-105.1017303,-105.1017027,-105.1016803,-105.101653,-105.1016319,-105.1016212,-105.1015819,-105.1015553,-105.1015176,-105.1014806,-105.1014703,-105.1014391,-105.1013871,-105.1013663,-105.1013501,-105.1013279,-105.1012844,-105.1012531,-105.1012385,-105.1012467,-105.1012602,-105.1012679,-105.1012704,-105.1012675,-105.1012644,-105.1012632],"lat":[39.5526772,39.5526576,39.5526283,39.5525753,39.5525562,39.552523,39.5525042,39.5524855,39.5524573,39.5524341,39.5524155,39.552383,39.5523553,39.5523279,39.5523147,39.5522929,39.5522712,39.5522501,39.5522243,39.5522023,39.5521633,39.5521378,39.5521127,39.5520836,39.5519601,39.551997,39.5519468,39.5519127,39.5519022,39.5518915,39.5518679,39.5518524,39.5518448,39.5518182,39.5518067,39.5518032,39.5517918,39.5517715,39.5517567,39.5517455,39.5517305,39.551697,39.5516752,39.5516718,39.5516572,39.5516427,39.5516353,39.5516316,39.5516215,39.5516255,39.5516436,39.5516509,39.5516583,39.5516694,39.5516733,39.5516847,39.5516922,39.5517034,39.5517071,39.5517108,39.5517145,39.5517221,39.5517335,39.5517337,39.551734,39.5517414,39.5517525,39.551771,39.5517822,39.5517972,39.5518158,39.551831,39.5518424,39.5518576,39.5518731,39.5518888,39.5519008,39.5519202,39.551928,39.5519475,39.5519593,39.5519714,39.5519997,39.5520241,39.5520484,39.5520606,39.5520893,39.5521098,39.5521259,39.552156,39.5521687,39.5521941,39.5522072,39.5522205,39.5522466,39.5522597,39.5522941,39.5523117,39.5523384,39.5523564,39.5523925,39.5524017,39.5524289,39.5524656,39.5524877,39.552506,39.5525204,39.5525497,39.5525827,39.552623,39.5526373,39.5526517,39.5526663,39.5526761,39.5526907,39.5527155,39.5527454,39.5527805,39.5528013,39.5528119,39.5528416,39.5528731,39.552885,39.552906,39.5529318,39.5529695,39.5530069,39.5530448,39.5530663,39.5530822,39.5530822,39.5530822,39.5530653,39.5530596,39.5530418,39.5530251,39.5530149,39.5530038,39.5529819,39.5529599,39.5529292,39.5529188,39.5528921,39.552855,39.55284,39.5528352,39.5528353,39.5528296,39.5528137,39.5527977,39.5527766,39.5527556,39.5527355,39.5527114,39.5526872,39.5526673,39.5526772]}]],[[{"lng":[-104.9520356,-104.9519813,-104.9518346,-104.9517927,-104.9517792,-104.9518274,-104.9519127,-104.9520371,-104.9521077,-104.9521596,-104.9522354,-104.9522444,-104.952277,-104.9523271,-104.9523749,-104.9524714,-104.9524842,-104.9525297,-104.9525777,-104.9526152,-104.9526188,-104.9525493,-104.9524419,-104.9523295,-104.9522585,-104.9522013,-104.9521938,-104.9521781,-104.9521633,-104.9521727,-104.9521568,-104.9521788,-104.9521963,-104.9522013,-104.9521711,-104.95212,-104.952089,-104.9520985,-104.9520863,-104.9521159,-104.952192,-104.9523547,-104.9524584,-104.9526244,-104.952749,-104.9527906,-104.9529679,-104.9530462,-104.9531223,-104.9531558,-104.953235,-104.9532724,-104.9533705,-104.9534501,-104.9535255,-104.9535632,-104.9536431,-104.9537644,-104.9538856,-104.9540272,-104.9541289,-104.9542307,-104.954407,-104.9545617,-104.9547698,-104.9550011,-104.9552766,-104.9554673,-104.9556582,-104.9557218,-104.9558617,-104.9559664,-104.9561209,-104.9562876,-104.9564753,-104.9566221,-104.9567469,-104.9569579,-104.957106,-104.9572326,-104.9573379,-104.957444,-104.9575924,-104.9577412,-104.9578474,-104.957975,-104.9581247,-104.9582098,-104.958296,-104.958405,-104.9585108,-104.9586578,-104.9587626,-104.9588676,-104.9590149,-104.9591633,-104.9592483,-104.959312,-104.9594814,-104.959566,-104.9595863,-104.9595646,-104.9594707,-104.9594999,-104.9594991,-104.9594404,-104.9594566,-104.9594749,-104.9594744,-104.9594737,-104.959473,-104.9594274,-104.9594709,-104.9594205,-104.9594739,-104.9594739,-104.9594738,-104.95942,-104.9594737,-104.9594081,-104.9594351,-104.9594502,-104.9595134,-104.9595331,-104.9595731,-104.9595925,-104.9595749,-104.9595678,-104.9595271,-104.9595341,-104.9595286,-104.9595284,-104.9594592,-104.9595281,-104.9595279,-104.9595068,-104.9594776,-104.9594623,-104.9594278,-104.9594081,-104.9593687,-104.9593298,-104.9593295,-104.9593287,-104.959328,-104.9593082,-104.9592495,-104.959152,-104.9589972,-104.9588811,-104.9587378,-104.9586871,-104.9585316,-104.9584346,-104.9583176,-104.9580847,-104.9578899,-104.9575991,-104.957151,-104.9567817,-104.9565293,-104.9563573,-104.9562217,-104.9560817,-104.9558654,-104.9556294,-104.9553163,-104.9550222,-104.9546303,-104.9542966,-104.9540998,-104.9540024,-104.953846,-104.9537401,-104.9535857,-104.9534355,-104.9533377,-104.9531615,-104.9530075,-104.9527509,-104.9524941,-104.9523365,-104.9522035,-104.9520578,-104.9520356],"lat":[39.7442065,39.7442145,39.7442255,39.7442382,39.7443125,39.7443753,39.7444553,39.7445379,39.7445875,39.7446359,39.7446785,39.7447318,39.7447793,39.7448433,39.7449226,39.7450212,39.7451003,39.7451963,39.7452773,39.7452951,39.7454052,39.7454643,39.7455055,39.7455782,39.7456381,39.7457462,39.7458081,39.7459039,39.7459994,39.7460653,39.7461622,39.7462785,39.7462961,39.746395,39.7464587,39.7465216,39.7465861,39.7466537,39.7467211,39.7467909,39.7468302,39.7468568,39.7468628,39.7468722,39.7468792,39.7468815,39.7469592,39.7469837,39.7470378,39.7471219,39.7471601,39.7471961,39.7472525,39.747291,39.7473634,39.7473997,39.7474383,39.7474811,39.7475374,39.7475969,39.7476369,39.747677,39.7476811,39.7477643,39.747811,39.7478415,39.7478572,39.7478685,39.7478797,39.7478835,39.7478377,39.7478735,39.7479561,39.7480192,39.7480806,39.7481233,39.7480732,39.7482086,39.7482537,39.7482964,39.7483378,39.7483613,39.748386,39.7483922,39.7483969,39.7484029,39.7483744,39.7483785,39.7483115,39.7481943,39.7481814,39.7482053,39.7482449,39.7482847,39.7483087,39.748334,39.7483386,39.7483419,39.7483505,39.7483546,39.7482673,39.7482134,39.7480703,39.7480524,39.7479825,39.7478379,39.7478053,39.7477207,39.747635,39.7475495,39.7474812,39.7473403,39.7472775,39.7470865,39.7470467,39.7469143,39.7468648,39.7467599,39.7467171,39.7466064,39.746532,39.7464659,39.7464422,39.7463784,39.7463159,39.7462364,39.7461469,39.7460166,39.7459109,39.7457823,39.7457097,39.7456472,39.7455253,39.7454607,39.7453835,39.745259,39.7452242,39.7451331,39.7450261,39.7449946,39.7449168,39.7448394,39.7447942,39.744704,39.7445845,39.744524,39.7444615,39.7444119,39.7443299,39.7442942,39.7442554,39.7442397,39.7442459,39.7442407,39.7442637,39.7442622,39.74427,39.7442691,39.7442743,39.7442543,39.7442407,39.7442259,39.7442177,39.7442314,39.7442493,39.7442661,39.7442644,39.7442633,39.7442571,39.7442539,39.7442581,39.7442527,39.7442443,39.7442306,39.7442225,39.7442222,39.744217,39.7442075,39.7441916,39.7441854,39.7441864,39.7441751,39.7441964,39.7441928,39.7442065]}]],[[{"lng":[-105.0971552,-105.097151,-105.0971466,-105.0971414,-105.0971198,-105.0971158,-105.0971134,-105.0971062,-105.0971029,-105.0970861,-105.0970786,-105.0970739,-105.0970677,-105.0970594,-105.0970503,-105.0970413,-105.0970368,-105.0970313,-105.0970222,-105.0970175,-105.0970139,-105.0970138,-105.0970118,-105.0970123,-105.0970095,-105.0970132,-105.0970198,-105.0970245,-105.0970323,-105.097042,-105.0970525,-105.0970639,-105.0970763,-105.0970886,-105.0971014,-105.0971205,-105.0971295,-105.0971365,-105.0971411,-105.0971533,-105.0971586,-105.0971666,-105.0971733,-105.097182,-105.0971891,-105.0971954,-105.0972046,-105.0972126,-105.0972198,-105.0972268,-105.0972338,-105.0972433,-105.0972552,-105.0972572,-105.0972633,-105.0972701,-105.0972792,-105.097284,-105.09729,-105.0972954,-105.0973008,-105.0973079,-105.0973135,-105.097321,-105.0973302,-105.0973395,-105.0973417,-105.0973484,-105.0973582,-105.0973669,-105.0973725,-105.0973787,-105.0973837,-105.0973887,-105.0973948,-105.0974008,-105.0974057,-105.0974106,-105.0974168,-105.0974225,-105.0974277,-105.0974328,-105.0974372,-105.0974405,-105.0974434,-105.097446,-105.0974485,-105.0974504,-105.0974469,-105.0974434,-105.0974379,-105.0974323,-105.0974258,-105.0974218,-105.097417,-105.0974121,-105.0974063,-105.0973988,-105.0973925,-105.0973892,-105.0973852,-105.0973812,-105.0973764,-105.0973682,-105.0973658,-105.0973564,-105.0973512,-105.0973447,-105.0973381,-105.0973327,-105.0973265,-105.0973211,-105.0973136,-105.0973089,-105.0973024,-105.0972968,-105.0972911,-105.0972833,-105.0972795,-105.0972744,-105.0972702,-105.0972608,-105.0972579,-105.0972543,-105.0972504,-105.0972488,-105.0972473,-105.0972441,-105.0972389,-105.0972353,-105.0972309,-105.0972269,-105.0972224,-105.097218,-105.0972128,-105.097208,-105.0972024,-105.0971949,-105.0971902,-105.0971801,-105.0971771,-105.097172,-105.0971667,-105.0971622,-105.0971552],"lat":[39.5492436,39.5492458,39.5492485,39.5492512,39.5492622,39.5492679,39.5492717,39.549278,39.5492824,39.5492907,39.5492961,39.5492999,39.5493058,39.5493127,39.5493161,39.5493236,39.5493273,39.549333,39.5493404,39.5493458,39.549352,39.5493578,39.549366,39.54937,39.5493773,39.549381,39.5493831,39.5493862,39.5493876,39.5493907,39.5493918,39.5493908,39.5493907,39.5493875,39.5493883,39.5493865,39.5493865,39.5493878,39.5493905,39.5493912,39.5493906,39.5493896,39.5493908,39.5493907,39.5493902,39.5493916,39.5493923,39.5493925,39.5493917,39.5493923,39.5493885,39.5493886,39.5493872,39.5493872,39.5493871,39.549389,39.5493906,39.5493925,39.5493936,39.5493951,39.5493966,39.5493967,39.549398,39.5493976,39.5493972,39.5493982,39.5493978,39.5493978,39.5493934,39.5493948,39.5493926,39.5493885,39.5493842,39.5493803,39.5493756,39.549371,39.5493672,39.5493633,39.5493611,39.5493589,39.5493546,39.5493502,39.5493453,39.5493413,39.5493351,39.5493305,39.5493259,39.5493208,39.5493185,39.5493165,39.549316,39.5493166,39.5493167,39.5493161,39.5493162,39.5493162,39.5493157,39.5493163,39.5493174,39.5493137,39.5493119,39.54931,39.5493087,39.5493061,39.5493054,39.5493035,39.5493024,39.5493034,39.5493034,39.5493022,39.5493004,39.5492992,39.5492981,39.5492975,39.5492969,39.5492957,39.5492945,39.5492934,39.5492921,39.5492904,39.5492881,39.5492879,39.5492847,39.5492808,39.5492772,39.5492721,39.549267,39.5492641,39.5492611,39.5492596,39.5492574,39.5492537,39.5492514,39.5492491,39.5492461,39.5492451,39.5492435,39.5492427,39.5492417,39.5492412,39.5492403,39.5492407,39.5492413,39.5492425,39.5492436]}]],[[{"lng":[-105.0994987,-105.099495,-105.0994939,-105.0994761,-105.0994756,-105.0994748,-105.0994753,-105.0994741,-105.0994702,-105.0994683,-105.0994659,-105.0994627,-105.0994987],"lat":[39.5509736,39.5509752,39.5509695,39.5509421,39.5509411,39.5509369,39.5509322,39.5509269,39.5509189,39.5509149,39.5509099,39.5509063,39.5509736]},{"lng":[-105.0994929,-105.099492,-105.0994906,-105.0994899,-105.0994923,-105.0994967,-105.0994969,-105.0994897,-105.0994833,-105.0994795,-105.0994739,-105.0994618,-105.0994602,-105.0994544,-105.0994472,-105.0994388,-105.0994294,-105.0994161,-105.0994101,-105.099404,-105.0993983,-105.0993957,-105.0993934,-105.0993941,-105.099393,-105.0993912,-105.0993892,-105.0993883,-105.0993902,-105.0993958,-105.0994028,-105.0994097,-105.0994177,-105.0994241,-105.0994307,-105.0994388,-105.0994451,-105.0994478,-105.0994575,-105.0994644,-105.0994709,-105.0994752,-105.0994807,-105.0994863,-105.0994925,-105.099495,-105.0994929],"lat":[39.5509835,39.5509913,39.5509982,39.5510036,39.5510089,39.5510119,39.5510157,39.5510204,39.5510235,39.5510251,39.5510263,39.5510276,39.5510177,39.551017,39.5510193,39.5510224,39.5510293,39.5510443,39.5510457,39.551047,39.5510456,39.5510402,39.5510345,39.551025,39.551019,39.5510143,39.5510099,39.5510055,39.551002,39.5509997,39.5509967,39.5509939,39.5509909,39.5509906,39.5509902,39.5509906,39.5509904,39.5509892,39.5509863,39.5509847,39.5509819,39.5509813,39.5509801,39.550979,39.5509763,39.5509752,39.5509835]},{"lng":[-105.0994627,-105.0994588,-105.0994558,-105.0994527,-105.0994454,-105.099443,-105.0993779,-105.0993734,-105.0993667,-105.0993611,-105.0993543,-105.0993485,-105.0993404,-105.0993359,-105.0993271,-105.0993227,-105.0993146,-105.0993083,-105.0993011,-105.0992953,-105.0992881,-105.0992819,-105.0992745,-105.0992677,-105.0992623,-105.0992603,-105.099257,-105.0992566,-105.0992565,-105.0992585,-105.0992619,-105.0992675,-105.0992713,-105.0992736,-105.0992759,-105.0992788,-105.0992765,-105.0992783,-105.0992852,-105.0992888,-105.0992954,-105.0993022,-105.0993069,-105.0993156,-105.0993192,-105.0993285,-105.0993327,-105.0993414,-105.0993499,-105.0993567,-105.0993649,-105.0993755,-105.0993782,-105.0993861,-105.0993942,-105.0994013,-105.0994105,-105.099417,-105.099422,-105.099428,-105.099426,-105.0994232,-105.0994212,-105.0994191,-105.0994144,-105.09941,-105.0994083,-105.0994073,-105.0994054,-105.0994026,-105.0993995,-105.099398,-105.0993966,-105.0993941,-105.0993917,-105.0993898,-105.0993869,-105.0993846,-105.0993832,-105.0994627],"lat":[39.5509063,39.5509041,39.5509004,39.5508967,39.5508875,39.5508845,39.5507531,39.5507531,39.5507549,39.5507564,39.5507582,39.5507599,39.5507622,39.5507622,39.5507634,39.5507635,39.5507632,39.5507639,39.5507646,39.5507662,39.5507668,39.5507683,39.5507703,39.5507732,39.5507795,39.5507848,39.5507881,39.5507918,39.5507991,39.5508034,39.550811,39.5508191,39.5508242,39.5508296,39.5508338,39.5508414,39.5508459,39.5508529,39.5508655,39.5508706,39.5508758,39.5508822,39.5508857,39.5508842,39.5508833,39.5508805,39.5508791,39.5508762,39.5508735,39.5508713,39.5508687,39.5508648,39.5508639,39.5508614,39.5508587,39.5508562,39.5508531,39.550851,39.5508495,39.5508477,39.5508424,39.5508363,39.5508324,39.5508285,39.5508219,39.5508163,39.55081,39.550808,39.5508039,39.5507978,39.5507918,39.5507888,39.5507858,39.5507807,39.5507757,39.5507716,39.5507655,39.5507604,39.5507574,39.5509063]},{"lng":[-105.0994718,-105.0994665,-105.0994625,-105.0994573,-105.0994483,-105.0994416,-105.0994311,-105.0994211,-105.0994171,-105.0994084,-105.0994024,-105.0993969,-105.0993941,-105.0993838,-105.099378,-105.0993728,-105.0993657,-105.0993596,-105.0993574,-105.0993552,-105.0993528,-105.099352,-105.0993493,-105.0993468,-105.0993401,-105.0993376,-105.0993337,-105.0993304,-105.0993293,-105.0993238,-105.0993282,-105.0993326,-105.0993438,-105.099352,-105.0993594,-105.0993758,-105.0993787,-105.0993895,-105.0993948,-105.0993995,-105.0994038,-105.0994094,-105.0994163,-105.0994217,-105.0994269,-105.0994333,-105.0994363,-105.0994389,-105.099443,-105.0994718],"lat":[39.5509426,39.5509452,39.5509472,39.5509493,39.5509528,39.5509538,39.5509579,39.5509609,39.5509624,39.5509648,39.5509677,39.5509699,39.550971,39.5509742,39.550975,39.5509767,39.5509794,39.55098,39.5509726,39.5509684,39.5509607,39.5509522,39.5509454,39.5509385,39.5509345,39.5509292,39.5509228,39.5509189,39.5509168,39.5509093,39.5509078,39.5509063,39.5509049,39.5509045,39.5509032,39.5508998,39.5508988,39.550895,39.5508932,39.5508905,39.5508866,39.5508846,39.550882,39.55088,39.5508781,39.550876,39.5508782,39.5508809,39.5508845,39.5509426]}]],[[{"lng":[-104.9567674,-104.9567675,-104.9567602,-104.9567524,-104.9567519,-104.9567513,-104.9567529,-104.9567524,-104.956752,-104.9567515,-104.9567511,-104.9567486,-104.9567484,-104.9567499,-104.9567513,-104.9567511,-104.9567505,-104.9567539,-104.9567555,-104.9567589,-104.9567623,-104.9567654,-104.9567669,-104.9567703,-104.956772,-104.9567735,-104.9567749,-104.9567784,-104.9567837,-104.9567913,-104.9567991,-104.9568047,-104.9568182,-104.9568299,-104.9568397,-104.9568476,-104.9568574,-104.9568673,-104.956881,-104.9568888,-104.9568966,-104.9569045,-104.9569182,-104.9569259,-104.9569336,-104.9569491,-104.956953,-104.9569589,-104.9569687,-104.9569785,-104.9569883,-104.9570058,-104.9570135,-104.9570213,-104.9570271,-104.9570368,-104.9570503,-104.95706,-104.9570755,-104.9570833,-104.9570891,-104.9571007,-104.9571104,-104.9571199,-104.9571296,-104.9571411,-104.9571566,-104.957174,-104.9571816,-104.9571889,-104.9571941,-104.9572029,-104.9572153,-104.9572213,-104.9572295,-104.9572431,-104.9572544,-104.9572621,-104.9572698,-104.9572813,-104.9572927,-104.9573003,-104.9573078,-104.9573197,-104.9573352,-104.9573429,-104.9573542,-104.9573656,-104.9573731,-104.9573788,-104.9573902,-104.9574055,-104.9574113,-104.957417,-104.9574266,-104.9574361,-104.9574436,-104.957449,-104.9574505,-104.9574557,-104.9574454,-104.9574522,-104.9574531,-104.9574574,-104.9574541,-104.9574484,-104.9574427,-104.9574183,-104.9574155,-104.9574106,-104.9574085,-104.9574169,-104.9574072,-104.9573994,-104.957388,-104.9573823,-104.9573688,-104.9573566,-104.9573435,-104.957336,-104.9573175,-104.9573065,-104.9572898,-104.9572744,-104.9572597,-104.957256,-104.9572486,-104.9572391,-104.9572278,-104.9572145,-104.9572069,-104.9571975,-104.9571881,-104.9571749,-104.9571636,-104.9571542,-104.9571429,-104.9571334,-104.957124,-104.9571127,-104.9571052,-104.9570976,-104.957092,-104.9570826,-104.9570731,-104.9570618,-104.9570524,-104.9570408,-104.9570333,-104.9570239,-104.9570164,-104.9570051,-104.9569937,-104.9569806,-104.9569731,-104.9569637,-104.9569561,-104.9569486,-104.9569374,-104.9569243,-104.9569078,-104.9569021,-104.9568865,-104.9568733,-104.9568639,-104.9568525,-104.9568462,-104.9568334,-104.9568281,-104.9568189,-104.9568084,-104.9567968,-104.9567731,-104.9567674],"lat":[39.7506905,39.750689,39.7506846,39.7506887,39.7506959,39.7507046,39.7507104,39.7507176,39.7507234,39.7507322,39.750738,39.7507467,39.7507511,39.750757,39.7507644,39.7507703,39.7507791,39.7507865,39.7507925,39.7507986,39.7508047,39.7508153,39.7508214,39.7508289,39.7508335,39.750841,39.7508501,39.7508563,39.7508655,39.7508688,39.7508689,39.7508736,39.7508768,39.750877,39.7508771,39.7508742,39.7508714,39.7508685,39.7508673,39.7508659,39.7508645,39.7508616,39.7508603,39.7508619,39.7508621,39.7508624,39.7508625,39.7508611,39.7508568,39.7508524,39.750848,39.7508437,39.7508407,39.7508393,39.7508379,39.7508366,39.7508339,39.7508342,39.7508315,39.7508317,39.7508319,39.7508306,39.7508278,39.7508249,39.7508221,39.7508223,39.7508196,39.750817,39.7508142,39.7508126,39.7508123,39.7508106,39.7508113,39.7508116,39.750812,39.7508108,39.750808,39.7508067,39.7508054,39.7508026,39.7508028,39.750803,39.7508016,39.7508019,39.7508023,39.7508009,39.7507996,39.7507983,39.750797,39.750797,39.7507958,39.7507946,39.7507947,39.7507948,39.750795,39.7507937,39.7507909,39.7507851,39.7507792,39.7507719,39.7507619,39.7507586,39.7507531,39.7507484,39.7507426,39.7507382,39.7507323,39.7507242,39.7507198,39.7507141,39.7507085,39.7507058,39.7507041,39.7507011,39.7506994,39.7506993,39.7506991,39.7506988,39.7506985,39.7506984,39.750698,39.7506979,39.750699,39.7507001,39.7506998,39.7506998,39.7506997,39.750698,39.7506978,39.7506961,39.7506945,39.7506944,39.7506942,39.7506925,39.7506923,39.7506921,39.7506919,39.7506917,39.7506915,39.7506927,39.750694,39.7506939,39.7506938,39.7506936,39.7506934,39.7506932,39.750693,39.7506927,39.7506926,39.7506938,39.7506937,39.7506935,39.7506946,39.7506945,39.7506958,39.7506956,39.7506969,39.7506938,39.7506921,39.7506918,39.7506899,39.7506898,39.7506898,39.7506896,39.7506894,39.7506892,39.7506877,39.7506889,39.7506888,39.7506886,39.7506897,39.7506893,39.7506906,39.7506905]}]],[[{"lng":[-104.9591692,-104.9591719,-104.959174,-104.959175,-104.9591757,-104.9591782,-104.9591825,-104.9591861,-104.9591911,-104.9591952,-104.9591985,-104.9592016,-104.9592048,-104.959208,-104.9592129,-104.9592181,-104.9592213,-104.9592235,-104.9592267,-104.9592298,-104.9592329,-104.9592341,-104.9592372,-104.9592396,-104.959243,-104.9592472,-104.9592525,-104.9592566,-104.9592617,-104.9592655,-104.9592673,-104.95927,-104.9592717,-104.9592723,-104.9592719,-104.9592717,-104.9592715,-104.9592744,-104.9592772,-104.9592816,-104.9592892,-104.9592949,-104.959297,-104.9593044,-104.9593105,-104.9593166,-104.9593216,-104.9593276,-104.9593315,-104.9593376,-104.9593429,-104.9593471,-104.9593492,-104.9593528,-104.9593553,-104.9593567,-104.9593582,-104.9593616,-104.9593633,-104.9593647,-104.9593685,-104.9593692,-104.959373,-104.9593753,-104.9593791,-104.959384,-104.9593887,-104.959392,-104.9593954,-104.9593988,-104.9594055,-104.9594133,-104.9594167,-104.9594235,-104.959428,-104.9594325,-104.9594368,-104.9594389,-104.9594447,-104.9594485,-104.9594509,-104.9594561,-104.9594615,-104.959467,-104.9594743,-104.9594821,-104.9594868,-104.959492,-104.959497,-104.9595021,-104.9595082,-104.9595145,-104.9595187,-104.9595241,-104.9595301,-104.959535,-104.9595381,-104.9595433,-104.9595494,-104.9595525,-104.9595611,-104.959568,-104.9595748,-104.9595814,-104.9595855,-104.9595883,-104.9595907,-104.9595912,-104.9595908,-104.9595901,-104.9595903,-104.9595915,-104.9595929,-104.9595964,-104.9596016,-104.9596065,-104.9596082,-104.9596092,-104.9596101,-104.9596087,-104.9596117,-104.9596156,-104.9596188,-104.9596215,-104.9596234,-104.959625,-104.9596243,-104.9596229,-104.9596251,-104.9596275,-104.9596301,-104.9596334,-104.9596324,-104.9596359,-104.9596422,-104.9596452,-104.9596465,-104.9596462,-104.9596499,-104.9596524,-104.9596548,-104.9596539,-104.9596528,-104.9596524,-104.959648,-104.9596509,-104.9596525,-104.9596537,-104.9596533,-104.9596536,-104.9596552,-104.9596576,-104.9596579,-104.9596591,-104.95966,-104.959661,-104.9596629,-104.9596637,-104.959664,-104.9596647,-104.9596639,-104.9596628,-104.9596626,-104.9596616,-104.9596593,-104.9596576,-104.9596539,-104.9596514,-104.9596485,-104.9596441,-104.9596405,-104.9596375,-104.9596329,-104.9596272,-104.9596251,-104.9596196,-104.9596148,-104.959611,-104.9596078,-104.9596062,-104.9596055,-104.9596044,-104.9596028,-104.959602,-104.9595984,-104.9595946,-104.9595912,-104.9595864,-104.9595833,-104.95958,-104.9595758,-104.9595714,-104.9595657,-104.9595636,-104.9595566,-104.9595513,-104.9595462,-104.9595415,-104.9595387,-104.9595329,-104.9595275,-104.9595225,-104.9595188,-104.9595129,-104.9595025,-104.9594953,-104.9594881,-104.9594847,-104.959482,-104.9594774,-104.9594726,-104.9594678,-104.9594629,-104.9594582,-104.9594503,-104.9594439,-104.9594393,-104.9594352,-104.9594321,-104.9594297,-104.959427,-104.9594206,-104.9594151,-104.9594106,-104.9594069,-104.9594024,-104.9593969,-104.9593919,-104.9593859,-104.9593807,-104.959372,-104.9593674,-104.9593664,-104.959365,-104.9593614,-104.9593563,-104.9593504,-104.9593458,-104.9593389,-104.9593328,-104.9593292,-104.9593257,-104.959323,-104.959318,-104.9593116,-104.9593058,-104.9593033,-104.9592966,-104.9592924,-104.9592892,-104.9592875,-104.959281,-104.9592788,-104.9592757,-104.9592732,-104.9592703,-104.9592623,-104.9592606,-104.95926,-104.9592601,-104.9592607,-104.959261,-104.9592594,-104.9592577,-104.9592568,-104.9592556,-104.9592535,-104.9592507,-104.9592445,-104.9592411,-104.9592377,-104.9592343,-104.9592314,-104.9592292,-104.9592363,-104.9592376,-104.9592384,-104.9592371,-104.9592343,-104.9592266,-104.9592246,-104.9592224,-104.9592188,-104.9592181,-104.9592149,-104.959214,-104.9592139,-104.959213,-104.9592114,-104.9592081,-104.9592069,-104.9592057,-104.9592045,-104.9592044,-104.9592033,-104.9592002,-104.9591983,-104.9591972,-104.9591946,-104.9591909,-104.9591893,-104.9591861,-104.9591837,-104.9591806,-104.9591764,-104.9591753,-104.959172,-104.9591705,-104.959171,-104.9591741,-104.9591769,-104.9591807,-104.9591847,-104.9591891,-104.9591888,-104.9591852,-104.9591843,-104.9591864,-104.9591692],"lat":[39.7323531,39.7323553,39.7323566,39.7323607,39.7323652,39.7323661,39.732368,39.7323705,39.7323733,39.7323753,39.732379,39.7323803,39.7323832,39.7323853,39.73239,39.7323947,39.7323995,39.7324027,39.7324049,39.7324081,39.7324113,39.7324148,39.732419,39.732422,39.7324249,39.7324261,39.7324272,39.7324275,39.7324289,39.7324321,39.7324303,39.7324266,39.7324221,39.7324177,39.7324125,39.732408,39.7324025,39.7323965,39.7323945,39.7323932,39.7323914,39.7323903,39.7323888,39.7323862,39.732385,39.732384,39.7323835,39.7323828,39.7323824,39.7323835,39.7323855,39.7323889,39.7323907,39.7323969,39.7324023,39.7324071,39.7324118,39.732415,39.7324203,39.732425,39.7324392,39.7324445,39.7324507,39.7324523,39.7324539,39.7324535,39.7324527,39.7324533,39.7324547,39.732458,39.7324648,39.7324708,39.7324712,39.7324744,39.7324782,39.7324811,39.7324814,39.7324811,39.732484,39.732488,39.7324894,39.7324885,39.7324884,39.7324825,39.7324825,39.7324903,39.7324872,39.7324868,39.7324861,39.7324851,39.7324887,39.732492,39.732492,39.7324921,39.7324907,39.7324936,39.732493,39.7324926,39.732492,39.7324915,39.7324914,39.7324931,39.7324944,39.7324949,39.7324933,39.7324913,39.7324869,39.7324836,39.7324786,39.7324725,39.7324682,39.7324643,39.7324606,39.7324564,39.7324512,39.7324452,39.7324394,39.7324352,39.7324305,39.7324217,39.7324169,39.732415,39.7324134,39.7324075,39.7324034,39.7323989,39.7323943,39.7323894,39.7323877,39.7323839,39.7323813,39.7323778,39.7323712,39.7323692,39.7323708,39.732364,39.732359,39.7323546,39.7323527,39.7323495,39.7323462,39.732343,39.7323395,39.7323358,39.7323294,39.7323276,39.7323256,39.7323217,39.7323145,39.7323126,39.7323091,39.7323041,39.732301,39.7322945,39.7322912,39.7322885,39.7322857,39.7322817,39.7322768,39.732274,39.732271,39.7322666,39.7322658,39.7322621,39.732257,39.7322542,39.7322483,39.7322439,39.732241,39.7322367,39.7322347,39.7322342,39.7322317,39.7322285,39.7322273,39.7322242,39.7322215,39.7322188,39.732217,39.7322137,39.7322102,39.7322041,39.7322014,39.7321986,39.732196,39.7321957,39.7321962,39.7321953,39.7321941,39.7321923,39.7321906,39.7321875,39.7321831,39.7321819,39.7321798,39.7321775,39.7321758,39.7321762,39.7321765,39.7321751,39.7321745,39.7321735,39.7321731,39.7321721,39.7321704,39.7321682,39.7321652,39.7321633,39.7321612,39.7321599,39.7321583,39.7321568,39.7321557,39.732156,39.7321543,39.7321531,39.7321511,39.7321487,39.7321468,39.7321441,39.7321432,39.7321409,39.7321398,39.7321397,39.7321393,39.7321391,39.7321383,39.7321387,39.7321387,39.7321386,39.732137,39.7321349,39.7321337,39.7321295,39.7321286,39.7321278,39.7321266,39.7321252,39.7321235,39.7321223,39.7321208,39.7321205,39.7321196,39.7321189,39.7321171,39.7321153,39.732115,39.732115,39.732116,39.7321181,39.7321189,39.7321207,39.7321228,39.7321255,39.7321282,39.7321309,39.7321341,39.7321376,39.7321409,39.7321422,39.7321487,39.7321527,39.7321555,39.7321576,39.7321627,39.7321654,39.7321682,39.7321724,39.7321771,39.7321797,39.7321827,39.7321865,39.7321895,39.7321923,39.7321937,39.7321959,39.7321979,39.7322016,39.7322074,39.7322177,39.7322207,39.7322236,39.7322284,39.7322304,39.7322362,39.7322391,39.7322426,39.7322456,39.7322496,39.7322565,39.7322583,39.7322649,39.7322702,39.7322755,39.7322823,39.7322895,39.732295,39.7322984,39.732304,39.7323106,39.7323137,39.7323192,39.7323231,39.7323284,39.7323339,39.7323375,39.732343,39.732347,39.7323505,39.7323534,39.7323548,39.7323546,39.7323515,39.7323489,39.7323518,39.7323569,39.7323561,39.7323532,39.7323531]}]],[[{"lng":[-105.1042769,-105.1042734,-105.104267,-105.1042579,-105.1042464,-105.1042295,-105.1042213,-105.1042092,-105.1041988,-105.1041921,-105.1041807,-105.1041695,-105.1041583,-105.104144,-105.1041298,-105.1041078,-105.1040799,-105.1040577,-105.1040439,-105.1040274,-105.1040032,-105.1039952,-105.1039844,-105.1039713,-105.1039548,-105.1039517,-105.1039376,-105.1039265,-105.1039127,-105.1039042,-105.1038851,-105.1038689,-105.1038614,-105.1038546,-105.1038408,-105.1038368,-105.1038301,-105.10383,-105.1038313,-105.1038327,-105.1038348,-105.1038372,-105.1038379,-105.1038396,-105.1038421,-105.1038414,-105.1038387,-105.1038374,-105.1038361,-105.1038353,-105.1038375,-105.1038401,-105.1038423,-105.103845,-105.103847,-105.1038492,-105.1038561,-105.1038658,-105.1038746,-105.1038865,-105.1039011,-105.1039184,-105.103938,-105.1039407,-105.1039518,-105.1039689,-105.1039857,-105.10401,-105.1040208,-105.1040234,-105.1040376,-105.1040521,-105.1040635,-105.1040702,-105.1040774,-105.1040819,-105.104086,-105.1040931,-105.1041025,-105.1041093,-105.1041197,-105.1041199,-105.1041239,-105.1041305,-105.1041421,-105.1041461,-105.1041504,-105.1041544,-105.1041558,-105.1041579,-105.1041589,-105.104161,-105.1041637,-105.1041641,-105.1041689,-105.104171,-105.1041708,-105.1041647,-105.1041649,-105.104166,-105.1041677,-105.1041758,-105.1041799,-105.1041844,-105.1041933,-105.1042023,-105.1042185,-105.1042326,-105.1042467,-105.1042584,-105.1042695,-105.1042889,-105.1043008,-105.1043137,-105.1043221,-105.1043381,-105.1043534,-105.1043687,-105.1043844,-105.1043897,-105.1043988,-105.10441,-105.1044257,-105.1044405,-105.1044479,-105.1044609,-105.1044718,-105.1044928,-105.104498,-105.1045041,-105.1045082,-105.1045138,-105.1045228,-105.1045225,-105.1045317,-105.1045362,-105.1045401,-105.1045435,-105.1045469,-105.1045554,-105.1045614,-105.1045711,-105.1045826,-105.1045916,-105.1046014,-105.1046136,-105.1046227,-105.1046321,-105.1046389,-105.1046424,-105.1046367,-105.1046388,-105.1046424,-105.1046431,-105.1046449,-105.1046482,-105.1046495,-105.1046476,-105.1046455,-105.1046427,-105.1046416,-105.1046418,-105.1046399,-105.1046357,-105.1046325,-105.1046337,-105.1046377,-105.1046498,-105.1046557,-105.1046588,-105.1046618,-105.1046686,-105.1046669,-105.1046592,-105.1046549,-105.1046261,-105.1046229,-105.1046148,-105.1046129,-105.104606,-105.1045952,-105.1045745,-105.1045672,-105.1045495,-105.1045388,-105.1045253,-105.1045091,-105.1044954,-105.1044866,-105.1044715,-105.1044598,-105.1044536,-105.1044422,-105.1044309,-105.1044112,-105.1043971,-105.1043771,-105.1043566,-105.1043419,-105.1043304,-105.1043211,-105.1042961,-105.1042797,-105.1042677,-105.1042563,-105.1042404,-105.1042769],"lat":[39.6823144,39.682308,39.6822999,39.6822944,39.6822888,39.6822864,39.6822899,39.6822886,39.6822836,39.6822726,39.6822695,39.6822685,39.6822678,39.6822656,39.6822631,39.6822605,39.682257,39.6822549,39.6822542,39.682254,39.6822563,39.6822591,39.6822581,39.6822611,39.6822606,39.6822588,39.682256,39.682255,39.6822543,39.6822531,39.6822529,39.6822544,39.6822591,39.6822679,39.6822837,39.6822925,39.6823017,39.6823167,39.6823248,39.682333,39.6823454,39.6823599,39.682364,39.6823743,39.6823888,39.6824015,39.6824017,39.6824103,39.6824189,39.6824297,39.6824439,39.6824585,39.6824711,39.6824876,39.6825,39.6825125,39.6825204,39.6825282,39.6825316,39.6825367,39.6825417,39.6825464,39.6825488,39.6825486,39.6825497,39.6825541,39.6825564,39.6825539,39.6825528,39.6825526,39.6825554,39.6825604,39.6825637,39.6825715,39.6825811,39.6825912,39.6825992,39.682609,39.6826165,39.6826242,39.682638,39.6826504,39.6826602,39.6826697,39.6826736,39.6826816,39.6826916,39.6826996,39.6827079,39.6827202,39.6827264,39.6827388,39.6827552,39.6827573,39.6827694,39.6827818,39.6827965,39.6828078,39.6828246,39.6828308,39.6828411,39.682857,39.682865,39.6828751,39.6828804,39.6828856,39.6828858,39.6828886,39.6828915,39.6828947,39.6828957,39.6828979,39.6829032,39.6829127,39.6829139,39.6829123,39.6829065,39.6829006,39.6828969,39.6828964,39.6829018,39.6829047,39.6829029,39.6828969,39.6828939,39.6828925,39.6828915,39.6828853,39.6828828,39.6828717,39.6828649,39.6828516,39.6828403,39.6828383,39.682825,39.6828183,39.6828095,39.6827987,39.6827878,39.6827724,39.6827613,39.682754,39.6827424,39.6827331,39.6827279,39.6827204,39.6827111,39.6827039,39.6826969,39.6826861,39.6826739,39.6826675,39.682659,39.6826443,39.6826378,39.682625,39.6826165,39.6826021,39.682594,39.6825861,39.6825799,39.6825671,39.6825569,39.6825408,39.6825332,39.6825248,39.6825155,39.682495,39.6824797,39.682469,39.6824686,39.6824595,39.6824493,39.6824331,39.6824275,39.6824193,39.6824156,39.6824077,39.6823989,39.6823913,39.6823902,39.6823897,39.6823901,39.6823913,39.6823924,39.6823938,39.6823955,39.6823971,39.6823961,39.682394,39.6823866,39.6823785,39.6823708,39.6823652,39.6823608,39.682358,39.6823515,39.682343,39.6823359,39.6823329,39.6823277,39.682322,39.6823138,39.6823118,39.6823087,39.6823101,39.6823144]}]]],null,"Place category (as polygons)",{"crs":{"crsClass":"L.CRS.EPSG3857","code":null,"proj4def":null,"projectedBounds":null,"options":{}},"pane":"polygon","stroke":true,"color":"#333333","weight":0.5,"opacity":[0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9,0.9],"fill":true,"fillColor":["#FDE333","#FDE333","#FDE333","#FDE333","#FDE333","#FDE333","#FDE333","#FDE333","#4B0055","#4B0055","#4B0055","#4B0055","#4B0055"],"fillOpacity":[0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6],"smoothFactor":1,"noClip":false},["<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>1&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td>100&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>Denver Botanic Gardens, 100% Native&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>Denver Botanic G. Native Zone&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>native spectrum&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>mainly native prairie vegetation&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>Denver Botanic Gardens, 100% Native&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POLYGON&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td> 1&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td> 1&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>2&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td>100&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>Plains Conservation Center, 100% Native&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>Plains Cons. Center&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>native spectrum&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>Plains Conservation Center, 100% Native&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POLYGON&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td> 2&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td> 2&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>3&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td> 85&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>Green Mountain Park, 85% Native&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>Green Mountain&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>native spectrum&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>Green Mountain Park, 85% Native&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POLYGON&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td> 3&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td> 3&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>4&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td> 75&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>Hogback along C-470, 75% Native&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>Hogback along C-470&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>native spectrum&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>Hogback along C-470, 75% Native&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POLYGON&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td> 4&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td> 4&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>5&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td> 50&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>Suburban Open Space 1, Chatfield H.S., 50% Native&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>Suburban Open Space 1&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>native spectrum&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>Suburban Open Space 1, Chatfield H.S., 50% Native&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POLYGON&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td> 5&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td> 5&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>6&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td> 30&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>Suburban Open Space 2, Columbine Hills Church, 30% Native&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>Suburban Open Space 2&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>native spectrum&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>Suburban Open Space 2, Columbine Hills Church, 30% Native&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POLYGON&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td> 6&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td> 6&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>7&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td> 10&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>Denver Botanic Gardens at Chatfield, 10% Native&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>Denver Botanic G., Chatfield&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>native spectrum&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>Denver Botanic Gardens at Chatfield, 10% Native&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POLYGON&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td> 7&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td> 7&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>8&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td>  0&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>City Park, 0% Native&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>City Park&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>native spectrum&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>City Park, 0% Native&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POLYGON&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td> 8&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td> 8&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>9&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>Chatfield Meadow Restoration&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>Chatfield Meadow&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>high diversity&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>Chatfield Meadow Restoration&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POLYGON&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td> 9&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td> 9&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>10&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>Chatfield Prairie Garden&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>Chatfield Prairie Garden&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>high diversity&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>Chatfield Prairie Garden&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POLYGON&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td>10&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td>10&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>11&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>City Park Greenhouses&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>City Park Greenhouses&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>high diversity&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>City Park Greenhouses&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POLYGON&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td>11&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td>11&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>12&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>Denver Botanic Gardens Green Roof&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>Denver Botanic G. Green Roof&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>high diversity&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>Denver Botanic Gardens Green Roof&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POLYGON&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td>12&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td>12&emsp;<\/td><\/tr><\/table><\/div>","<div class='scrollableContainer'><table class=mapview-popup id='popup'><tr class='coord'><td><\/td><th><b>Feature ID&emsp;<\/b><\/th><td>13&emsp;<\/td><\/tr><tr><td>1<\/td><th>native_percent&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>2<\/td><th>place_name&emsp;<\/th><td>Kenderick Lake Xeriscape Garden&emsp;<\/td><\/tr><tr><td>3<\/td><th>place_name_short&emsp;<\/th><td>Kenderick Lake Xeriscape Garden&emsp;<\/td><\/tr><tr><td>4<\/td><th>place_type&emsp;<\/th><td>high diversity&emsp;<\/td><\/tr><tr><td>5<\/td><th>comment&emsp;<\/th><td>NA&emsp;<\/td><\/tr><tr><td>6<\/td><th>place_name_fac&emsp;<\/th><td>Kenderick Lake Xeriscape Garden&emsp;<\/td><\/tr><tr><td>7<\/td><th>geometry&emsp;<\/th><td>sfc_POLYGON&emsp;<\/td><\/tr><tr><td>8<\/td><th>place_id&emsp;<\/th><td>13&emsp;<\/td><\/tr><tr><td>9<\/td><th>id_row_number&emsp;<\/th><td>13&emsp;<\/td><\/tr><\/table><\/div>"],{"maxWidth":800,"minWidth":50,"autoPan":true,"keepInView":false,"closeButton":true,"closeOnClick":true,"className":""},["native spectrum","native spectrum","native spectrum","native spectrum","native spectrum","native spectrum","native spectrum","native spectrum","high diversity","high diversity","high diversity","high diversity","high diversity"],{"interactive":false,"permanent":false,"direction":"auto","opacity":1,"offset":[0,0],"textsize":"10px","textOnly":false,"className":"","sticky":true},{"stroke":true,"weight":1,"opacity":0.9,"fillOpacity":0.84,"bringToFront":false,"sendToBack":false}]},{"method":"addHomeButton","args":[-105.1910729,39.5492403,-104.7317405,39.7508771,true,"Place category (as polygons)","Zoom to Place category (as polygons)","<strong> Place category (as polygons) <\/strong>","bottomright"]},{"method":"addLayersControl","args":[["CartoDB.Positron","CartoDB.DarkMatter","OpenStreetMap","Esri.WorldImagery","OpenTopoMap"],["Place category (as points)","Place category (as polygons)"],{"collapsed":true,"autoZIndex":true,"position":"topleft"}]},{"method":"addLegend","args":[{"colors":["#4B0055","#FDE333"],"labels":["high diversity","native spectrum"],"na_color":null,"na_label":"NA","opacity":1,"position":"topright","type":"factor","title":"Place category (as polygons)","extra":null,"layerId":null,"className":"info legend","group":"Place category (as polygons)"}]},{"method":"addHomeButton","args":[-105.1910729,39.5492403,-104.7317405,39.7508771,true,null,"Zoom to full extent","<strong>Zoom full<\/strong>","bottomleft"]}],"limits":{"lat":[39.5493338435949,39.7507654528795],"lng":[-105.173330427855,-104.733406286708]},"fitBounds":[39.5492403,-105.1910729,39.7508771,-104.7317405,[]]},"evals":[],"jsHooks":{"render":[{"code":"function(el, x, data) {\n  return (\n      function(el, x, data) {\n      // get the leaflet map\n      var map = this; //HTMLWidgets.find('#' + el.id);\n      // we need a new div element because we have to handle\n      // the mouseover output separately\n      // debugger;\n      function addElement () {\n      // generate new div Element\n      var newDiv = $(document.createElement('div'));\n      // append at end of leaflet htmlwidget container\n      $(el).append(newDiv);\n      //provide ID and style\n      newDiv.addClass('lnlt');\n      newDiv.css({\n      'position': 'relative',\n      'bottomleft':  '0px',\n      'background-color': 'rgba(255, 255, 255, 0.7)',\n      'box-shadow': '0 0 2px #bbb',\n      'background-clip': 'padding-box',\n      'margin': '0',\n      'padding-left': '5px',\n      'color': '#333',\n      'font': '9px/1.5 \"Helvetica Neue\", Arial, Helvetica, sans-serif',\n      'z-index': '700',\n      });\n      return newDiv;\n      }\n\n\n      // check for already existing lnlt class to not duplicate\n      var lnlt = $(el).find('.lnlt');\n\n      if(!lnlt.length) {\n      lnlt = addElement();\n\n      // grab the special div we generated in the beginning\n      // and put the mousmove output there\n\n      map.on('mousemove', function (e) {\n      if (e.originalEvent.ctrlKey) {\n      if (document.querySelector('.lnlt') === null) lnlt = addElement();\n      lnlt.text(\n                           ' lon: ' + (e.latlng.lng).toFixed(5) +\n                           ' | lat: ' + (e.latlng.lat).toFixed(5) +\n                           ' | zoom: ' + map.getZoom() +\n                           ' | x: ' + L.CRS.EPSG3857.project(e.latlng).x.toFixed(0) +\n                           ' | y: ' + L.CRS.EPSG3857.project(e.latlng).y.toFixed(0) +\n                           ' | epsg: 3857 ' +\n                           ' | proj4: +proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +no_defs ');\n      } else {\n      if (document.querySelector('.lnlt') === null) lnlt = addElement();\n      lnlt.text(\n                      ' lon: ' + (e.latlng.lng).toFixed(5) +\n                      ' | lat: ' + (e.latlng.lat).toFixed(5) +\n                      ' | zoom: ' + map.getZoom() + ' ');\n      }\n      });\n\n      // remove the lnlt div when mouse leaves map\n      map.on('mouseout', function (e) {\n      var strip = document.querySelector('.lnlt');\n      if( strip !==null) strip.remove();\n      });\n\n      };\n\n      //$(el).keypress(67, function(e) {\n      map.on('preclick', function(e) {\n      if (e.originalEvent.ctrlKey) {\n      if (document.querySelector('.lnlt') === null) lnlt = addElement();\n      lnlt.text(\n                      ' lon: ' + (e.latlng.lng).toFixed(5) +\n                      ' | lat: ' + (e.latlng.lat).toFixed(5) +\n                      ' | zoom: ' + map.getZoom() + ' ');\n      var txt = document.querySelector('.lnlt').textContent;\n      console.log(txt);\n      //txt.innerText.focus();\n      //txt.select();\n      setClipboardText('\"' + txt + '\"');\n      }\n      });\n\n      }\n      ).call(this.getMap(), el, x, data);\n}","data":null},{"code":"function(el, x, data) {\n  return (function(el,x,data){\n           var map = this;\n\n           map.on('keypress', function(e) {\n               console.log(e.originalEvent.code);\n               var key = e.originalEvent.code;\n               if (key === 'KeyE') {\n                   var bb = this.getBounds();\n                   var txt = JSON.stringify(bb);\n                   console.log(txt);\n\n                   setClipboardText('\\'' + txt + '\\'');\n               }\n           })\n        }).call(this.getMap(), el, x, data);\n}","data":null}]}}</script>
+<div style="page-break-after: always;"></div>
+</div>
+<div id="ndvi-of-native-plants-polygons" class="section level2" number="1.2">
+<h2><span class="header-section-number">1.2</span> NDVI of native-plants polygons</h2>
+<table>
+<caption><span id="tab:unnamed-chunk-1">Table 1.1: </span>NDVI of selected places of varying levels of plant nativity on selected cloud-free summer (May, June, July, August) days over five years (2016-2021)</caption>
+<colgroup>
+<col width="12%" />
+<col width="44%" />
+<col width="8%" />
+<col width="11%" />
+<col width="11%" />
+<col width="11%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Place type</th>
+<th align="left">Place name</th>
+<th align="right">NDVI, mean</th>
+<th align="right">NDVI, 25th-ile</th>
+<th align="right">NDVI, 50th-ile</th>
+<th align="right">NDVI, 75th-ile</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">high diversity</td>
+<td align="left">Chatfield Meadow Restoration</td>
+<td align="right">0.48</td>
+<td align="right">0.47</td>
+<td align="right">0.50</td>
+<td align="right">0.50</td>
+</tr>
+<tr class="even">
+<td align="left">high diversity</td>
+<td align="left">Chatfield Prairie Garden</td>
+<td align="right">0.37</td>
+<td align="right">0.35</td>
+<td align="right">0.37</td>
+<td align="right">0.37</td>
+</tr>
+<tr class="odd">
+<td align="left">high diversity</td>
+<td align="left">City Park Greenhouses</td>
+<td align="right">0.31</td>
+<td align="right">0.27</td>
+<td align="right">0.28</td>
+<td align="right">0.28</td>
+</tr>
+<tr class="even">
+<td align="left">high diversity</td>
+<td align="left">Denver Botanic Gardens Green Roof</td>
+<td align="right">0.34</td>
+<td align="right">0.34</td>
+<td align="right">0.36</td>
+<td align="right">0.36</td>
+</tr>
+<tr class="odd">
+<td align="left">high diversity</td>
+<td align="left">Kenderick Lake Xeriscape Garden</td>
+<td align="right">0.40</td>
+<td align="right">0.36</td>
+<td align="right">0.37</td>
+<td align="right">0.37</td>
+</tr>
+<tr class="even">
+<td align="left">native spectrum</td>
+<td align="left">Denver Botanic Gardens, 100% Native</td>
+<td align="right">0.54</td>
+<td align="right">0.52</td>
+<td align="right">0.55</td>
+<td align="right">0.55</td>
+</tr>
+<tr class="odd">
+<td align="left">native spectrum</td>
+<td align="left">Plains Conservation Center, 100% Native</td>
+<td align="right">0.16</td>
+<td align="right">0.23</td>
+<td align="right">0.26</td>
+<td align="right">0.26</td>
+</tr>
+<tr class="even">
+<td align="left">native spectrum</td>
+<td align="left">Green Mountain Park, 85% Native</td>
+<td align="right">0.42</td>
+<td align="right">0.36</td>
+<td align="right">0.40</td>
+<td align="right">0.40</td>
+</tr>
+<tr class="odd">
+<td align="left">native spectrum</td>
+<td align="left">Hogback along C-470, 75% Native</td>
+<td align="right">0.36</td>
+<td align="right">0.32</td>
+<td align="right">0.35</td>
+<td align="right">0.35</td>
+</tr>
+<tr class="even">
+<td align="left">native spectrum</td>
+<td align="left">Suburban Open Space 1, Chatfield H.S., 50% Native</td>
+<td align="right">0.40</td>
+<td align="right">0.37</td>
+<td align="right">0.41</td>
+<td align="right">0.41</td>
+</tr>
+<tr class="odd">
+<td align="left">native spectrum</td>
+<td align="left">Suburban Open Space 2, Columbine Hills Church, 30% Native</td>
+<td align="right">0.36</td>
+<td align="right">0.26</td>
+<td align="right">0.31</td>
+<td align="right">0.31</td>
+</tr>
+<tr class="even">
+<td align="left">native spectrum</td>
+<td align="left">Denver Botanic Gardens at Chatfield, 10% Native</td>
+<td align="right">0.53</td>
+<td align="right">0.40</td>
+<td align="right">0.54</td>
+<td align="right">0.54</td>
+</tr>
+<tr class="odd">
+<td align="left">native spectrum</td>
+<td align="left">City Park, 0% Native</td>
+<td align="right">0.67</td>
+<td align="right">0.67</td>
+<td align="right">0.70</td>
+<td align="right">0.70</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+<br>
+<br>
+<p>Copyright &copy; 2022 Michael D. Garber </p>
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3,h4",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

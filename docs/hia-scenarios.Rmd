@@ -2,11 +2,7 @@
 title: "Denver green-space health-impact assessment scenarios"
 author: "Drafted by Michael Garber on behalf of the CSU [NATURGREEN](https://source.colostate.edu/csu-one-health-institute-funds-pilot-projects-around-climate-change-and-one-health-theme/) project"
 date: "Revised April 8 2022"
-output: 
-  html_document:
-    toc: true  
-    toc_float: true
-    toc_depth: 4
+output: bookdown::html_document2 #the rest will get picked up from the _site.yml
 bibliography: references.bib
 csl: american-medical-association.csl
 link-citations: true
