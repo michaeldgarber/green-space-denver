@@ -11,8 +11,9 @@ output:
 
 This document presents preliminary analyses characterizing the NDVI of certain places and census tracts throughout the Denver area. 
 
-First, load packages used in this Rmarkdown doc.
+
 ```{r loadpackages, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+#First, load packages used in this Rmarkdown doc.
 library(here)
 library(tidyverse)
 library(sf)
@@ -65,7 +66,7 @@ First, pick a few places where we would expect NDVI to be high in the summer on 
 
 (These areas are defined here: https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/1b_wrangle_check_landsat_ndvi_denver.R)
 
-```{r loadtestareas, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
+```{r loadtestareas, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 load("bbox_evergreen_east.RData")
 load("bbox_indian_tree_golf.RData")
@@ -83,7 +84,7 @@ mv_den_metro_bbox_custom+ mv_evergreen_east + mv_indian_tree_golf + mv_city_park
 
 ### What is NDVI over time for these test places?
 Let's look at the temporal NDVI trend for these three places, without excluding any dates. This is the mean NDVI on that day. That is, each place includes several pixels of size 30 meters squared. This is the average of the NDVI for those pixels for that place on that day.
-```{r testplacesggplot, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
+```{r testplacesggplot, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 load("ndvi_test_places_day_wrangle.RData")
 ndvi_test_places_day_wrangle %>% 
@@ -99,7 +100,7 @@ ndvi_test_places_day_wrangle %>%
 ```
 
 Hmm, if we look closely, we can see that there are some very low NDVI values for some of these places even in the summer, which is not plausible. Those low values must indicate obstruction by clouds. For example, look at a day when NDVI was measured as very low in City Park despite it being mid-May when we would expect it to be higher. So I'm going to exclude dates like these. 
-```{r mapviewbaddate, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
+```{r mapviewbaddate, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 pal_viridis_trunc=viridis::viridis_pal(end=.9) #trunc for truncated
 ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
@@ -144,7 +145,7 @@ places_native_nogeo %>%
 
 
 Map these places by type (nativity spectrum or high-plant diversity).
-```{r mapviewplacesnative, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
+```{r mapviewplacesnative, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 places_native_geo %>% 
   mapview(zcol = "place_type",
           layer.name = "Place category")
@@ -155,7 +156,7 @@ During valid dates only (above).
 
 ### For the places with percent nativity values
 The first set of polygons sent over.
-```{r ggplotndvinative, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
+```{r ggplotndvinative, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 native_places_ndvi_day_nogeo %>% 
   filter(date_is_valid_all==1) %>% 
   filter(place_type == "native spectrum") %>% 
@@ -189,7 +190,7 @@ native_places_ndvi_day_nogeo %>%
 ### For the places with high plant diversity
 This is the second set of polygons sent.
 
-```{r ggplotndvidivers, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
+```{r ggplotndvidivers, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 native_places_ndvi_day_nogeo %>% 
   filter(date_is_valid_all==1) %>% 
   filter(place_type == "high diversity") %>% 
@@ -222,7 +223,7 @@ native_places_ndvi_day_nogeo %>%
 
 ## Graph NDVI against percent nativity
 Among the first set of polygons with values for percent nativity.
-```{r ggplotscatter, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
+```{r ggplotscatter, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 native_places_ndvi_day_nogeo %>% 
   filter(date_is_valid_all==1) %>% 
   filter(place_type == "native spectrum") %>% 
@@ -270,7 +271,7 @@ In this section, we summarize NDVI for census tracts in Denver County. Before ch
 
 
 Here is a map of the median NDVI of the census tracts in the area on 2021-07-04:
-```{r ndvitracts2021-07-04, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE, fig.width=10}
+```{r ndvitracts2021-07-04, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 #4/8/22 note I used to have another code chunk above this one showing a different day (2021-06-10), but the code was breaking.
 library(here)
 setwd(here("data-processed"))
@@ -287,7 +288,7 @@ den_co_tract_ndvi_day_geo %>%
 ```
 
 Here is a histogram of the distribution of median NDVI for these census tracts on June 10, 2021:
-```{r ndvitractshisto2021-06-10, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
+```{r ndvitractshisto2021-06-10, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 den_co_tract_ndvi_day_geo %>% 
   filter(date == "2021-06-10") %>% 
   ggplot(aes(ndvi_med))+
@@ -299,7 +300,7 @@ den_co_tract_ndvi_day_geo %>%
 In this section, we examine the NDVI levels of public green space in this area, including city parks and nature reserves. Please see this code for more details on how we gathered the polygons for the greens spaces: https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_load_denver_osm_parks_water.R
 
 Here are the parks we downloaded:
-```{r parkbytype, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
+```{r parkbytype, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 load("den_jeff_co_green_space_public.RData")
 den_jeff_co_green_space_public %>% 
@@ -308,7 +309,7 @@ den_jeff_co_green_space_public %>%
 
 Like with census tracts, we removed bodies of water from these green spaces before measuring NDVI. 
 Here is the NDVI on June 10, 2021:
-```{r ndviparks2021-06-10, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE, fig.width=10}
+```{r ndviparks2021-06-10, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 load("den_metro_green_space_ndvi_day_geo.RData")
 load("den_jeff_co_geo.RData")

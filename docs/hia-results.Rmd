@@ -111,7 +111,7 @@ This section elaborates on the scenarios and visualizes them with maps.
 
 ### Scenario 1: add native plants to all census block groups
 
-Under the first scenario, which we view as the most ambitious, we consider the expected impact on mortality by applying a green-space intervention to all census block groups, without specifying where. This scenario was informed by conversations with colleagues who stated that
+Under the first scenario, which we view as the most ambitious, we consider the expected impact on mortality by applying a green-space intervention to all census block groups, without specifying where.
 
 We first measured the mean NDVI of each census block group on July 4, 2021. The weighted block-group-level mean is presented here, weighted by the proportion each 30 square-meter pixel covers by the census block group. For example, if half of a pixel overlaps the block group, it receives a weight of 0.5 in the weighted average. We also removed bodies of water before measuring NDVI.
 
