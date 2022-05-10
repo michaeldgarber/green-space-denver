@@ -68,9 +68,11 @@ First, pick a few places where we would expect NDVI to be high in the summer on 
 
 ```{r loadtestareas, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
+getwd()
 load("bbox_evergreen_east.RData")
 load("bbox_indian_tree_golf.RData")
 load("bbox_city_park.RData")
+load("den_metro_bbox_custom.RData")
 mv_evergreen_east = bbox_evergreen_east %>%
   mapview(col.regions = "red",  layer.name = "Evergreen East")
 mv_indian_tree_golf = bbox_indian_tree_golf %>%
@@ -144,11 +146,51 @@ places_native_nogeo %>%
 ```
 
 
+### Map places of interest by type
 Map these places by type (nativity spectrum or high-plant diversity).
-```{r mapviewplacesnative, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
-places_native_geo %>% 
+```{r mapviewplacesnative, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+webshot::install_phantomjs()
+#I need a version that is just points because the polygons are hard to see on the map
+library(here)
+library(tidyverse)
+library(sf)
+library(terra)
+library(raster) 
+library(mapview)
+library(knitr) #to make sure kable works
+library(viridis)
+library(scales)
+library(lubridate) #for ggplot
+setwd(here("data-processed"))
+load("places_native_geo.RData")
+load("places_native_nogeo.RData")
+load("native_places_ndvi_day_nogeo.RData")
+sf::sf_use_s2(FALSE) 
+places_native_geo_points = places_native_geo %>% 
+  st_make_valid() %>% 
+  st_centroid()
+
+mv_places_native_polygons = places_native_geo %>% 
   mapview(zcol = "place_type",
-          layer.name = "Place category")
+          layer.name = "Place category (as polygons)")
+
+mv_places_native_points = places_native_geo_points %>% 
+  mapview(zcol = "place_type",
+          layer.name = "Place category (as points)")
+
+library(leaflet)
+library(leaflet.extras)
+mv_places_polygons_points =mv_places_native_points+
+  mv_places_native_polygons
+
+mv_places_polygons_points@map %>% 
+  addFullscreenControl()
+
+#This works, but I don't need to run every time.
+#setwd(here("results"))
+#getwd()
+#mapshot(mv_places_polygons_points, file = "mv_places_polygons_points.png")
+
 ```
 
 ## Graph NDVI over time for these places

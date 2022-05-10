@@ -4,6 +4,7 @@ author: "Michael D Garber"
 date: "Revised May 3, 2022"
 output: 
   html_document:
+    number_sections: true
     toc: true  
     toc_float: true
     toc_depth: 4
@@ -48,6 +49,7 @@ We aim to estimate the number of premature deaths that would be prevented by the
 We measured existing green space in the City of Denver by the normalized difference vegetation index (NDVI) measured by the Landsat-8 satellite at a spatial resolution of 30 square meters. To define native-plants greenness, we measured the NDVI of several places in Denver (places described in more detail [here](https://michaeldgarber.github.io/green-space-denver/ndvi-of-places-tracts.html#22_Load_places_of_interest)) comprised of various levels of native and adapted plants during cloud-free summer (May, June, July, August) days over five years (2016-2021). Over these days in these areas, the mean NDVI was as low as 0.35 at the Denver Botanic Gardens Green Roof and as high as 0.67 in City Park, which is 0% native and consists of more watered turf. A plot in Denver Botanic Gardens that is 100% native plants had a mean NDVI of 0.54 over these days.
 
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+library(here)
 setwd(here("data-processed"))
 load("places_native_geo.RData")
 load("places_native_nogeo.RData")
@@ -62,9 +64,9 @@ native_places_ndvi_day_nogeo %>%
     ndvi_75th = quantile(ndvi_med, probs =c(0.75), na.rm=TRUE) ) %>% #percentile of medians
   ungroup() %>% 
   knitr::kable(
+    caption = "NDVI of selected places of varying levels of plant nativity on selected cloud-free summer (May, June, July, August) days over five years (2016-2021)",
         col.names = c("Place type", "Place name", "NDVI, mean", "NDVI, 25th-ile", "NDVI, 50th-ile", "NDVI, 75th-ile"),
     digits=2)
-
 ```
 
 To acknowledge the lack of precision in these NDVI estimates and the range of NDVI levels that may correspond to a native-plants intervention, we defined NDVI using the mean of the Denver Botanic Gardens as as the primary analysis and that of the Denver Botanic Gardens Green Roof as an alternative value.

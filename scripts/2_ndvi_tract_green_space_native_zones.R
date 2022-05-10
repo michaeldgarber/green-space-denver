@@ -300,7 +300,8 @@ native_places_ndvi_day_geo %>%
     zcol = "ndvi_mean_wt" 
   )
 
-## ggplot - line graph of NDVI over time with median, 25th, and 75th as ribbon by area-------
+## ggplot - line graph of NDVI over time with median, 
+#25th, and 75th as ribbon by area-------
 library(scales)
 names(native_places_ndvi_day_nogeo)
 table(native_places_ndvi_day_nogeo$place_type)
