@@ -28,3 +28,6 @@ vignettes/*.pdf
 .Renviron
 data-processed
 green-space-denver.Rproj
+.DS_Store
+.gitignore
+/site_libs/.DS_Store
