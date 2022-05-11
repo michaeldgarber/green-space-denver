@@ -1,9 +1,9 @@
 ---
 title: "green-space-denver"
-output:
-  html_document:
-    highlight: textmate
-    include:
+output: 
+  bookdown::html_document2:
+    toc: FALSE #overwrite the _yml
+    include: 
       after_body: footer.html
 ---
 

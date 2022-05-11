@@ -59,6 +59,7 @@ native_places_ndvi_day_nogeo %>%
     ndvi_75th = quantile(ndvi_med, probs =c(0.75), na.rm=TRUE) ) %>% #percentile of medians
   ungroup() %>% 
   knitr::kable(
+         booktabs = TRUE,
     caption = "NDVI of selected places of varying levels of plant nativity on selected cloud-free summer (May, June, July, August) days over five years (2016-2021)",
         col.names = c("Place type", "Place name", "NDVI, mean", "NDVI, 25th-ile", "NDVI, 50th-ile", "NDVI, 75th-ile"),
     digits=2)
@@ -112,7 +113,8 @@ Under the first scenario, which we view as the most ambitious, we consider the e
 
 We first measured the mean NDVI of each census block group on July 4, 2021. The weighted block-group-level mean is presented here, weighted by the proportion each 30 square-meter pixel covers by the census block group. For example, if half of a pixel overlaps the block group, it receives a weight of 0.5 in the weighted average. We also removed bodies of water before measuring NDVI.
 
-```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE, fig.cap = "Scenario 1"}
+#update may 11 2022 to add figure caption
 setwd(here("data-processed"))
 load("den_co_bg_ndvi_geo.RData") #updated april 18 2022
 #names(den_co_bg_ndvi_geo)
@@ -491,6 +493,8 @@ hia_all_overall %>%
     starts_with("area_mi2_bg_int_res"),
     starts_with("pop_affected")) %>%
   knitr::kable(
+    caption = "Population affected, cumulative area of the treatment, and the cumulative area of the 500 m residential buffer surrounding the treatment under each scenario",
+    booktabs = TRUE,
     col.names = c(
       "Scenario", "Sub-scenario", 
       "NDVI, native",
@@ -522,6 +526,8 @@ hia_all_overall %>%
     deaths_prevented, deaths_prevented_ll, deaths_prevented_ul, #have to hard code
     starts_with("deaths_prevented_per_pop_10")) %>%
   knitr::kable(
+     booktabs = TRUE,
+        caption = "Under each scenario, the estimated number of deaths prevented and the number of deaths prevented per 100,000 people affected",
     col.names = c(
       "Scenario", "Sub-scenario", 
       "NDVI, native",
