@@ -89,7 +89,7 @@ extract_wrangle_ndvi_over_time= function(df1, df2){
     ) %>% 
     rename(
       wt_area = weight, #the area weight, as a proportion
-      id_row_number = ID #make less ambiguous but general enough to shaer between this and parks
+      id_row_number = ID #make less ambiguous but general enough to share between this and parks
     ) %>% 
     mutate(
       ndvi_wt_int = ndvi*wt_area, #for use in the weighted average

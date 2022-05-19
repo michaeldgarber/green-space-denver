@@ -95,6 +95,9 @@ lookup_tract_nbhd_northeast_exclude = den_metro_tract_no_wtr_geo %>%
   distinct(tract_fips, nbhd_northeast_exclude) %>% 
   as_tibble()
 lookup_tract_nbhd_northeast_exclude
+save(lookup_tract_nbhd_northeast_exclude,
+     file = "lookup_tract_nbhd_northeast_exclude.RData")
+
 #### tracts--------
 den_co_tract_no_wtr_filtered_geo = den_metro_tract_no_wtr_geo %>% 
   filter(county_fips == "031") %>% 
@@ -548,8 +551,10 @@ lookup_equity_cumsum_area
 ## Define scenarios akin to scenario 1 for eventual rbinding----------
 ### Define each sub-scenario-------------
 #One each for 20 percent and one for 30 percent and for CDPHE definition and City of Denver definition
+
+
 thirty_percent_area_study_area
-equity_bg_cdphe_alt_30_nogeo = den_co_bg_ndvi_geo %>% 
+equity_bg_cdphe_alt_100_30_nogeo = den_co_bg_ndvi_geo %>% 
   st_set_geometry(NULL) %>% 
   as_tibble() %>% 
   left_join(lookup_equity_cumsum_area, by = "bg_fips") %>% 
@@ -558,9 +563,9 @@ equity_bg_cdphe_alt_30_nogeo = den_co_bg_ndvi_geo %>%
     prop_area_tx = .3, #what proportion of the area (all study area)
     prop_tx_itself_veg=1,#of the area of the actual treatment, what proportion is treated?
     scenario = "all-bg-equity",
-    scenario_sub = "cdphe-def-30-pct" ) 
+    scenario_sub = "cdphe-def-100-pct-30-pct" ) #in contrast to below, 100 percent of 30 percent
 
-equity_bg_cdphe_alt_20_nogeo = den_co_bg_ndvi_geo %>% 
+equity_bg_cdphe_alt_100_20_nogeo = den_co_bg_ndvi_geo %>% 
   st_set_geometry(NULL) %>% 
   as_tibble() %>% 
   left_join(lookup_equity_cumsum_area, by = "bg_fips") %>% 
@@ -569,9 +574,9 @@ equity_bg_cdphe_alt_20_nogeo = den_co_bg_ndvi_geo %>%
     prop_area_tx = .2, #what proportion of the area (all study area)
     prop_tx_itself_veg=1,#of the area of the actual treatment, what proportion is treated?
     scenario = "all-bg-equity",
-    scenario_sub = "cdphe-def-20-pct" ) 
+    scenario_sub = "cdphe-def-100-pct-20-pct" ) 
 
-equity_nbhd_denver_alt_30_nogeo = den_co_bg_ndvi_geo %>% 
+equity_nbhd_denver_alt_100_30_nogeo = den_co_bg_ndvi_geo %>% 
   st_set_geometry(NULL) %>% 
   as_tibble() %>% 
   left_join(lookup_equity_cumsum_area, by = "bg_fips") %>% 
@@ -580,9 +585,9 @@ equity_nbhd_denver_alt_30_nogeo = den_co_bg_ndvi_geo %>%
     prop_area_tx = .3, #what proportion of the area (all study area)
     prop_tx_itself_veg=1,#of the area of the actual treatment, what proportion is treated?
     scenario = "all-bg-equity",
-    scenario_sub = "denver-def-30-pct" ) 
+    scenario_sub = "denver-def-100-pct-30-pct" ) 
 
-equity_nbhd_denver_alt_20_nogeo = den_co_bg_ndvi_geo %>% 
+equity_nbhd_denver_alt_100_20_nogeo = den_co_bg_ndvi_geo %>% 
   st_set_geometry(NULL) %>% 
   as_tibble() %>% 
   left_join(lookup_equity_cumsum_area, by = "bg_fips") %>% 
@@ -591,15 +596,69 @@ equity_nbhd_denver_alt_20_nogeo = den_co_bg_ndvi_geo %>%
     prop_area_tx = .2, #what proportion of the area (all study area)
     prop_tx_itself_veg=1,#of the area of the actual treatment, what proportion is treated?
     scenario = "all-bg-equity",
-    scenario_sub = "denver-def-20-pct" ) 
+    scenario_sub = "denver-def-100-pct-20-pct" ) 
+
+
+#Update May 19 2022
+#I'm adding scenarios here that do not assume that of the treated areas that 100% would be treated,
+#as that doesn't seem feasible; use all four
+#note the only change is in the value for prop_tx_itself_veg
+equity_bg_cdphe_alt_30_30_nogeo = den_co_bg_ndvi_geo %>% #double 30 is intentional; compare w above
+  st_set_geometry(NULL) %>% 
+  as_tibble() %>% 
+  left_join(lookup_equity_cumsum_area, by = "bg_fips") %>% 
+  filter(area_mi2_cumsum_equity_bg_cdphe<thirty_percent_area_study_area) %>% 
+  mutate(
+    prop_area_tx = .3, #what proportion of the area (all study area)
+    prop_tx_itself_veg=.3,#of the area of the actual treatment, what proportion is treated?
+    scenario = "all-bg-equity",
+    scenario_sub = "cdphe-def-30-pct-30-pct" ) #30 percent of 30 percent of land, in contrast with above
+
+equity_bg_cdphe_alt_20_20_nogeo = den_co_bg_ndvi_geo %>% 
+  st_set_geometry(NULL) %>% 
+  as_tibble() %>% 
+  left_join(lookup_equity_cumsum_area, by = "bg_fips") %>% 
+  filter(area_mi2_cumsum_equity_bg_cdphe<twenty_percent_area_study_area) %>% 
+  mutate(
+    prop_area_tx = .2, #what proportion of the area (all study area)
+    prop_tx_itself_veg=.2,#of the area of the actual treatment, what proportion is treated?
+    scenario = "all-bg-equity",
+    scenario_sub = "cdphe-def-20-pct-20-pct" ) 
+
+equity_nbhd_denver_alt_30_30_nogeo = den_co_bg_ndvi_geo %>% 
+  st_set_geometry(NULL) %>% 
+  as_tibble() %>% 
+  left_join(lookup_equity_cumsum_area, by = "bg_fips") %>% 
+  filter(area_mi2_cumsum_equity_nbhd_denver<thirty_percent_area_study_area) %>% 
+  mutate(
+    prop_area_tx = .3, #what proportion of the area (all study area)
+    prop_tx_itself_veg=.3,#of the area of the actual treatment, what proportion is treated?
+    scenario = "all-bg-equity",
+    scenario_sub = "denver-def-30-pct-30-pct" ) 
+
+equity_nbhd_denver_alt_20_20_nogeo = den_co_bg_ndvi_geo %>% 
+  st_set_geometry(NULL) %>% 
+  as_tibble() %>% 
+  left_join(lookup_equity_cumsum_area, by = "bg_fips") %>% 
+  filter(area_mi2_cumsum_equity_nbhd_denver<twenty_percent_area_study_area) %>% 
+  mutate(
+    prop_area_tx = .2, #what proportion of the area (all study area)
+    prop_tx_itself_veg=.2,#of the area of the actual treatment, what proportion is treated?
+    scenario = "all-bg-equity",
+    scenario_sub = "denver-def-20-pct-20-pct" ) 
+
 
 ### Combine them-----------
 map_over_native_ndvi_all_bg_equity = function(ndvi_native_threshold_val){
-  df = equity_bg_cdphe_alt_30_nogeo %>% 
+  df = equity_bg_cdphe_alt_30_30_nogeo %>% 
     bind_rows(
-      equity_bg_cdphe_alt_20_nogeo,
-      equity_nbhd_denver_alt_30_nogeo,
-      equity_nbhd_denver_alt_20_nogeo
+      equity_bg_cdphe_alt_20_20_nogeo,
+      equity_nbhd_denver_alt_30_30_nogeo,
+      equity_nbhd_denver_alt_20_20_nogeo,
+      equity_bg_cdphe_alt_100_30_nogeo,
+      equity_bg_cdphe_alt_100_20_nogeo,
+      equity_nbhd_denver_alt_100_30_nogeo,
+      equity_nbhd_denver_alt_100_20_nogeo
     ) %>% 
     mutate(
       #add the native-plants NDVI value here instead of above so I can loop it through

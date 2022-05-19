@@ -847,7 +847,7 @@ tract_and_bg_wrangle <-function(df){
       race_b_prop = race_b/race_tot,
       race_h_prop = race_h/race_tot, 
       race_nw_prop = 1-race_w_prop, #nw for nonwhite (i.e, 1-white)
-      race_o_prop = 1-race_b_prop - race_w_prop,
+      race_o_prop = 1-(race_b_prop + race_w_prop +race_h_prop),
       
       pov_last_12_prop = pov_last_12/pov_last_12_tot, #percent poverty
       

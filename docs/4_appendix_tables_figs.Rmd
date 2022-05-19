@@ -1,7 +1,7 @@
 ---
-title: "NATURGREEN results tables-figures-supplement"
+title: "Supplemental tables & figures for NATURGREEN paper"
 author: "Michael D Garber"
-date: '2022-05-10'
+date: '2022-05-19'
 #always_allow_html: true
 #note word doesn't seem to render unless I render the whole site ()rmarkdown::render_site(encoding = 'UTF-8')
 output:
@@ -17,16 +17,154 @@ output:
 
 Filename: 4_appendix_tables_figs
 
-The purpose of this script is to output tables and  figures that can be pasted into the Word Doc of the manuscript.
-I'm separating this from the supplement because I will render the supplement to html until Word or PDF is needed.
+The purpose of this is to output tables and  figures for the appendix.
+Eventually, this could be rendered as a Word Doc or PDF for an appendix corresponding to a submitted manuscript. 
+For now, it's simpler to keep as an html.
 
+# Study area demographics
 
-Divide the paper into those used for the main text and those used for the supplement.
+## Table of total population, population density, age, race, and poverty of study area
+
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+library(here)
+library(tidyverse)
+library(mapview)
+library(sf)
+#all of this info is created here:
+#scripts/0_import_manage_denver_acs.R
+setwd(here("data-processed"))
+load("lookup_tract_nbhd_northeast_exclude.RData")
+load("den_tract_acs5_wrangle_geo.RData")
+#names(den_tract_acs5_wrangle_geo)
+#use tract-level data for the overall table
+den_tract_acs5_wrangle_geo %>% 
+  filter(county_fips=="031") %>% 
+  left_join(lookup_tract_nbhd_northeast_exclude, by = "tract_fips") %>% 
+  filter(nbhd_northeast_exclude==0) %>% 
+  st_set_geometry(NULL) %>% 
+  group_by(county_fips) %>% 
+  summarise(
+    area_mi2 = sum(area_mi2_tract, na.rm=TRUE),
+    pop_tot = sum(pop_tot, na.rm=TRUE),
+    
+    age_med = median(age_med , na.rm=TRUE),
+    hh_inc_med = median(hh_inc_med, na.rm=TRUE),
+    
+    race_tot = sum(race_tot, na.rm=TRUE),
+    race_w = sum(race_w, na.rm=TRUE),
+    race_h = sum(race_h, na.rm=TRUE),
+    race_b = sum(race_b, na.rm=TRUE),
+    
+    pov_last_12 = sum(pov_last_12, na.rm=TRUE),
+    pov_last_12_tot = sum(pov_last_12_tot, na.rm=TRUE),
+
+  ) %>% 
+  ungroup() %>% 
+  mutate(
+    pop_dens_mi2 = pop_tot/area_mi2,
+    race_w_prop = race_w/race_tot,           #prop for proportion
+    race_b_prop = race_b/race_tot,
+    race_h_prop = race_h/race_tot, 
+    race_nw_prop = 1-race_w_prop, #nw for nonwhite (i.e, 1-white)
+    race_o_prop = 1-(race_b_prop + race_w_prop +race_h_prop),
+    
+    pov_last_12_prop = pov_last_12/pov_last_12_tot  #percent poverty
+  ) %>% 
+  dplyr::select(
+    area_mi2, pop_tot, pop_dens_mi2, race_w_prop, race_b_prop, race_h_prop, race_o_prop,
+    age_med,
+    pov_last_12_prop,
+    hh_inc_med
+  ) %>% 
+  pivot_longer(
+    cols = everything(),
+    names_to = "Measure"
+    ) %>% 
+  knitr::kable(digits = 2)
+
+```
+
+## Map population density by block group
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+#scripts/0_import_manage_denver_acs.R
+setwd(here("data-processed"))
+load("lookup_tract_nbhd_northeast_exclude.RData")
+load("den_bg_acs5_wrangle_geo.RData")
+den_bg_acs5_wrangle_geo %>% 
+  filter(county_fips=="031") %>% 
+  left_join(lookup_tract_nbhd_northeast_exclude, by = "tract_fips") %>% 
+  filter(nbhd_northeast_exclude==0) %>% 
+  dplyr::select(ends_with( "fips"), contains("pop_dens")) %>% 
+  mapview(
+    layer.name = "Population density per square mile",
+    zcol = "pop_dens_mi2_all")
+```
+
+## Map median age by census tract
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("lookup_tract_nbhd_northeast_exclude.RData")
+load("den_bg_acs5_wrangle_geo.RData")
+load("den_tract_acs5_wrangle_geo.RData")
+den_tract_acs5_wrangle_geo %>% 
+  filter(county_fips=="031") %>% 
+  left_join(lookup_tract_nbhd_northeast_exclude, by = "tract_fips") %>% 
+  filter(nbhd_northeast_exclude==0) %>% 
+  dplyr::select(ends_with( "fips"), contains("age")) %>% 
+  mapview(
+    layer.name = "Median age",
+    zcol = "age_med")
+```
+
+## Map race (proportion non-white) by census tract
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("lookup_tract_nbhd_northeast_exclude.RData")
+load("den_tract_acs5_wrangle_geo.RData")
+den_tract_acs5_wrangle_geo %>% 
+  filter(county_fips=="031") %>% 
+  left_join(lookup_tract_nbhd_northeast_exclude, by = "tract_fips") %>% 
+  filter(nbhd_northeast_exclude==0) %>% 
+  dplyr::select(ends_with( "fips"), contains("race")) %>% 
+  mapview(
+    layer.name = "Proportion non-white race",
+    zcol = "race_nw_prop")
+```
+
+## Map percent in poverty in last 12 months by census tract
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("lookup_tract_nbhd_northeast_exclude.RData")
+load("den_tract_acs5_wrangle_geo.RData")
+den_tract_acs5_wrangle_geo %>% 
+  filter(county_fips=="031") %>% 
+  left_join(lookup_tract_nbhd_northeast_exclude, by = "tract_fips") %>% 
+  filter(nbhd_northeast_exclude==0) %>% 
+  dplyr::select(ends_with( "fips"), contains("pov")) %>% 
+  mapview(
+    layer.name = "Proportion in poverty, last year",
+    zcol = "pov_last_12_prop")
+```
+
+## Map median household income by census tract
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("lookup_tract_nbhd_northeast_exclude.RData")
+load("den_tract_acs5_wrangle_geo.RData")
+den_tract_acs5_wrangle_geo %>% 
+  filter(county_fips=="031") %>% 
+  left_join(lookup_tract_nbhd_northeast_exclude, by = "tract_fips") %>% 
+  filter(nbhd_northeast_exclude==0) %>% 
+  dplyr::select(ends_with( "fips"), contains("hh_inc")) %>% 
+  mapview(
+    layer.name = "Median household income",
+    zcol = "hh_inc_med")
+```
 
 # Native-plants polygons
 
 ## Map of native-plants polygons
-```{r mapviewplacesnative, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 #I need a version that is just points because the polygons are hard to see on the map
 library(here)
 library(tidyverse)
