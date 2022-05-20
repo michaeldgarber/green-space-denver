@@ -52,7 +52,7 @@ bootstrap_hia = function(s_id_val){
 
 # Run bootstrap function----------
 #run the function x times; 500 reaches memory limit. 200 is fine. don't save the data frame because it's huge
-n_boot_reps = 200
+n_boot_reps = 20
 s_id_val_list <- seq(from = 1, to = n_boot_reps, by = 1)
 
 hia_all_boot  = s_id_val_list %>% 
@@ -62,6 +62,7 @@ hia_all_boot  = s_id_val_list %>%
     starts_with("ndvi_native_threshold"),
     starts_with("pop"), starts_with("area"), contains("area"),
     contains("ndvi"), contains("drf"), starts_with("rr"), starts_with("paf"), 
+    starts_with("equity"),
     starts_with("attrib"),
     everything())
 
@@ -75,9 +76,10 @@ summary(hia_all_boot$drf_est)
 ### Summarize overall-----------
 hia_all_overall_s = hia_all_boot %>% 
   filter(ndvi_below_native_threshold==1) %>% 
-  group_by(s_id, scenario, scenario_sub, ndvi_native_threshold) %>% 
+  group_by(s_id, scenario, scenario_sub, ndvi_native_threshold, equity_bg_cdphe_tertile_den) %>% 
   summarise_ungroup_hia() %>% #function created in scripts/3_HIA_for_each_scenario.R
-  group_by( scenario, scenario_sub, ndvi_native_threshold) %>% #summarize over sample id and take percentiles
+  #summarize over sample id and take percentiles
+  group_by( scenario, scenario_sub, ndvi_native_threshold, equity_bg_cdphe_tertile_den) %>% 
   summarise(
     pop_affected_ll = quantile(pop_affected, probs =c(0.025), na.rm=TRUE),
     pop_affected_ul = quantile(pop_affected, probs =c(0.975), na.rm=TRUE),
@@ -94,9 +96,11 @@ hia_all_overall_s = hia_all_boot %>%
   dplyr::select(
     contains("scenario"), 
     starts_with("ndvi_native_threshold"),
+    starts_with("equity_bg_cdphe"),
     starts_with("pop"), 
-    starts_with("death"),
     starts_with("area"),
+    starts_with("ndvi"), 
+    starts_with("death"),
     everything())
 
   

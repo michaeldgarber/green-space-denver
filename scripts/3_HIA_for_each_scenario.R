@@ -9,8 +9,10 @@ library(leaflet)
 library(leaflet.extras)
 setwd(here("data-processed"))
 
-#major revision april 14 2022 to make scenario datasets long form
+#Major revision april 14 2022 to make scenario datasets long form
 # code is less repetitive and will be easier to bootstrap
+# Update May 20 2022 to remove the equity-focused scenario and instead
+# will plan to stratify all scenarios by equity
 
 #This code should
 #-extract baseline NDVI for each polygon
@@ -243,9 +245,10 @@ mutate_ndvi_diff_bg_itself = function(df){
         ndvi_below_native_threshold == 0 ~ "No"
       ),
       prop_area_comp = 1-prop_area_tx, #paradoxically, take 1 minus this now
-      ndvi_alt_avg = prop_area_tx*ndvi_native_threshold+(1-prop_area_tx)*ndvi_mean_wt,
+      #renamed may 20 2022 from ndvi_alt_avg. i use ndvi_mean elsewhere, so this is more consistent.
+      ndvi_mean_alt = prop_area_tx*ndvi_native_threshold+(1-prop_area_tx)*ndvi_mean_wt,
       ndvi_quo = ndvi_mean_wt, #rename this to _quo to be consistent with other scenarios
-      ndvi_diff = ndvi_alt_avg-ndvi_quo
+      ndvi_diff = ndvi_mean_alt-ndvi_quo
   )
 }
 
@@ -1209,7 +1212,7 @@ nrow(den_bg_int_wtr_50ft_ndvi_nogeo)
 #all of the variables that are used to calculate ndvi_diff
 mutate_ndvi_diff_bg_int = function(df){
   df %>% 
-    #update: take the ndvi_alt_avg definition out of this because it will vary
+    #update: take the ndvi_mean_alt definition out of this because it will vary
     #based on the intervention. for example, sometimes we will need to assume that only 50%
     #of the intervened-upon area is affected, so we will multiply the threshold value by .5
     #and take a weighted average with the existing NDVI
@@ -1222,7 +1225,7 @@ mutate_ndvi_diff_bg_int = function(df){
 
       #calculate weighted average NDVI of alternative scenario based on area
       #renaming average to emphasize that this is the version that averages the comp area as well
-      ndvi_alt_avg = 
+      ndvi_mean_alt = 
         case_when(
           ndvi_alt_tx_only>0 ~prop_area_comp*ndvi_mean_wt_comp+prop_area_tx*ndvi_alt_tx_only, 
           TRUE ~ndvi_mean_wt_res #otherwise, it's just the full res buffer
@@ -1235,7 +1238,7 @@ mutate_ndvi_diff_bg_int = function(df){
       #that suggests we need to re-calculate
       #the weighted average at baseline and instead of using ndvi_mean_wt_res for the status quo
       #calculate a new status-quo weighted average using the areal proportions
-      #use quo for status quo; avoid sq because it could be squared
+      #use quo for status quo; avoid using sq for nomenclature because it could mean squared
       
       #update 4/15/22
       #this has to be conditional based on whether treatment-area NDVI is non-missing
@@ -1247,7 +1250,7 @@ mutate_ndvi_diff_bg_int = function(df){
       #now we can calculate the linear exposure difference between those values
       #and the baseline mean NDVI in the 500 m buffer. use ndvi_diff as done above
       ##alternative minus baseline
-      ndvi_diff = ndvi_alt_avg - ndvi_quo
+      ndvi_diff = ndvi_mean_alt - ndvi_quo
     )
 }
 
@@ -2440,6 +2443,10 @@ hia_all  = den_co_bg_ndvi_alt_all_nogeo %>% #scenario all bg
   ) %>% #link pop data here
   #make sure tract_fips and county_fips aren't here
   dplyr::select(-contains("tract_fips"), -contains("county_fips")) %>% 
+  #add equity indices to all scenarios but before I do that,
+  #remove variables that may duplicate and get in the way
+  dplyr::select(-starts_with("equity"), -starts_with("nbhd"), -starts_with("bg_fips_2019")) %>% 
+  link_equity_indices() %>% #defined above
   left_join(den_co_bg_sex_age_gbd_wrangle, by = "bg_fips") %>% 
   mutate(
     pop_affected = case_when(
@@ -2523,33 +2530,57 @@ save(lookup_scenario_sort_order, file = "lookup_scenario_sort_order.RData")
 #write a function for the summarise since it's used so often
 summarise_ungroup_hia = function(df){
   df %>% 
+    #before summarizing, I have to calculate intermediate terms for the weighted average
+    #of NDVI
+    mutate(
+      #re-calculate weighted average ndvi - baseline and alternate
+      ndvi_mean_alt_int = ndvi_mean_alt*area_mi2_bg_int_res,
+      ndvi_quo_int = ndvi_quo*area_mi2_bg_int_res
+    ) %>% 
     summarise(
       pop_affected = sum(pop_affected, na.rm=TRUE),
       attrib_d = sum(attrib_d, na.rm=TRUE),
       deaths_prevented = sum(deaths_prevented, na.rm=TRUE),
-      area_mi2_bg_int_tx = sum(area_mi2_bg_int_tx, na.rm=TRUE),
-      area_mi2_bg_int_res = sum(area_mi2_bg_int_res, na.rm=TRUE)
+      area_mi2_bg_int_tx = sum(area_mi2_bg_int_tx, na.rm=TRUE), #treatment area
+      
+      #recall, area_mi2_bg_int_res also works for the block-group-level ones
+      area_mi2_bg_int_res = sum(area_mi2_bg_int_res, na.rm=TRUE), #residential buffer area
+      
+      #sum these products before computing the weighted average below
+      ndvi_mean_alt_int = sum(ndvi_mean_alt_int, na.rm=TRUE),
+      ndvi_quo_int = sum(ndvi_quo_int, na.rm=TRUE)
     ) %>% 
     ungroup() %>% 
-    mutate(#this has to be in its own separate mutate by order of operations
+    mutate(
+      ndvi_mean_alt =ndvi_mean_alt_int/area_mi2_bg_int_res, #weighted mean
+      ndvi_quo =ndvi_quo_int/area_mi2_bg_int_res, #weighted mean
+      ndvi_diff = ndvi_mean_alt-ndvi_quo, #useful to keep
+      
+      #this has to be in its own separate mutate by order of operations
       deaths_prevented_per_pop = deaths_prevented/pop_affected,
       deaths_prevented_per_pop_100k = deaths_prevented_per_pop*100000
     ) 
 }
+
+names(hia_all)
+
 hia_all_overall = hia_all %>% 
-  filter(ndvi_below_native_threshold==1) %>% 
-  group_by(scenario, scenario_sub, ndvi_native_threshold) %>% 
+  filter(ndvi_below_native_threshold==1) %>% #grouping by equity category here
+  group_by(scenario, scenario_sub, ndvi_native_threshold, equity_bg_cdphe_tertile_den) %>% 
   summarise_ungroup_hia() %>% 
   left_join(lookup_scenario_sort_order, by = c("scenario", "scenario_sub")) %>% 
   arrange(scenario_sort_order) %>% 
   dplyr::select(
     contains("scenario"), 
     starts_with("ndvi_native_threshold"),
+    starts_with("equity_bg_cdphe"),
     starts_with("pop"), 
-    starts_with("death"),
     starts_with("area"),
+    starts_with("ndvi"), 
+    starts_with("death"),
     everything())
 
+View(hia_all_overall)
 hia_all_overall
 setwd(here("data-processed"))
 save(hia_all_overall, file = "hia_all_overall.RData")
