@@ -13,13 +13,14 @@ output:
     toc_depth: 4
     include: 
       after_body: footer.html
+bibliography: references.bib
+csl: american-medical-association.csl
+link-citations: true
 ---
 
 Filename: 4_appendix_tables_figs
 
-The purpose of this is to output tables and  figures for the appendix.
-Eventually, this could be rendered as a Word Doc or PDF for an appendix corresponding to a submitted manuscript. 
-For now, it's simpler to keep as an html.
+The purpose of this is to output tables and figures for the appendix. Eventually, this could be rendered as a Word Doc or PDF for an appendix corresponding to a submitted manuscript. For now, it's simpler to keep as an html.
 
 # Denver demographics
 
@@ -88,6 +89,7 @@ den_tract_acs5_wrangle_geo %>%
 ```
 
 ## Map population density by block group
+
 ```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 #scripts/0_import_manage_denver_acs.R
 setwd(here("data-processed"))
@@ -104,6 +106,7 @@ den_bg_acs5_wrangle_geo %>%
 ```
 
 ## Map median age by census tract
+
 ```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 load("lookup_tract_nbhd_northeast_exclude.RData")
@@ -120,6 +123,7 @@ den_tract_acs5_wrangle_geo %>%
 ```
 
 ## Map race (proportion non-white) by census tract
+
 ```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 load("lookup_tract_nbhd_northeast_exclude.RData")
@@ -135,6 +139,7 @@ den_tract_acs5_wrangle_geo %>%
 ```
 
 ## Map percent in poverty in last 12 months by census tract
+
 ```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 load("lookup_tract_nbhd_northeast_exclude.RData")
@@ -150,6 +155,7 @@ den_tract_acs5_wrangle_geo %>%
 ```
 
 ## Map median household income by census tract
+
 ```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 load("lookup_tract_nbhd_northeast_exclude.RData")
@@ -167,6 +173,7 @@ den_tract_acs5_wrangle_geo %>%
 # Native-plants polygons
 
 ## Map of native-plants polygons
+
 ```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 #I need a version that is just points because the polygons are hard to see on the map
 library(here)
@@ -174,7 +181,7 @@ library(tidyverse)
 library(sf)
 library(terra)
 library(raster) 
-library(mapview)
+library(mapview) 
 library(knitr) #to make sure kable works
 library(viridis)
 library(scales)
@@ -209,6 +216,7 @@ mv_places_polygons_points@map %>%
 \newpage
 
 ## NDVI of native-plants polygons
+
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 library(here)
 library(tidyverse)
@@ -235,10 +243,75 @@ native_places_ndvi_day_nogeo %>%
     digits=2)
 ```
 
+# Equity indices
+
+Both the State of Colorado and the City of Denver have created equity indices to guide their work. The Colorado Department of Public Health & Environment (CDPHE) describes their equity index here[@cdphe2021] and makes the index available for download here.[@cdphe] The City of Denver Department of Public Health & Environment (DDPHE) describes the neighborhood-level equity index here[@ddphe] and makes the data available for download here.[@denver]
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE, fig.cap = "Comparing equity indices"}
+library(scales)
+setwd(here("data-processed"))
+load("den_equity_ind_2020.RData") #updated april 18 2022
+load("cdphe_equity_geo.RData")
+mv_cdphe_equity_den_tertile =  cdphe_equity_geo %>% 
+  filter(county_fips == "031") %>% 
+  mapview(
+    layer.name = "Equity Index, CDPHE, tertile",
+    zcol = "equity_bg_cdphe_tertile_den",
+    col.regions = viridis_pal(direction = -1) #flip scale
+    )
+
+mv_den_equity_ind_tertile = den_equity_ind_2020 %>% 
+  mapview(
+    layer.name = "Equity Index, Denver, tertile",
+    zcol = "equity_nbhd_denver_tertile",
+    col.regions = viridis_pal(direction = 1) #don't flip scale
+    
+    )
+mv_equity_both = mv_den_equity_ind_tertile + mv_cdphe_equity_den_tertile
+library(leaflet.extras)
+mv_equity_both@map %>% 
+  addFullscreenControl()
+```
+
+Chi-square comparing tertiles of CDPHE Equity Index vs City of Denver Equity Index
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+#to keep consistent, using exact same function used in 3_hia_for_each_scenario
+link_equity_indices= function(df){
+  df %>% 
+    left_join(lookup_colorado_bg_tract, by = "bg_fips") %>% #2020 ok
+    left_join(lookup_den_nbhd_tract, by = "tract_fips") %>%  
+    left_join(lookup_equity_nbhd_denver, by = "nbhd_id") %>% 
+    rename(bg_fips_2020 = bg_fips) %>%   
+    left_join(lookup_colorado_bg_2020_vs_2019_nogeo, by = "bg_fips_2020") %>% 
+    left_join(lookup_equity_bg_cdphe_2019, by = "bg_fips_2019") %>% 
+    rename(bg_fips = bg_fips_2020)      #change name back
+}
+
+setwd(here("data-processed"))
+load("den_bg_acs5_wrangle_geo.RData")
+load("lookup_colorado_bg_tract.RData")
+load("lookup_den_nbhd_tract.RData") #neighborhood ids in denver linked to tracts
+load("lookup_equity_nbhd_denver.RData")
+load("lookup_colorado_bg_2020_vs_2019_nogeo.RData")
+load("lookup_equity_bg_cdphe_2019.RData")
+compare_tertiles = den_bg_acs5_wrangle_geo %>% 
+  dplyr::select(bg_fips, county_fips, geometry) %>% 
+  link_equity_indices() %>% 
+  filter(county_fips == "031") %>% 
+  dplyr::select(contains("fips"), contains("equity")) %>% 
+  st_set_geometry(NULL)
+
+compare_tertiles_chisq = chisq.test(table(
+  compare_tertiles$equity_bg_cdphe_tertile_den, compare_tertiles$equity_nbhd_denver_tertile)
+)
+
+compare_tertiles_chisq
+```
+
 # Visualization of scenarios
-Note to self:
-This section is mostly copied from
-~green-space-denver/docs/hia-results.Rmd
+
+Note to self: This section is mostly copied from \~green-space-denver/docs/hia-results.Rmd
 
 ## Scenario 1: add native plants to all census block groups
 
@@ -299,65 +372,7 @@ mv_both_thresholds@map %>%
   addFullscreenControl()
 ```
 
-## Scenario 2: add native plants prioritizing census block groups with most health-equity need
-
-Under this set of scenarios, we assumed we had a "budget" of greening of either 30% or 20% of Denver's area, and we applied that budget to those with most need from a health-equity standpoint based on the CDPHE and DDPHE definitions, described above. As the below maps show, the two health-equity definitions from the State and from the City overlap considerably.
-
-### Restricting to 30% of the study area, prioritizing block groups of greatest need according to two health-equity definitions
-
-```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
-library(viridis)
-setwd(here("data-processed"))
-load("den_co_bg_equity_sorted.RData")
-load("thirty_percent_area_study_area.RData")
-load("twenty_percent_area_study_area.RData")
-mv_equity_nbhd_denver_first_thirty=den_co_bg_equity_sorted %>% 
-  filter(area_mi2_cumsum_equity_nbhd_denver<thirty_percent_area_study_area) %>% 
-  mapview(
-    layer.name = "Equity, City of Denver; lower is worse off",
-    zcol = "equity_nbhd_denver",
-    col.regions = viridis_pal(direction=1,option="C"))
-
-mv_equity_bg_cdphe_first_thirty = den_co_bg_equity_sorted %>% 
-  filter(area_mi2_cumsum_equity_bg_cdphe<thirty_percent_area_study_area) %>% 
-  mapview(
-    layer.name = "Equity, CDPHE; higher is worse off",
-    zcol = "equity_bg_cdphe",
-    col.regions = viridis_pal(direction=-1,option="D"))
-
-mv_equity_thirty_both = mv_equity_nbhd_denver_first_thirty + mv_equity_bg_cdphe_first_thirty
-mv_equity_thirty_both@map %>% 
-  addFullscreenControl()
-```
-
-### Restricting to 20% of the study area, prioritizing block groups of greatest need according to two health-equity definitions
-
-```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
-library(viridis)
-setwd(here("data-processed"))
-load("den_co_bg_equity_sorted.RData")
-load("thirty_percent_area_study_area.RData")
-load("twenty_percent_area_study_area.RData")
-mv_equity_nbhd_denver_first_twenty=den_co_bg_equity_sorted %>% 
-  filter(area_mi2_cumsum_equity_nbhd_denver<twenty_percent_area_study_area) %>% 
-  mapview(
-    layer.name = "Equity, City of Denver; lower is worse off",
-    zcol = "equity_nbhd_denver",
-    col.regions = viridis_pal(direction=1,option="C"))
-
-mv_equity_bg_cdphe_first_twenty = den_co_bg_equity_sorted %>% 
-  filter(area_mi2_cumsum_equity_bg_cdphe<twenty_percent_area_study_area) %>% 
-  mapview(
-    layer.name = "Equity, CDPHE; higher is worse off",
-    zcol = "equity_bg_cdphe",
-    col.regions = viridis_pal(direction=-1,option="D"))
-
-mv_equity_twenty_both = mv_equity_nbhd_denver_first_twenty + mv_equity_bg_cdphe_first_twenty
-mv_equity_twenty_both@map %>% 
-  addFullscreenControl()
-```
-
-## Scenario 3: add native-plants buffers to riparian areas
+## Scenario 2: add native-plants buffers to riparian areas
 
 We measured NDVI in a 200-foot buffer, a 100-foot buffer, and a 50-foot buffer around all bodies of water in Denver. We downloaded bodies of water from OpenStreetMap (code [here](https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_load_denver_osm_parks_water.R)). We defined residential exposure to these riparian areas as those individuals living within a 500-meter buffer.
 
@@ -397,9 +412,9 @@ mv_rip_all3@map %>%
   addFullscreenControl()
 ```
 
-## Scenario 4: green infrastructure
+## Scenario 3: green infrastructure
 
-### Scenario 4.1. Large stormwater retention ponds
+### Scenario 3.1. Large stormwater retention ponds
 
 We were provided a list of planned projects throughout Denver. Per our conversations, we assume that about 75% of the project's footprint would consist of native or vegetation. Like for riparian areas, we defined exposure to the projects as those individuals living within a 500 m buffer of the projects. A map of baseline NDVI of the projects themselves and of a 500 m residential buffer around the projects is below.
 
@@ -443,11 +458,7 @@ mv_ogi_proj_all3@map %>%
   addFullscreenControl()
 ```
 
-### Scenario 4.2. Green streets
-
-Not yet complete.
-
-### Scenario 4.3. Site new or re-development storwmater controls
+### Scenario 3.2. Site new or re-development storwmater controls
 
 The approach for estimating the health impact of the redevelopment controls differs from scenarios 2 and 3.1. because we will not know where the re-developments will occur. We thus simulated possible locations. Per our conversations, we anticipate the following number of parcels will be subject to these rules per year:
 
@@ -520,9 +531,9 @@ mv_parcel_both@map %>%
   addFullscreenControl()
 ```
 
-## Scenario 5: add native plants to parking lots
+## Scenario 4: add native plants to parking lots
 
-Finally, we propose replacing a portion of parking-lot surface with native plants. Denver's area is about 9% parking lot (below table). We obtained spatial data on [parking lots](%5Bhttps://www.denvergov.org/opendata/dataset/parking-lots-2016)](<https://www.denvergov.org/opendata/dataset/parking-lots-2016>)) from the City of Denver Open Data Catalog.
+Finally, we propose replacing a portion of parking-lot surface with native plants. Denver's area is about 9% parking lot (below table). We obtained spatial data on parking lots from the City of Denver Open Data Catalog.[@denvero2016]
 
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
@@ -579,3 +590,4 @@ mv_prkng_both@map %>%
   addFullscreenControl()
 ```
 
+# References

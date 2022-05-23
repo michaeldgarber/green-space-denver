@@ -14,10 +14,11 @@ source(here("scripts", "0_read_denver_native_zones.R")) #
 
 source(here("scripts", "1_remove_water_tract_bg_park.R")) #if ACS data is re-run, this should be, too
 
-#will take a while (~10 min) but not as long as it used to, because now I'm not extracting the NDVI of every census tract
-#in the full Denver Metro area
+#will take a while (~10 min) but not as long as it used to, because I'm no longer
+#extracting the NDVI of every census tract in the entire Denver Metro area
 source(here("scripts", "2_ndvi_tract_green_space_native_zones.R"))
 
+library(here)
 source(here("scripts", "3_HIA_for_each_scenario.R")) #run the HIA
 source(here("scripts", "3a_HIA_for_each_scenario_boot.R")) #boot the HIA
 

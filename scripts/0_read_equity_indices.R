@@ -1,5 +1,8 @@
 #filename: 0_read_equity_indices
-
+library(here)
+library(tidyverse)
+library(mapview)
+library(sf)
 #This script reads in the various equity indices for the City of Denver and the State of Colorado
 
 # read Denver equity index from data portal------
@@ -49,9 +52,11 @@ den_equity_ind_2020 %>% ggplot()+
   geom_histogram(aes(equity_nbhd_denver))
 
 #lookup the overall equity score
-den_equity_ind_2020
 lookup_equity_nbhd_denver = den_equity_ind_2020 %>% 
-  distinct(nbhd_id, equity_nbhd_denver, equity_nbhd_denver_quartile) %>% 
+  distinct(
+    nbhd_id, equity_nbhd_denver, 
+    equity_nbhd_denver_quartile,
+    equity_nbhd_denver_tertile) %>% 
   as_tibble()
 save(lookup_equity_nbhd_denver, file = "lookup_equity_nbhd_denver.RData")
 #it's by neighborhood. interesting.
@@ -76,7 +81,6 @@ den_co_tract_wrangle_geo = den_co_tract_geo %>%
 summary(den_co_tract_wrangle_geo$area_mi2)
 mv_den_co_tract_geo = den_co_tract_wrangle_geo %>% 
   mapview(zcol = "tract_fips")
-mv_den_equity_ind_2020+mv_den_co_tract_geo
 
 # read state equity definition from CDPHE---------------
 #links for information
@@ -130,6 +134,7 @@ cdphe_equity_geo = lookup_equity_bg_cdphe %>%
   left_join(colorado_bg_2019_geo, by = "bg_fips") %>% 
   st_as_sf()
 
+save(cdphe_equity_geo, file = "cdphe_equity_geo.RData")
 cdphe_equity_geo %>% mapview(zcol = "equity_bg_cdphe")
 cdphe_equity_geo %>% mapview(zcol = "equity_bg_cdphe_quartile_den")
 cdphe_equity_geo %>% mapview(zcol = "equity_bg_cdphe_tertile_den")
@@ -153,7 +158,7 @@ lookup_equity_bg_cdphe_2019
 setwd(here("data-processed"))
 save(lookup_equity_bg_cdphe_2019, file = "lookup_equity_bg_cdphe_2019.RData")
 
-# Compare tertiles for the CDPHE definition vs the Denver city definition
+# Compare tertiles for the CDPHE definition vs the Denver city definition----------
 
 library(scales)
 mv_cdphe_equity_den_tertile =  cdphe_equity_geo %>% 
@@ -173,4 +178,44 @@ mv_den_equity_ind_tertile = den_equity_ind_2020 %>%
     )
 mv_den_equity_ind_tertile + mv_cdphe_equity_den_tertile
 
+#to link 2020 block groups with 2020 census tracts
+load("den_bg_acs5_wrangle_geo.RData")
+load("lookup_colorado_bg_tract.RData")
+load("lookup_den_nbhd_tract.RData") #neighborhood ids in denver linked to tracts
+#run a chi square of the two indices
 
+#to keep consistent, using exact same function used in 3_hia_for_each_scenario
+link_equity_indices= function(df){
+  df %>% 
+    left_join(lookup_colorado_bg_tract, by = "bg_fips") %>% #2020 ok
+    left_join(lookup_den_nbhd_tract, by = "tract_fips") %>%  #link neighbs so can link den equity neighb data; 2020 OK
+    left_join(lookup_equity_nbhd_denver, by = "nbhd_id") %>% #denver neighborhood equity score
+    rename(bg_fips_2020 = bg_fips) %>%    #link the 2019 block-group definition to link the CDPHE equity score
+    left_join(lookup_colorado_bg_2020_vs_2019_nogeo, by = "bg_fips_2020") %>% 
+    left_join(lookup_equity_bg_cdphe_2019, by = "bg_fips_2019") %>% #link block-group level equity; note 2019 bg 
+    rename(bg_fips = bg_fips_2020)      #change name back
+}
+
+names(den_bg_acs5_wrangle_geo)
+compare_tertiles = den_bg_acs5_wrangle_geo %>% 
+  dplyr::select(bg_fips, county_fips, geometry) %>% 
+  link_equity_indices() %>% 
+  filter(county_fips == "031") %>% 
+  dplyr::select(contains("fips"), contains("equity")) %>% 
+  st_set_geometry(NULL)
+
+names(compare_tertiles)
+
+compare_tertiles %>% 
+  group_by(equity_bg_cdphe_tertile_den, equity_nbhd_denver_tertile) %>% 
+  summarise(n=n())
+
+compare_tertiles_chisq = chisq.test(table(
+  compare_tertiles$equity_bg_cdphe_tertile_den, compare_tertiles$equity_nbhd_denver_tertile)
+)
+
+compare_tertiles_chisq
+compare_equity_tertiles_den %>% mapview(zcol = "equity_bg_cdphe_tertile_state")
+
+names(compare_equity_tertiles_den)
+  
