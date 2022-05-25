@@ -481,19 +481,19 @@ Results of each scenario appear in the table below. The first table describes, f
 ## Table 1: Description of scenarios (area, pop affected, NDVi)
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
-load("hia_all_overall.RData")
-load("hia_all_overall_s.RData") #bootstrapped version with 95% CI
+load("hia_all_by_ndvi.RData")
+load("hia_all_by_ndvi_s.RData") #bootstrapped version with 95% CI
 load("hia_all_equity_cat.RData")
 load("hia_all_equity_cat_s.RData")
 load("lookup_scenario_sort_order.RData") #to get it to sort how I want
 load("lookup_scenario_main_text.RData") #to restrict to those in the main text if necessary
 
 #combine these first before bind_rows
-hia_all_overall_est_boot = hia_all_overall %>% 
-    left_join(hia_all_overall_s, by = c("scenario", "scenario_sub", "ndvi_native_threshold")) 
+hia_all_by_ndvi_est_boot = hia_all_by_ndvi %>% 
+    left_join(hia_all_by_ndvi_s, by = c("scenario", "scenario_sub", "ndvi_native_threshold")) 
 hia_all_equity_cat_est_boot = hia_all_equity_cat %>% 
   left_join(hia_all_equity_cat_s, by = c("scenario", "scenario_sub", "ndvi_native_threshold", "equity_bg_cdphe_tertile_den")) 
-hia_all_overall_est_boot %>% 
+hia_all_by_ndvi_est_boot %>% 
   bind_rows(hia_all_equity_cat_est_boot) %>% 
   arrange(scenario_sort_order) %>% 
   #filter to just the main sub-scenarios to present in the main text
@@ -536,19 +536,19 @@ hia_all_overall_est_boot %>%
 ## Table 2: estimated deaths averted (total and rate per 100k) under each scenario
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
-load("hia_all_overall.RData")
-load("hia_all_overall_s.RData") #bootstrapped version with 95% CI
+load("hia_all_by_ndvi.RData")
+load("hia_all_by_ndvi_s.RData") #bootstrapped version with 95% CI
 load("hia_all_equity_cat.RData")
 load("hia_all_equity_cat_s.RData")
 load("lookup_scenario_sort_order.RData") #to get it to sort how I want
 load("lookup_scenario_main_text.RData") #to restrict to those in the main text if necessary
 
 #combine these first before bind_rows
-hia_all_overall_est_boot = hia_all_overall %>% 
-    left_join(hia_all_overall_s, by = c("scenario", "scenario_sub", "ndvi_native_threshold")) 
+hia_all_by_ndvi_est_boot = hia_all_by_ndvi %>% 
+    left_join(hia_all_by_ndvi_s, by = c("scenario", "scenario_sub", "ndvi_native_threshold")) 
 hia_all_equity_cat_est_boot = hia_all_equity_cat %>% 
   left_join(hia_all_equity_cat_s, by = c("scenario", "scenario_sub", "ndvi_native_threshold", "equity_bg_cdphe_tertile_den")) 
-hia_all_overall_est_boot %>% 
+hia_all_by_ndvi_est_boot %>% 
   bind_rows(hia_all_equity_cat_est_boot) %>% 
   arrange(scenario_sort_order) %>% 
   #filter to just the main sub-scenarios to present in the main text

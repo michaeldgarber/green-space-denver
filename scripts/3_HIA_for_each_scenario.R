@@ -2321,6 +2321,7 @@ hia_all  = den_co_bg_ndvi_alt_all_nogeo %>% #scenario all bg
   #remove variables that may duplicate and get in the way
   dplyr::select(-starts_with("equity"), -starts_with("nbhd"), -starts_with("bg_fips_2019")) %>% 
   link_equity_indices() %>% #defined above
+  dplyr::select(-starts_with("tract_fips")) %>% #again, tract_fips gets duplicated so remove 
   left_join(den_co_bg_sex_age_gbd_wrangle, by = "bg_fips") %>% 
   mutate(
     pop_affected = case_when(
@@ -2404,8 +2405,8 @@ lookup_scenario_sort_order = hia_all %>%
   distinct(scenario, scenario_sub, scenario_sort_order)
 lookup_scenario_sort_order
 save(lookup_scenario_sort_order, file = "lookup_scenario_sort_order.RData")
-## Summarize HIA------------
-### Summarize overall-----------
+
+# Summarize HIA------------
 #write a function for the summarise since it's used so often
 summarise_ungroup_hia = function(df){
   df %>% 
@@ -2441,10 +2442,11 @@ summarise_ungroup_hia = function(df){
     ) 
 }
 
-names(hia_all)
 
-# Overall overall
-hia_all_overall = hia_all %>% 
+
+## Stratify by NDVI definition--------
+### Overall overall, stratified by NDVI definition------------
+hia_all_by_ndvi = hia_all %>% 
   filter(ndvi_below_native_threshold==1) %>% #grouping by equity category here
   group_by(scenario, scenario_sub, ndvi_native_threshold ) %>% 
   summarise_ungroup_hia() %>% 
@@ -2460,12 +2462,12 @@ hia_all_overall = hia_all %>%
     starts_with("death"),
     everything())
 
-hia_all_overall
+hia_all_by_ndvi
 setwd(here("data-processed"))
-save(hia_all_overall, file = "hia_all_overall.RData")
+save(hia_all_by_ndvi, file = "hia_all_by_ndvi.RData")
 
 ### Overall, stratified by equity tertile
-hia_all_equity_cat = hia_all %>% 
+hia_all_by_ndvi_equity = hia_all %>% 
   filter(ndvi_below_native_threshold==1) %>% #grouping by equity category here
   group_by(scenario, scenario_sub, ndvi_native_threshold, equity_bg_cdphe_tertile_den) %>% 
   summarise_ungroup_hia() %>% 
@@ -2481,20 +2483,20 @@ hia_all_equity_cat = hia_all %>%
     starts_with("death"),
     everything())
 
-hia_all_equity_cat
+hia_all_by_ndvi_equity
 setwd(here("data-processed"))
-save(hia_all_equity_cat, file = "hia_all_equity_cat.RData")
+save(hia_all_by_ndvi_equity, file = "hia_all_by_ndvi_equity.RData")
 
 ### Summarize by block group----------
 load("lookup_den_metro_bg_geo.RData") #created 0_import_manage_denver_acs.R
-hia_all_bg = hia_all %>% 
+hia_all_by_ndvi_bg = hia_all %>% 
   filter(ndvi_below_native_threshold==1) %>% 
   group_by(bg_fips, scenario, scenario_sub, ndvi_native_threshold) %>% 
   summarise_ungroup_hia() 
-hia_all_bg
-names(hia_all_bg)
+hia_all_by_ndvi_bg
+names(hia_all_by_ndvi_bg)
 
-hia_all_bg %>% 
+hia_all_by_ndvi_bg %>% 
   filter(scenario == "all-bg") %>% 
   filter(scenario_sub == "100-pct") %>% 
   left_join(lookup_den_metro_bg_geo, by = "bg_fips") %>% 
@@ -2503,12 +2505,11 @@ hia_all_bg %>%
   
 ### Summarize by age group
 table(hia_all$age_group_acs)
-hia_all_age = hia_all %>% 
+hia_all_by_ndvi_age = hia_all %>% 
   filter(ndvi_below_native_threshold==1) %>% 
   group_by(age_group_acs, scenario, scenario_sub, ndvi_native_threshold) %>% 
   summarise_ungroup_hia() 
 
-hia_all_age
+hia_all_by_ndvi_age
 
-#final note: nice work, mike. this is much more streamlined and ready for
-#bootstrapping
+## Collapse and summarize over NDVI definition---------

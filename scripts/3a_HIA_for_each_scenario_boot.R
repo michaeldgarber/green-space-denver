@@ -52,7 +52,7 @@ bootstrap_hia = function(s_id_val){
 
 # Run bootstrap function----------
 #run the function x times; 500 reaches memory limit. 200 is fine. don't save the data frame because it's huge
-n_boot_reps = 20
+n_boot_reps = 100
 s_id_val_list <- seq(from = 1, to = n_boot_reps, by = 1)
 
 hia_all_boot  = s_id_val_list %>% 
@@ -72,9 +72,9 @@ nrow(hia_all_boot)
 summary(hia_all_boot$drf_est)
 
 
-## Summarize HIA------------
+## Summarize HIA - Stratify by NDVI threshold-------------
 ### Summarize overall-----------
-hia_all_overall_s = hia_all_boot %>% 
+hia_all_by_ndvi_s = hia_all_boot %>% 
   filter(ndvi_below_native_threshold==1) %>% 
   group_by(s_id, scenario, scenario_sub, ndvi_native_threshold) %>% 
   summarise_ungroup_hia() %>% #function created in scripts/3_HIA_for_each_scenario.R
@@ -104,13 +104,13 @@ hia_all_overall_s = hia_all_boot %>%
     everything())
 
   
-hia_all_overall_s
+hia_all_by_ndvi_s
 #save the summary but not hia_all_boot, as it's too huge and will take up too much space
 setwd(here("data-processed"))
-save(hia_all_overall_s, file = "hia_all_overall_s.RData")
+save(hia_all_by_ndvi_s, file = "hia_all_by_ndvi_s.RData")
 
 ### overall by equity category--------------
-hia_all_equity_cat_s = hia_all_boot %>% 
+hia_all_by_ndvi_equity_s = hia_all_boot %>% 
   filter(ndvi_below_native_threshold==1) %>% 
   group_by(s_id, scenario, scenario_sub, ndvi_native_threshold, equity_bg_cdphe_tertile_den) %>% 
   summarise_ungroup_hia() %>% #function created in scripts/3_HIA_for_each_scenario.R
@@ -140,9 +140,11 @@ hia_all_equity_cat_s = hia_all_boot %>%
     everything())
 
 
-hia_all_equity_cat_s
+hia_all_by_ndvi_equity_s
 #save the summary but not hia_all_boot, as it's too huge and will take up too much space
 setwd(here("data-processed"))
-save(hia_all_equity_cat_s, file = "hia_all_equity_cat_s.RData")
+save(hia_all_by_ndvi_equity_s, file = "hia_all_by_ndvi_equity_s.RData")
 
+
+## Summarize HIA - collapse over NDVI threshold-------------
 
