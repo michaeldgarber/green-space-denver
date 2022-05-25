@@ -20,9 +20,14 @@ link-citations: true
 
 Filename: tables_figs_appendix
 
-The purpose of this is to output tables and figures for the appendix. Eventually, this could be rendered as a Word Doc or PDF for an appendix corresponding to a submitted manuscript. 
+This document conatains supplementary material, mostly tables and figures, as well as some additional text and description. Eventually, this could be rendered as a Word Doc or PDF for an appendix corresponding to a submitted manuscript. 
 
-As another note, this may duplicate some of the information presented in the main text. That is, the tables/figures presented in the main text can be viewed as a subset as those presented here.
+The tables and figures intended for the main text are here:
+
+~/green-space-denver/docs/tables_figs_appendix.html
+
+As of now, this also contains all of the information presented in the main text. That is, the tables and figures presented in the main text are a subset of those presented here.
+
 
 # Denver demographics
 

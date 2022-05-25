@@ -19,6 +19,36 @@ Filename: tables_figs_main_text
 
 This document contains tables and figures presented in the main text. It is a subset of those presented in the appendix, which is here:
 
-~green-space-denver/docs/tables_figs_appendix.Rmd
+~green-space-denver/docs/tables_figs_appendix.html
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+library(here)
+library(tidyverse)
+library(mapview)
+library(sf)
+library(leaflet.extras)
+```
+
+# Scenario 1
+Note this is direclty copied from the appendix version.
+The weighted block-group-level mean NDVI on July 4, 2021 is presented here.
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE, fig.cap = "Scenario 1"}
+#update may 11 2022 to add figure caption
+setwd(here("data-processed"))
+load("den_co_bg_ndvi_geo.RData") #updated april 18 2022
+#names(den_co_bg_ndvi_geo)
+pal_terrain = terrain.colors(100) %>% rev()#reverse the order of the palette
+mv_den_co_bg_ndvi  = den_co_bg_ndvi_geo %>% 
+  dplyr::select(bg_fips, ndvi_mean_wt) %>% 
+  mapview(
+    layer.name = "NDVI, block group",
+    zcol = "ndvi_mean_wt",
+    col.regions = pal_terrain, 
+    at = seq(-0.1, 1, 0.1)
+  )
+mv_den_co_bg_ndvi@map %>% 
+  addFullscreenControl()
+```
 
 

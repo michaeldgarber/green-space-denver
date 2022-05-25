@@ -11,6 +11,13 @@ This page presents some work-in-progress updates for the Denver green-space heal
 
 **Project Updates**
 
+-   Tables and figures (main text and appendix):
+
+    -   <https://michaeldgarber.github.io/green-space-denver/tables_figs_appendix.html>
+
+    -   <https://michaeldgarber.github.io/green-space-denver/tables_figs_main_text.html>
+
+
 -   Preliminary HIA results for scenarios:
 
     -   <https://michaeldgarber.github.io/green-space-denver/hia-results.html>
