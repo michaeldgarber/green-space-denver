@@ -1,0 +1,24 @@
+---
+title: "NATURGREEN results tables-figures-supplement"
+author: "Michael D Garber"
+date: '2022-05-24'
+#always_allow_html: true
+#note word doesn't seem to render unless I render the whole site ()rmarkdown::render_site(encoding = 'UTF-8')
+output:
+  bookdown::html_document2:
+    toc: true
+    toc_float: true
+    toc_depth: 4
+    include: 
+      after_body: footer.html
+  bookdown::word_document2:
+    toc: true 
+---
+
+Filename: tables_figs_main_text
+
+This document contains tables and figures presented in the main text. It is a subset of those presented in the appendix, which is here:
+
+~green-space-denver/docs/tables_figs_appendix.Rmd
+
+
