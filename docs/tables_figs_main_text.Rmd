@@ -118,6 +118,7 @@ load("lookup_scenario_sort_order.RData") #to get it to sort how I want
 load("lookup_scenario_main_text.RData") #to restrict to those in the main text if necessary
 
 #combine these first before bind_rows
+names(hia_all_overall)
 hia_all_overall_est_boot = hia_all_overall %>% 
     left_join(hia_all_overall_s, by = c("scenario", "scenario_sub", "ndvi_native_threshold")) 
 hia_all_equity_cat_est_boot = hia_all_equity_cat %>% 
@@ -133,6 +134,7 @@ hia_all_overall_est_boot %>%
   #  scenario_sub, #not presenting sub-scenarios in the main text table
         ndvi_native_threshold,
     starts_with("equity_bg_cdphe_tertile_den"),
+  ndvi_diff, 
     deaths_prevented, deaths_prevented_ll, deaths_prevented_ul, #have to hard code
     starts_with("deaths_prevented_per_pop_10")) %>%
   knitr::kable(
@@ -142,6 +144,7 @@ hia_all_overall_est_boot %>%
       "Scenario", 
       "NDVI, native",
       "Equity Tertile", 
+      "NDVI linear change",
       "Deaths prevented, est.", 
       "Deaths prevented, 95% LL", 
       "Deaths prevented, 95% UL",
@@ -150,5 +153,5 @@ hia_all_overall_est_boot %>%
       "Deaths prevented per 100k, 95% UL"
       ),
     format.args = list(big.mark = ","),
-    digits = c(0, 2, 0, 0, 0, 0, 0, 0,0, 0)) #set max digits (after decimal, I guess)
+    digits = c(0, 2, 0, 2, 0, 0, 0, 0, 0,0, 0)) #set max digits (after decimal, I guess)
 ```
