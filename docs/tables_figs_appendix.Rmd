@@ -326,7 +326,7 @@ Note to self: This section is mostly copied from \~green-space-denver/docs/hia-r
 
 The weighted block-group-level mean NDVI on July 4, 2021 is presented here.
 
-```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE, fig.cap = "Scenario 1"}
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE, fig.cap = "Mean normalized difference vegetation index (NDVI) of census block groups in Denver, Colorado (excluding some in the northeast, described in main text) on July 4, 2021 as measured by the Landsat-8 satellite on July 4, 2021. NDVI is measured at a spatial resolution of 30 meters squared. The weighted block-group-level mean NDVI is weighted by the proportion Landsat pixels overlap the water-free land area of the block group"}
 #update may 11 2022 to add figure caption
 setwd(here("data-processed"))
 load("den_co_bg_ndvi_geo.RData") #updated april 18 2022
@@ -555,6 +555,8 @@ den_prkng_tx_marg %>%
          ) %>% 
   dplyr::select(-starts_with("area_ft2")) %>% 
   knitr::kable(
+    booktabs = TRUE,
+    caption = "Proportion of Denver's area covered by parking lots",
     col.names = c("Total area (mi^2^), parking lots", "Total area (mi^2^), Denver", "proportion parking lots"),
     digits = 2)
 ```

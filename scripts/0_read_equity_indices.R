@@ -214,8 +214,3 @@ compare_tertiles_chisq = chisq.test(table(
   compare_tertiles$equity_bg_cdphe_tertile_den, compare_tertiles$equity_nbhd_denver_tertile)
 )
 
-compare_tertiles_chisq
-compare_equity_tertiles_den %>% mapview(zcol = "equity_bg_cdphe_tertile_state")
-
-names(compare_equity_tertiles_den)
-  

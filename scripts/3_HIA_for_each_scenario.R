@@ -2353,6 +2353,14 @@ hia_all  = den_co_bg_ndvi_alt_all_nogeo %>% #scenario all bg
       ndvi_quo   < ndvi_native_threshold ~1,
       TRUE ~0
     ),
+    scenario_main_text = case_when(
+      scenario == "all-bg" & scenario_sub == "30-pct" ~1,
+      scenario == "riparian" & scenario_sub == "200-ft" ~1,
+      scenario == "ogi" & scenario_sub == "ogi_proj" ~1,
+      scenario == "prkng" & scenario_sub == "30-pct" ~1,
+      TRUE ~0
+    ),
+      
     #I thought I could get these to sort based on factor order, but nope, sort this way
     scenario_sort_order = case_when(
       scenario == "all-bg" & scenario_sub == "100-pct" ~1,
@@ -2375,11 +2383,16 @@ hia_all  = den_co_bg_ndvi_alt_all_nogeo %>% #scenario all bg
     contains("equity"),
     everything())
 
-
 save(hia_all, file = "hia_all.RData")
+#create a lookup for scenario_main_text
+lookup_scenario_main_text = hia_all %>% 
+  distinct(scenario, scenario_sub, scenario_main_text)
+lookup_scenario_main_text
+save(lookup_scenario_main_text, file = "lookup_scenario_main_text.RData")
 #checks
 table(hia_all$scenario)
 table(hia_all$scenario_sub)
+table(hia_all$scenario_main_text)
 names(hia_all)
 table(hia_all$ndvi_below_native_threshold)
 nrow(hia_all)
@@ -2428,7 +2441,29 @@ summarise_ungroup_hia = function(df){
 
 names(hia_all)
 
+# Overall overall
 hia_all_overall = hia_all %>% 
+  filter(ndvi_below_native_threshold==1) %>% #grouping by equity category here
+  group_by(scenario, scenario_sub, ndvi_native_threshold ) %>% 
+  summarise_ungroup_hia() %>% 
+  left_join(lookup_scenario_sort_order, by = c("scenario", "scenario_sub")) %>% 
+  arrange(scenario_sort_order) %>% 
+  dplyr::select(
+    contains("scenario"), 
+    starts_with("ndvi_native_threshold"),
+    starts_with("equity_bg_cdphe"),
+    starts_with("pop"), 
+    starts_with("area"),
+    starts_with("ndvi"), 
+    starts_with("death"),
+    everything())
+
+hia_all_overall
+setwd(here("data-processed"))
+save(hia_all_overall, file = "hia_all_overall.RData")
+
+### Overall, stratified by equity tertile
+hia_all_equity_cat = hia_all %>% 
   filter(ndvi_below_native_threshold==1) %>% #grouping by equity category here
   group_by(scenario, scenario_sub, ndvi_native_threshold, equity_bg_cdphe_tertile_den) %>% 
   summarise_ungroup_hia() %>% 
@@ -2444,10 +2479,10 @@ hia_all_overall = hia_all %>%
     starts_with("death"),
     everything())
 
-hia_all_overall
-View(hia_all_overall)
+hia_all_equity_cat
 setwd(here("data-processed"))
-save(hia_all_overall, file = "hia_all_overall.RData")
+save(hia_all_equity_cat, file = "hia_all_equity_cat.RData")
+
 ### Summarize by block group----------
 load("lookup_den_metro_bg_geo.RData") #created 0_import_manage_denver_acs.R
 hia_all_bg = hia_all %>% 

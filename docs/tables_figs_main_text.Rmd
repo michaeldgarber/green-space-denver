@@ -33,7 +33,7 @@ library(leaflet.extras)
 Note this is direclty copied from the appendix version.
 The weighted block-group-level mean NDVI on July 4, 2021 is presented here.
 
-```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE, fig.cap = "Scenario 1"}
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE, fig.cap = "Mean normalized difference vegetation index (NDVI) of census block groups in Denver, Colorado (excluding some in the northeast, described in main text) on July 4, 2021 as measured by the Landsat-8 satellite on July 4, 2021. NDVI is measured at a spatial resolution of 30 meters squared. The weighted block-group-level mean NDVI is weighted by the proportion Landsat pixels overlap the water-free land area of the block group"}
 #update may 11 2022 to add figure caption
 setwd(here("data-processed"))
 load("den_co_bg_ndvi_geo.RData") #updated april 18 2022
@@ -51,4 +51,104 @@ mv_den_co_bg_ndvi@map %>%
   addFullscreenControl()
 ```
 
+# Tables
+## Table 1: Description of scenarios (area, pop affected, NDVi)
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("hia_all_overall.RData")
+load("hia_all_overall_s.RData") #bootstrapped version with 95% CI
+load("hia_all_equity_cat.RData")
+load("hia_all_equity_cat_s.RData")
+load("lookup_scenario_sort_order.RData") #to get it to sort how I want
+load("lookup_scenario_main_text.RData") #to restrict to those in the main text if necessary
 
+#combine these first before bind_rows
+hia_all_overall_est_boot = hia_all_overall %>% 
+    left_join(hia_all_overall_s, by = c("scenario", "scenario_sub", "ndvi_native_threshold")) 
+hia_all_equity_cat_est_boot = hia_all_equity_cat %>% 
+  left_join(hia_all_equity_cat_s, by = c("scenario", "scenario_sub", "ndvi_native_threshold", "equity_bg_cdphe_tertile_den")) 
+hia_all_overall_est_boot %>% 
+  bind_rows(hia_all_equity_cat_est_boot) %>% 
+  arrange(scenario_sort_order) %>% 
+  #filter to just the main sub-scenarios to present in the main text
+  left_join(lookup_scenario_main_text, by = c("scenario", "scenario_sub")) %>% 
+  filter(scenario_main_text==1) %>% 
+  dplyr::select(
+    scenario, 
+  #  scenario_sub, #not presenting sub-scenarios in the main text table
+        ndvi_native_threshold,
+    starts_with("equity_bg_cdphe_tertile_den"),
+    starts_with("area_mi2_bg_int_tx"),
+    starts_with("area_mi2_bg_int_res"),
+    ndvi_quo, #must hard-quote
+    ndvi_mean_alt, #must hard-quote because ndvi_mean_alt_int exists
+    starts_with("pop_affected")
+
+  ) %>%
+  knitr::kable(
+    caption = "For each scenario and native-plants NDVI definition, the cumulative area of the treatment, its corresponding residential buffer, and the population affected, overall and stratified by equity tertile.",
+    booktabs = TRUE,
+    col.names = c(
+      "Scenario", 
+      "NDVI, native",
+      "Equity Tertile", 
+      "Area, treatment (mi^2^)",
+      "Area, residential buffer (mi^2^)",
+      "Baseline NDVI",
+      "Alternative NDVI",
+      "Pop. affected, est.", 
+      "Pop. affected, 95% LL", 
+      "Pop. affected, 95% UL"
+      ),
+    format.args = list(big.mark = ","),
+    #set max digits in order -
+    #see https://stackoverflow.com/questions/24896923/kable-displays-different-number-of-digits-in-each-column
+    digits = c(0, 2, 0, 0, 0, 2, 2, 0, 0, 0)
+    )  
+```
+
+## Table 2: estimated deaths averted (total and rate per 100k) under each scenario
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("hia_all_overall.RData")
+load("hia_all_overall_s.RData") #bootstrapped version with 95% CI
+load("hia_all_equity_cat.RData")
+load("hia_all_equity_cat_s.RData")
+load("lookup_scenario_sort_order.RData") #to get it to sort how I want
+load("lookup_scenario_main_text.RData") #to restrict to those in the main text if necessary
+
+#combine these first before bind_rows
+hia_all_overall_est_boot = hia_all_overall %>% 
+    left_join(hia_all_overall_s, by = c("scenario", "scenario_sub", "ndvi_native_threshold")) 
+hia_all_equity_cat_est_boot = hia_all_equity_cat %>% 
+  left_join(hia_all_equity_cat_s, by = c("scenario", "scenario_sub", "ndvi_native_threshold", "equity_bg_cdphe_tertile_den")) 
+hia_all_overall_est_boot %>% 
+  bind_rows(hia_all_equity_cat_est_boot) %>% 
+  arrange(scenario_sort_order) %>% 
+  #filter to just the main sub-scenarios to present in the main text
+  left_join(lookup_scenario_main_text, by = c("scenario", "scenario_sub")) %>% 
+  filter(scenario_main_text==1) %>% 
+  dplyr::select(
+    scenario, 
+  #  scenario_sub, #not presenting sub-scenarios in the main text table
+        ndvi_native_threshold,
+    starts_with("equity_bg_cdphe_tertile_den"),
+    deaths_prevented, deaths_prevented_ll, deaths_prevented_ul, #have to hard code
+    starts_with("deaths_prevented_per_pop_10")) %>%
+  knitr::kable(
+    caption = "For each scenario and native-plants NDVI definition, the cumulative area of the treatment, its corresponding residential buffer, and the population affected, overall and stratified by equity tertile.",
+    booktabs = TRUE,
+    col.names = c(
+      "Scenario", 
+      "NDVI, native",
+      "Equity Tertile", 
+      "Deaths prevented, est.", 
+      "Deaths prevented, 95% LL", 
+      "Deaths prevented, 95% UL",
+      "Deaths prevented per 100k, est.", 
+      "Deaths prevented per 100k, 95% LL", 
+      "Deaths prevented per 100k, 95% UL"
+      ),
+    format.args = list(big.mark = ","),
+    digits = c(0, 2, 0, 0, 0, 0, 0, 0,0, 0)) #set max digits (after decimal, I guess)
+```
