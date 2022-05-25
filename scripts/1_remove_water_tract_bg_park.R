@@ -41,6 +41,8 @@ den_metro_bg_no_wtr_geo = den_metro_bg_geo %>%
 save(den_metro_bg_no_wtr_geo, file = "den_metro_bg_no_wtr_geo.RData")
 den_metro_bg_no_wtr_geo %>% mapview(zcol = "county_fips")
 
+
+
 ## area lookups for tracts and block groups without water--------
 lookup_tract_no_wtr_area = den_metro_tract_no_wtr_geo %>% 
   mutate(

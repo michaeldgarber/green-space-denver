@@ -182,7 +182,13 @@ lookup_den_co_bg_no_wtr_geo = den_co_bg_no_wtr_filtered_geo  %>%
 lookup_den_co_bg_no_wtr_geo %>% mapview()
 save(lookup_den_co_bg_no_wtr_geo, file = "lookup_den_co_bg_no_wtr_geo.RData")
 
-  
+
+#also make a 4326 version that doesn't exclude thoes northeast tracts
+#make a 4326 version of this, as it's needed sometimes
+den_metro_bg_no_wtr_4326_geo = den_metro_bg_no_wtr_geo %>% 
+  st_transform(4326) %>% 
+  mutate(row_id_int=row_number())
+save(den_metro_bg_no_wtr_4326_geo, file = "den_metro_bg_no_wtr_4326_geo.RData")
 
 ### Load zoning data, because we will also exclude the airport zone and
 # the industrial zone, per meeting with DRR 3/7
@@ -253,6 +259,18 @@ den_co_bg_ndvi_geo = ndvi_den_co_20210704 %>%
   extract_wrangle_ndvi_bg_int(df2 = den_co_bg_no_wtr_filtered_4326)
 save(den_co_bg_ndvi_geo, file = "den_co_bg_ndvi_geo.RData")
 
+
+#Because I need it elsewhere, also create one that doesn't exclude northeast tracts
+load("den_metro_bg_no_wtr_4326_geo.RData") #created ~scripts/1_remove_water_tract_bg_park.R
+den_co_bg_ndvi_no_exclusions_geo = ndvi_den_co_20210704 %>% 
+  extract_wrangle_ndvi_bg_int(df2 = den_metro_bg_no_wtr_4326_geo)
+
+
+#look up the main NDVI (weighted mean) for use in another script
+lookup_den_co_bg_ndvi_mean_wt = den_co_bg_ndvi_no_exclusions_geo %>% 
+  st_set_geometry(NULL) %>% 
+  distinct(bg_fips, ndvi_mean_wt)
+save(lookup_den_co_bg_ndvi_mean_wt, file = "lookup_den_co_bg_ndvi_mean_wt.RData")
 
 #make a function like for the bg_int scenarios
 #bg itself vs bg intersection below
