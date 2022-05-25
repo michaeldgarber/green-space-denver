@@ -386,11 +386,13 @@ ndvi_native_places_summary = native_places_ndvi_day_nogeo %>%
 # 0.3228 for a lower value
 # 0.4909 for denver botanic gardens
 
-#iterate over two values of ndvi for native plants
+#iterate over three values of ndvi for native plants
+#May 25, 2022: I want to add green mountain park and then
 ndvi_native_threshold_values = ndvi_native_places_summary %>% 
   filter( 
     place_name_fac == "Denver Botanic Gardens Green Roof" |
-      place_name_fac == "Denver Botanic Gardens, 100% Native") %>% 
+      place_name_fac == "Denver Botanic Gardens, 100% Native" |
+      place_name_fac == "Green Mountain Park, 85% Native") %>% 
   dplyr::select(ndvi_mean) %>% 
   pull()
 

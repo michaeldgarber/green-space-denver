@@ -544,7 +544,6 @@ load("lookup_scenario_sort_order.RData") #to get it to sort how I want
 load("lookup_scenario_main_text.RData") #to restrict to those in the main text if necessary
 
 #combine these first before bind_rows
-names(hia_all_overall)
 hia_all_overall_est_boot = hia_all_overall %>% 
     left_join(hia_all_overall_s, by = c("scenario", "scenario_sub", "ndvi_native_threshold")) 
 hia_all_equity_cat_est_boot = hia_all_equity_cat %>% 
