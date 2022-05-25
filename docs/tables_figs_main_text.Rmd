@@ -51,7 +51,7 @@ mv_den_co_bg_ndvi@map %>%
   addFullscreenControl()
 ```
 
-# Tables option 1: (stratify by native-plants NDVI definition)
+# Tables option 1: stratify by native-plants NDVI definition
 ## Table 1: Description of scenarios (area, pop affected, NDVi)
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
@@ -158,5 +158,5 @@ hia_all_by_ndvi_est_boot %>%
 ```
 
 
-# Tables option 2: (report summary results summarized over plausible native-plants NDVI definitions)
+# Tables option 2: report summary results summarized over plausible native-plants NDVI definitions
 
