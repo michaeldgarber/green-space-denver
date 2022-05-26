@@ -1,5 +1,5 @@
 ---
-title: "Population density per NDVI: possible metrics"
+title: "Population density and NDVI: possible measures considering both"
 author: "Michael D Garber"
 date: '2022-05-24'
 #always_allow_html: true
@@ -18,8 +18,6 @@ output:
 This page presents some ideas for expressing NDVI in terms of population density for the City of Denver, Colorado.
 
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
-#Note to self: for initial coding in an R script, see ~scripts/4_pop_dens_per_ndvi.R
-
 library(tidyverse)
 library(sf)
 library(mapview)
@@ -29,35 +27,7 @@ library(raster)
 library(leaflet)
 library(leaflet.extras)
 setwd(here("data-processed"))
-load("lookup_den_co_bg_no_wtr_geo.RData") #created ~scripts/3_HIA_for_each_scenario.R
-load("den_co_bg_ndvi_alt_all_nogeo.RData") #from  scripts/3_HIA_for_each_scenario.R
-load("den_bg_acs5_wrangle_geo.RData") #from ~scripts/0_import_manage_denver_acs.R
-load("lookup_den_co_bg_ndvi_mean_wt.RData")
-load("lookup_tract_nbhd_northeast_exclude.RData")
-
-den_co_bg_pop_per_ndvi =  den_bg_acs5_wrangle_geo %>% 
-  filter(county_fips == "031") %>% 
-  left_join(lookup_den_co_bg_ndvi_mean_wt, by = "bg_fips") %>% 
-  left_join(lookup_tract_nbhd_northeast_exclude, by = "tract_fips") %>% 
-  filter(nbhd_northeast_exclude==0) %>% #exclude the northeast airport-adjacent tracts. nobody or very few people
-  mutate(
-    pop_dens_per_ndvi = case_when(
-      is.na(ndvi_mean_wt)==TRUE ~ NA_real_,
-      is.na(pop_dens_mi2_all)==TRUE ~ NA_real_,
-      pop_dens_mi2_all <5 ~ NA_real_,
-      TRUE ~ pop_dens_mi2_all/ndvi_mean_wt
-  ),
-  #try a ranking for both pop. density and NDVI
-  #https://dplyr.tidyverse.org/reference/ranking.html
-  pop_dens_mi2_all_rank = dense_rank(pop_dens_mi2_all),
-  ndvi_mean_wt_rank = dense_rank(ndvi_mean_wt),
-  
-  #and then do a ratio of those two ranks
-  pop_dens_per_ndvi_ratio_of_ranks = pop_dens_mi2_all_rank/ndvi_mean_wt_rank,
-  pop_dens_per_ndvi_rank = dense_rank(pop_dens_per_ndvi)   #rank the ratio
-  ) %>% 
-  dplyr::select(
-    ends_with("fips"), pop_tot, contains("pop_dens"), contains("ndvi"), contains("nbhd_northeast"))
+load("den_co_bg_pop_per_ndvi.RData") #made in scripts/4_pop_dens_per_ndvi.R
 ```
 
 # Population density
@@ -69,6 +39,14 @@ mv_den_co_bg_pop_per_ndvi =den_co_bg_pop_per_ndvi %>%
 
 mv_den_co_bg_pop_per_ndvi@map %>% 
   addFullscreenControl()
+```
+Population density tertiles
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+pal_terrain_3_cat = rev(terrain.colors(4)[1:3])
+den_co_bg_pop_per_ndvi %>% 
+  mapview(
+    layer.name = "Population density tertile",
+    zcol = "pop_dens_mi2_tertile")
 ```
 
 # NDVI
@@ -87,18 +65,111 @@ mv_den_co_bg_ndvi@map %>%
   addFullscreenControl()
 ```
 
-# Measures considering both population density and NDVI
-Consider two options characterizing block groups:
+NDVI tertiles, overall
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+den_co_bg_pop_per_ndvi %>% 
+  mapview(
+    layer.name = "NDVI tertile",
+    col.regions = pal_terrain_3_cat, 
+    zcol = "ndvi_tertile_overall")
+```
 
+# Explore relationship between population density and NDVI
+## Scatterplot
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+den_co_bg_pop_per_ndvi %>% 
+  ggplot(aes(x=pop_dens_mi2_all, y=ndvi_mean_wt )) + 
+  geom_point(aes(colour=pop_dens_mi2_tertile ), size = 1) +
+  ylab("NDVI") +
+  xlab("Pop. density") +
+  theme_bw(base_size = 14) +
+  scale_color_hue(
+    name = "Pop. density tertile"
+  )
+```
+
+## Map of NDVI tertiles within tertiles of population density
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+pop_dens_mi2_tertile_1 = den_co_bg_pop_per_ndvi %>% 
+  st_set_geometry(NULL) %>% 
+  group_by(pop_dens_mi2_tertile) %>% 
+  summarise(n=n()) %>% 
+  dplyr::select(pop_dens_mi2_tertile) %>% 
+  ungroup() %>% 
+  dplyr::slice(1) %>% 
+  pull()
+
+pop_dens_mi2_tertile_2 = den_co_bg_pop_per_ndvi %>% 
+  st_set_geometry(NULL) %>% 
+  group_by(pop_dens_mi2_tertile) %>% 
+  summarise(n=n()) %>% 
+  dplyr::select(pop_dens_mi2_tertile) %>% 
+  ungroup() %>% 
+  dplyr::slice(2) %>% 
+  pull()
+
+pop_dens_mi2_tertile_3 = den_co_bg_pop_per_ndvi %>% 
+  st_set_geometry(NULL) %>% 
+  group_by(pop_dens_mi2_tertile) %>% 
+  summarise(n=n()) %>% 
+  dplyr::select(pop_dens_mi2_tertile) %>% 
+  ungroup() %>% 
+  dplyr::slice(3) %>% 
+  pull()
+
+#See mapview issue regarding a bug in getting the labels to print.
+#That's why I'm simply calling the categorie 1, 2, 3, which is less informative
+#than including the actual range of values, but this will work for now.
+pal_terrain_3_cat = rev(terrain.colors(4)[1:3])
+mv_ndvi_tertile_pop_dens_1 = den_co_bg_pop_per_ndvi %>% 
+  filter(pop_dens_mi2_tertile== pop_dens_mi2_tertile_1) %>% 
+  mapview(
+    layer.name = "NDVI tertile within pop. dens. tertile 1 (lowest)",
+    col.regions = pal_terrain_3_cat, 
+    zcol = "ndvi_tertile_within_pop_dens_tertile_label")
+
+mv_ndvi_tertile_pop_dens_2 =den_co_bg_pop_per_ndvi %>% 
+  filter(pop_dens_mi2_tertile== pop_dens_mi2_tertile_2) %>% 
+  mapview(
+    layer.name = "NDVI tertile within pop. dens tertile 2 (middle)",
+    col.regions = pal_terrain_3_cat, 
+    zcol = "ndvi_tertile_within_pop_dens_tertile_label")
+
+mv_ndvi_tertile_pop_dens_3 =den_co_bg_pop_per_ndvi %>% 
+  filter(pop_dens_mi2_tertile== pop_dens_mi2_tertile_3) %>% 
+  mapview(
+    layer.name = "NDVI tertile within pop. dens. tertile 3 (highest)",
+    col.regions = pal_terrain_3_cat, 
+    zcol = "ndvi_tertile_within_pop_dens_tertile_label")
+
+mv_ndvi_tertile_overall =den_co_bg_pop_per_ndvi %>% 
+  mapview(
+    layer.name = "NDVI tertile, overall",
+    col.regions = pal_terrain_3_cat, 
+    zcol = "ndvi_tertile_overall")
+
+mv_ndvi_pop_dens_tertile_combined = mv_ndvi_tertile_pop_dens_1 + 
+  mv_ndvi_tertile_pop_dens_2+
+  mv_ndvi_tertile_pop_dens_3 + 
+  mv_ndvi_tertile_overall
+
+mv_ndvi_pop_dens_tertile_combined@map %>% 
+  leaflet.extras::addFullscreenControl()
+```
+
+# Possible composite measures considering both population density and NDVI
 1. Population density per NDVI (population density per square mile / NDVI)
-2. Block-group rank of the above.
+2. A ranking of population density per NDVI
+3. Quantiles within quantiles as above.
 
 The first is somewhat difficult to visualize on a map because the distribution has a right skew with some very high values and most much lower.
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 summary(den_co_bg_pop_per_ndvi$pop_dens_per_ndvi)
 den_co_bg_pop_per_ndvi %>% 
   ggplot(aes(pop_dens_per_ndvi))+
-  geom_histogram()
+  geom_histogram()+
+  theme_bw(base_size = 14) +
+  xlab("Pop. density per NDVI")
 ```
 
 The second is easier to visualize because the distribution is uniform by definition (a simple rank).
@@ -106,23 +177,25 @@ The second is easier to visualize because the distribution is uniform by definit
 summary(den_co_bg_pop_per_ndvi$pop_dens_per_ndvi_rank)
 den_co_bg_pop_per_ndvi %>% 
   ggplot(aes(pop_dens_per_ndvi_rank))+
-  geom_histogram()
+  geom_histogram()+
+  theme_bw(base_size = 14) +
+  xlab("Block group ranking of pop. density per NDVI")
 ```
 
-Map them both.
+Map population density per NDVI and the ranking of population density per NDVI on the same map.
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 library(viridis)
 library(scales)
 mv_pop_dens_per_ndvi=den_co_bg_pop_per_ndvi %>% 
   mapview(
     col.regions = viridis_pal(option = "C"),
-    layer.name = "Population density per NDVI",
+    layer.name = "Pop. density per NDVI",
     zcol = "pop_dens_per_ndvi")
 
 mv_rank=den_co_bg_pop_per_ndvi %>% 
   mapview(
     col.regions = viridis_pal(option = "C"),
-    layer.name = "Population density per NDVI, rank",
+    layer.name = "Rank of pop. density per NDVI",
     zcol = "pop_dens_per_ndvi_rank")
 
 mv_both = mv_pop_dens_per_ndvi +
