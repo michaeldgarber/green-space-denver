@@ -3,11 +3,15 @@ library(tidyverse)
 library(sf)
 library(mapview)
 library(here)
-library(terra)
-library(raster)
+library(remotes)
+library(terra) #had to install from "binary" rather than "source"
+library(raster)#had to install from "binary" rather than "source"
 library(leaflet)
 library(leaflet.extras)
+library(rgdal) #note it will be retired soon
 setwd(here("data-processed"))
+
+
 
 #Major revision april 14 2022 to make scenario datasets long form
 # code is less repetitive and will be easier to bootstrap
@@ -33,7 +37,8 @@ load("lookup_date_is_valid_all.RData")
 load("den_co_geo.RData") #Load Denver County's 
 den_co_geo %>% mapview()
 den_co_4326 = den_co_geo %>% st_transform(4326)
-lookup_date_is_valid_all %>% filter(date_is_valid_all==1)
+lookup_date_is_valid_all %>% 
+  filter(date_is_valid_all==1)
 #Let's use July 4, 2021 and also limit to Denver County
 ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
 ndvi_den_metro_terr_5_yr$`20210704_NDVI`
@@ -42,30 +47,14 @@ ndvi_den_metro_terr_5_yr$`20210704_NDVI`
 ndvi_den_co_20210704 = ndvi_den_metro_terr_5_yr$`20210704_NDVI` %>% 
   terra::trim() %>%    #remove NAs
   terra::crop(den_co_4326)  
+
+plot(ndvi_den_co_20210704)
 #This automatically converts to a bbox so it's a rectangle.
 #for some reason, this band is not getting the NE area (airport)
 #this takes about 30 seconds. probably not worth saving for that amount of time,
 #given the complexity of saving raster files.
 
-pal_terrain = terrain.colors(100) %>% rev()#reverse the order of the palette
-mv_ndvi_den_co_20210704= ndvi_den_co_20210704 %>% 
-  raster::raster() %>% 
-  mapview(
-    layer.name = "NDVI, pixel",
-    col.regions = pal_terrain, 
-    at = seq(-0.4, 1, 0.1)
-  ) 
-
-mv_ndvi_den_co_20210704
-#save this for use in the rmarkdown code:
-save(mv_ndvi_den_co_20210704, file = "mv_ndvi_den_co_20210704.RData")
-load("den_co_tract_geo.RData") 
-mv_den_co_tract_geo = den_co_tract_geo %>% 
-  mapview(zcol = "tract_fips", layer.name = "Census Tract") 
-
-mv_den_co_tract_geo@map %>% 
-  addFullscreenControl()
-mv_ndvi_den_co_20210704 + mv_den_co_tract_geo
+#mapviews for rasters aren't working anymore...
 
 ### tracts and block groups-----------
 #Limit administrative boundaries data to the Denver area only
@@ -193,7 +182,7 @@ save(den_metro_bg_no_wtr_4326_geo, file = "den_metro_bg_no_wtr_4326_geo.RData")
 ### Load zoning data, because we will also exclude the airport zone and
 # the industrial zone, per meeting with DRR 3/7
 # source(here("scripts","0_read_wrangle_denver_land_use.R")) #this takes ~10 s
-
+#update: actually don't takes too long
 
 
 #I'm first computing NDVI diff for each scenario, and then in a subsequent
@@ -2381,6 +2370,13 @@ hia_all  = den_co_bg_ndvi_alt_all_nogeo %>% #scenario all bg
       scenario == "prkng" & scenario_sub == "30-pct" ~1,
       TRUE ~0
     ),
+    
+    #to re-calculate the weighted average, I need these intermediate values.
+    #easiest to put them here:
+    
+    #re-calculate weighted average ndvi - baseline and alternate
+    ndvi_mean_alt_int = ndvi_mean_alt*area_mi2_bg_int_res,
+    ndvi_quo_int = ndvi_quo*area_mi2_bg_int_res,
       
     #I thought I could get these to sort based on factor order, but nope, sort this way
     scenario_sort_order = case_when(
@@ -2428,13 +2424,6 @@ save(lookup_scenario_sort_order, file = "lookup_scenario_sort_order.RData")
 #write a function for the summarise since it's used so often
 summarise_ungroup_hia = function(df){
   df %>% 
-    #before summarizing, I have to calculate intermediate terms for the weighted average
-    #of NDVI
-    mutate(
-      #re-calculate weighted average ndvi - baseline and alternate
-      ndvi_mean_alt_int = ndvi_mean_alt*area_mi2_bg_int_res,
-      ndvi_quo_int = ndvi_quo*area_mi2_bg_int_res
-    ) %>% 
     summarise(
       pop_affected = sum(pop_affected, na.rm=TRUE),
       attrib_d = sum(attrib_d, na.rm=TRUE),
@@ -2486,8 +2475,10 @@ save(hia_all_by_ndvi, file = "hia_all_by_ndvi.RData")
 
 ### Overall, stratified by equity tertile
 hia_all_by_ndvi_equity = hia_all %>% 
-  filter(ndvi_below_native_threshold==1) %>% #grouping by equity category here
-  group_by(scenario, scenario_sub, ndvi_native_threshold, equity_bg_cdphe_tertile_den) %>% 
+  filter(ndvi_below_native_threshold==1) %>% 
+  #5/26 DRR suggested grouping by denver equity category rather than cdphe version
+  #equity_nbhd_denver_tertile vs equity_bg_cdphe_tertile_den
+  group_by(scenario, scenario_sub, ndvi_native_threshold, equity_nbhd_denver_tertile) %>% 
   summarise_ungroup_hia() %>% 
   left_join(lookup_scenario_sort_order, by = c("scenario", "scenario_sub")) %>% 
   arrange(scenario_sort_order) %>% 
@@ -2531,3 +2522,59 @@ hia_all_by_ndvi_age = hia_all %>%
 hia_all_by_ndvi_age
 
 ## Collapse and summarize over NDVI definition---------
+#What varies between NDVI definitions but not between subsequent bootstrap replications,
+#which vary the risk ratio and the population?
+#treatment area, residential buffer area, baseline NDVI, alternative NDVI
+#what varies over subsequent bootstrap reps?
+#get a median for all of them and 95% 100%
+#we have to group by ndvi group first and then sum over it in the next step
+
+names(hia_all_by_ndvi)
+#get point estimates. mean or median? probably median, I guess?
+table(hia_all_by_ndvi$ndvi_native_threshold)
+View(hia_all_by_ndvi)
+
+hia_all_over_ndvi = hia_all_by_ndvi %>% #begin with this one, created just above.
+  as_tibble() %>% 
+  dplyr::group_by(scenario_sort_order) %>% #collapse over ndvi category here
+  dplyr::summarise(
+    n=n(),
+    pop_affected = median(pop_affected, na.rm=TRUE), #just median for pop
+    attrib_d = median(attrib_d, na.rm=TRUE), #just median for attrib deaths
+    deaths_prevented = median(deaths_prevented, na.rm=TRUE), #same
+    deaths_prevented_per_pop  = median(deaths_prevented_per_pop, na.rm=TRUE),#Same
+    deaths_prevented_per_pop_100k = median(deaths_prevented_per_pop, na.rm=TRUE),#Same
+    #the rest vary over NDVI definition but will not vary over the other replications, 
+    #so report the interval at this stage.
+    area_mi2_bg_int_tx = quantile(area_mi2_bg_int_tx, probs =c(0.5), na.rm=TRUE),
+    area_mi2_bg_int_tx_max = quantile(area_mi2_bg_int_tx, probs =c(.99), na.rm=TRUE),
+    area_mi2_bg_int_tx_min = quantile(area_mi2_bg_int_tx, probs =c(.01), na.rm=TRUE),
+    area_mi2_bg_int_res = median(area_mi2_bg_int_res, na.rm=TRUE),
+    area_mi2_bg_int_res_max = max(area_mi2_bg_int_res, na.rm=TRUE),
+    area_mi2_bg_int_res_min = min(area_mi2_bg_int_res, na.rm=TRUE),
+    ndvi_mean_alt = median(ndvi_mean_alt, na.rm=TRUE),
+    ndvi_mean_alt_max = max(ndvi_mean_alt, na.rm=TRUE),
+    ndvi_mean_alt_min = min(ndvi_mean_alt, na.rm=TRUE),
+    ndvi_quo = median(ndvi_quo, na.rm=TRUE),
+    ndvi_quo_max = max(ndvi_quo, na.rm=TRUE),
+    ndvi_quo_min = min(ndvi_quo, na.rm=TRUE)
+  ) %>% 
+  ungroup() %>% 
+  left_join(lookup_scenario_sort_order, by = c("scenario", "scenario_sub")) %>% 
+  arrange(scenario_sort_order) %>% 
+  dplyr::select(
+    contains("scenario"), 
+    starts_with("ndvi_native_threshold"),
+    starts_with("equity_bg_cdphe"),
+    n,
+    starts_with("pop"), 
+    starts_with("area"),
+    starts_with("ndvi"), 
+    starts_with("death"),
+    everything())
+
+#this isn't working as expected. wtf?
+hia_all_over_ndvi
+View(hia_all_over_ndvi)
+names(hia_all_over_ndvi)
+summary(hia_all_over_ndvi$ndvi_mean_alt)

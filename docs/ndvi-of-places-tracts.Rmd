@@ -42,15 +42,20 @@ https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/1b_wrangl
 ## NDVI for one day
 Here is the NDVI over the study area on a cloud-free day, July 4, 2021:
 ```{r terragoodmo, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
+#Update 5/26/22 this may not work with mapview anymore, so use plot instead for speed and
 setwd(here("data-processed"))
 pal_terrain_col = rev(terrain.colors(100)) 
-ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
-mv_good_date =ndvi_den_metro_terr_5_yr$`20210704_NDVI` %>% 
-  raster::raster() %>%  
-  mapview(
-    col.regions = pal_terrain_col,
-    layer.name = "NDVI, July 4, 2021")
-mv_good_date
+ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif") 
+
+ndvi_den_metro_terr_5_yr$`20210704_NDVI` %>% plot()
+#old code:
+# mv_good_date =ndvi_den_metro_terr_5_yr$`20210704_NDVI` %>% 
+#   raster::raster() %>%  
+#   mapview(
+#     col.regions = pal_terrain_col,
+#     layer.name = "NDVI, July 4, 2021")
+# mv_good_date
+
 ```
 
 
@@ -101,12 +106,16 @@ Hmm, if we look closely, we can see that there are some very low NDVI values for
 setwd(here("data-processed"))
 pal_viridis_trunc=viridis::viridis_pal(end=.9) #trunc for truncated
 ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
-mv_bad_date =ndvi_den_metro_terr_5_yr$`20180517_NDVI` %>% #Use 2018-05-17
-  raster::raster() %>%  
-  mapview(
-    col.regions = pal_viridis_trunc,
-    layer.name = "NDVI, May 17, 2018")
-mv_bad_date
+ndvi_den_metro_terr_5_yr$`20180517_NDVI` %>% #Use 2018-05-17
+  plot()
+
+#old code that uses mapview. decide to use plot instead. see abobve
+# mv_bad_date =ndvi_den_metro_terr_5_yr$`20180517_NDVI` %>% #Use 2018-05-17
+#   raster::raster() %>%  
+#   mapview(
+#     col.regions = pal_viridis_trunc,
+#     layer.name = "NDVI, May 17, 2018")
+# mv_bad_date
 ```
 
 The specific NDVI thresholds for each thresholds are noted in this script (https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/1b_wrangle_check_landsat_ndvi_denver.R) and warrant further discussion. 
@@ -184,7 +193,7 @@ mv_places_polygons_points@map %>%
 #This works, but I don't need to run every time.
 #setwd(here("results"))
 #getwd()
-mapshot(mv_places_polygons_points, file = "mv_places_polygons_points.png")
+#mapshot(mv_places_polygons_points, file = "mv_places_polygons_points.png")
 
 ```
 
