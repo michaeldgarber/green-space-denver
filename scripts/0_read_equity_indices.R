@@ -182,6 +182,7 @@ mv_den_equity_ind_tertile + mv_cdphe_equity_den_tertile
 load("den_bg_acs5_wrangle_geo.RData")
 load("lookup_colorado_bg_tract.RData")
 load("lookup_den_nbhd_tract.RData") #neighborhood ids in denver linked to tracts
+load("lookup_colorado_bg_2020_vs_2019_nogeo.RData")
 #run a chi square of the two indices
 
 #to keep consistent, using exact same function used in 3_hia_for_each_scenario

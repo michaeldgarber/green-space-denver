@@ -44,14 +44,14 @@ den_co_bg_pop_per_ndvi =  den_bg_acs5_wrangle_geo %>%
   
   ndvi_tertile_overall = cut_number(ndvi_mean_wt, 3)
   ) %>% 
-  group_by(as.character(pop_dens_mi2_tertile)) %>% #tried to convert to character to fix weird mapview factor issue
+  group_by(pop_dens_mi2_tertile) %>% #tried to convert to character to fix weird mapview factor issue
   mutate(
     ndvi_tertile_within_pop_dens_tertile = cut_number(ndvi_mean_wt, 3),
     ndvi_tertile_within_pop_dens_tertile_label = cut_number(
       ndvi_mean_wt, 3, labels = c("1", "2", "3"))
     ) %>% 
   ungroup() %>% 
-  group_by(as.character(pop_dens_mi2_tertile)) %>% #tried to convert to character to fix weird mapview factor issue
+  group_by(pop_dens_mi2_tertile) %>% #tried to convert to character to fix weird mapview factor issue
   mutate(
     ndvi_tertile_within_pop_dens_quartile = cut_number(ndvi_mean_wt, 3),
     ndvi_tertile_within_pop_dens_quartile_label = cut_number(
@@ -61,6 +61,7 @@ den_co_bg_pop_per_ndvi =  den_bg_acs5_wrangle_geo %>%
     ends_with("fips"), pop_tot, contains("pop_dens"), contains("ndvi"), contains("nbhd_northeast")) 
 
 save(den_co_bg_pop_per_ndvi, file = "den_co_bg_pop_per_ndvi.RData")
+names(den_co_bg_pop_per_ndvi)
 table(den_co_bg_pop_per_ndvi$ndvi_tertile_within_pop_dens_quartile)
 table(den_co_bg_pop_per_ndvi$ndvi_tertile_within_pop_dens_tertile)
 table(den_co_bg_pop_per_ndvi$ndvi_tertile_within_pop_dens_quartile_label)
