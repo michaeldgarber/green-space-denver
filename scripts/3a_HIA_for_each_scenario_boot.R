@@ -78,8 +78,9 @@ step_two_bootstrap_summarise_ungroup_select = function(df){
       pop_affected_ul = quantile(pop_affected, probs =c(0.975), na.rm=TRUE),
       attrib_d_ll = quantile(attrib_d, probs =c(0.025), na.rm=TRUE),
       attrib_d_ul = quantile(attrib_d, probs =c(0.975), na.rm=TRUE),
-      deaths_prevented_ll = quantile(deaths_prevented, probs =c(0.025), na.rm=TRUE),
-      deaths_prevented_ul = quantile(deaths_prevented, probs =c(0.975), na.rm=TRUE),
+      #call this _count so it can be dynamically selected later.
+      deaths_prevented_count_ll = quantile(deaths_prevented, probs =c(0.025), na.rm=TRUE),
+      deaths_prevented_count_ul = quantile(deaths_prevented, probs =c(0.975), na.rm=TRUE),
       deaths_prevented_per_pop_ll = quantile(deaths_prevented_per_pop, probs =c(0.025), na.rm=TRUE),
       deaths_prevented_per_pop_ul = quantile(deaths_prevented_per_pop, probs =c(0.975), na.rm=TRUE),
       deaths_prevented_per_pop_100k_ll = quantile(deaths_prevented_per_pop_100k, probs =c(0.025), na.rm=TRUE),
@@ -135,16 +136,19 @@ select_vars_estimate_boot = function(df){
     contains("equity"),
     contains("area_mi2_bg_int_tx"),
     contains("area_mi2_bg_int_res"),
+    contains("ndvi_quo"),
     contains("ndvi_mean_alt"),
-    contains("ndvi_mean_quo"),
-    contains("ndvi_mean_alt"),
+    contains("ndvi_diff"),
     contains("pop_affect"),
-    contains("deaths_prevented"),
+    #have to hard code these to get them in the desired order
+    starts_with("deaths_prevented_cou"),
+    #this omits the per pop that's not per 100k pop. that's okay. don't use it in tables
+    starts_with("deaths_prevented_per_pop_100k"),
     contains("attrib_d")
   )
 }
 
-hia_all_over_ndvi_over_equity_est_boot = hia_all_over_ndvi %>% 
+hia_all_over_ndvi_over_equity_est_boot = hia_all_over_ndvi_over_equity %>% 
   left_join(hia_all_over_ndvi_over_equity_s, by = c("scenario", "scenario_sub")) %>% 
   select_vars_estimate_boot()
 
@@ -196,6 +200,7 @@ hia_all_by_ndvi_over_equity_est_boot = hia_all_by_ndvi_over_equity %>%
   select_vars_estimate_boot()
 names(hia_all_by_ndvi_over_equity_est_boot)
 save(hia_all_by_ndvi_over_equity_est_boot, file = "hia_all_by_ndvi_over_equity_est_boot.RData")
+
 hia_all_by_ndvi_by_equity_est_boot = hia_all_by_ndvi_by_equity %>% 
   left_join(hia_all_by_ndvi_by_equity_s, by = c("scenario", "scenario_sub", "equity_nbhd_denver_tertile")) %>% 
   select_vars_estimate_boot()

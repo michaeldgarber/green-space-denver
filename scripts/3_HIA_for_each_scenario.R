@@ -124,6 +124,7 @@ lookup_tract_nbhd_northeast_exclude
 #the study area for use in subsequent scenarios
 #install.packages("nngeo") #to remove holes in sf objects
 library(nngeo)
+load("den_co_tract_geo.RData")
 den_co_tract_geo %>% mapview()
 class(den_co_tract_geo)
 sf_use_s2()
@@ -2529,39 +2530,43 @@ hia_all_by_ndvi_age
 #get a median for all of them and 95% 100%
 #we have to group by ndvi group first and then sum over it in the next step
 
-names(hia_all_by_ndvi)
+names(hia_all_by_ndvi_over_equity)
 #get point estimates. mean or median? probably median, I guess?
-table(hia_all_by_ndvi$ndvi_native_threshold)
+table(hia_all_by_ndvi_over_equity$ndvi_native_threshold)
 
-skimr::skim(hia_all_by_ndvi)
+skimr::skim(hia_all_by_ndvi_over_equity)
 summarise_ungroup_hia_over_ndvi = function(df){
   df %>% 
     dplyr::summarise(
       pop_affected_med = median(pop_affected, na.rm=TRUE), #just median for pop
       attrib_d_med = median(attrib_d, na.rm=TRUE), #just median for attrib deaths
-      deaths_prevented_med = median(deaths_prevented, na.rm=TRUE), #same
+      #call this _count so it can be dynamically selected later.
+      deaths_prevented_count_med = median(deaths_prevented, na.rm=TRUE), #same
       deaths_prevented_per_pop_med  = median(deaths_prevented_per_pop, na.rm=TRUE),#Same
       deaths_prevented_per_pop_100k_med = median(deaths_prevented_per_pop_100k, na.rm=TRUE),#Same
       #the rest vary over NDVI definition but will not vary over the other replications, 
       #so report the interval at this stage.
-      area_mi2_bg_int_tx_max = max(area_mi2_bg_int_tx,  na.rm=TRUE),
-      area_mi2_bg_int_tx_min = min(area_mi2_bg_int_tx, na.rm=TRUE),
       area_mi2_bg_int_tx_med = median(area_mi2_bg_int_tx, na.rm=TRUE),
+      area_mi2_bg_int_tx_min = min(area_mi2_bg_int_tx, na.rm=TRUE),
+      area_mi2_bg_int_tx_max = max(area_mi2_bg_int_tx,  na.rm=TRUE),
       area_mi2_bg_int_res_med = median(area_mi2_bg_int_res, na.rm=TRUE),
-      area_mi2_bg_int_res_max = max(area_mi2_bg_int_res, na.rm=TRUE),
       area_mi2_bg_int_res_min = min(area_mi2_bg_int_res, na.rm=TRUE),
-      ndvi_mean_alt_med = median(ndvi_mean_alt, na.rm=TRUE),
-      ndvi_mean_alt_max = max(ndvi_mean_alt, na.rm=TRUE),
-      ndvi_mean_alt_min = min(ndvi_mean_alt, na.rm=TRUE),
+      area_mi2_bg_int_res_max = max(area_mi2_bg_int_res, na.rm=TRUE),
       ndvi_quo_med = median(ndvi_quo, na.rm=TRUE),
+      ndvi_quo_min = min(ndvi_quo, na.rm=TRUE),
       ndvi_quo_max = max(ndvi_quo, na.rm=TRUE),
-      ndvi_quo_min = min(ndvi_quo, na.rm=TRUE)
+      ndvi_mean_alt_med = median(ndvi_mean_alt, na.rm=TRUE),
+      ndvi_mean_alt_min = min(ndvi_mean_alt, na.rm=TRUE),
+      ndvi_mean_alt_max = max(ndvi_mean_alt, na.rm=TRUE),
+      ndvi_diff_med = median(ndvi_diff, na.rm=TRUE),
+      ndvi_diff_min = min(ndvi_diff, na.rm=TRUE),
+      ndvi_diff_max = max(ndvi_diff, na.rm=TRUE)
     ) %>% 
     ungroup()
 }
 
 ### over NDVI and over equity--------
-hia_all_over_ndvi_over_equity = hia_all_by_ndvi %>% #begin with this one, created just above.
+hia_all_over_ndvi_over_equity = hia_all_by_ndvi_over_equity %>% #begin with this one, created just above.
   group_by(scenario, scenario_sub) %>% #collapse over ndvi category here
   summarise_ungroup_hia_over_ndvi() %>% 
   left_join(lookup_scenario_sort_order, by = c("scenario", "scenario_sub")) %>% 
@@ -2580,7 +2585,7 @@ hia_all_over_ndvi_over_equity
 save(hia_all_over_ndvi_over_equity, file = "hia_all_over_ndvi_over_equity.RData")
 
 ### over NDVI by equity--------
-hia_all_over_ndvi_by_equity = hia_all_by_ndvi_equity %>% 
+hia_all_over_ndvi_by_equity = hia_all_by_ndvi_by_equity %>% 
   #collapse over ndvi category here
   group_by(scenario, scenario_sub, equity_nbhd_denver_tertile) %>% 
   summarise_ungroup_hia_over_ndvi() %>%   
