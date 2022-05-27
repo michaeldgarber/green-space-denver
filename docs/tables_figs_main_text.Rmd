@@ -1,5 +1,5 @@
 ---
-title: "NATURGREEN results tables-figures-supplement"
+title: "NATURGREEN paper tables & figure (main text)"
 author: "Michael D Garber"
 date: '2022-05-24'
 #always_allow_html: true

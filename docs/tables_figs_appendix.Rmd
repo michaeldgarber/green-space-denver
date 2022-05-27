@@ -1,5 +1,5 @@
 ---
-title: "Supplemental tables & figures for NATURGREEN paper"
+title: "NATURGREEN paper tables & figure (appendix)"
 author: "Michael D Garber"
 date: '2022-05-24'
 #always_allow_html: true
