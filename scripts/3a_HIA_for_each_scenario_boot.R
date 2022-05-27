@@ -6,10 +6,11 @@ library(here)
 library(truncnorm)
 setwd(here("data-processed"))
 #started 4/16/22
-#revised
+#revised 5/26/22
 
 #This is the bootstrapping code for the HIA
-#Two sources of error: population estimates and the dose-response function
+#Two sources of error for first group (stratified by native definition): population estimates and the dose-response function
+# three sources of error when summarizing over native definition: native definition, population estimates, and dose-response f
 
 #https://www.census.gov/content/dam/Census/programs-surveys/acs/guidance/training-presentations/20180418_MOE.pdf
 #For the census data, assume a normal distribution, where the margin of error represents a 90%
@@ -52,7 +53,7 @@ bootstrap_hia = function(s_id_val){
 
 # Run bootstrap function----------
 #run the function x times; 500 reaches memory limit. 200 is fine. don't save the data frame because it's huge
-n_boot_reps = 100
+n_boot_reps = 10
 s_id_val_list <- seq(from = 1, to = n_boot_reps, by = 1)
 
 hia_all_boot  = s_id_val_list %>% 
@@ -68,83 +69,136 @@ hia_all_boot  = s_id_val_list %>%
 
 hia_all_boot
 nrow(hia_all_boot)
-# Summarize results--------------
 summary(hia_all_boot$drf_est)
 
+step_two_bootstrap_summarise_ungroup_select = function(df){
+  df %>% 
+    summarise(
+      pop_affected_ll = quantile(pop_affected, probs =c(0.025), na.rm=TRUE),
+      pop_affected_ul = quantile(pop_affected, probs =c(0.975), na.rm=TRUE),
+      attrib_d_ll = quantile(attrib_d, probs =c(0.025), na.rm=TRUE),
+      attrib_d_ul = quantile(attrib_d, probs =c(0.975), na.rm=TRUE),
+      deaths_prevented_ll = quantile(deaths_prevented, probs =c(0.025), na.rm=TRUE),
+      deaths_prevented_ul = quantile(deaths_prevented, probs =c(0.975), na.rm=TRUE),
+      deaths_prevented_per_pop_ll = quantile(deaths_prevented_per_pop, probs =c(0.025), na.rm=TRUE),
+      deaths_prevented_per_pop_ul = quantile(deaths_prevented_per_pop, probs =c(0.975), na.rm=TRUE),
+      deaths_prevented_per_pop_100k_ll = quantile(deaths_prevented_per_pop_100k, probs =c(0.025), na.rm=TRUE),
+      deaths_prevented_per_pop_100k_ul = quantile(deaths_prevented_per_pop_100k, probs =c(0.975), na.rm=TRUE)
+    ) %>% 
+    ungroup() %>% 
+    dplyr::select(
+      contains("scenario"), 
+      starts_with("ndvi_native_threshold"),
+      starts_with("equity"),
+      starts_with("pop"), 
+      starts_with("area"),
+      starts_with("ndvi"), 
+      starts_with("death"),
+      everything())
+}
 
-## Summarize HIA - Stratify by NDVI threshold-------------
-### Summarize overall-----------
-hia_all_by_ndvi_s = hia_all_boot %>% 
+
+# Summarize HIA - collapse over NDVI threshold-------------
+## over NDVI over equity--------
+hia_all_over_ndvi_over_equity_s = hia_all_boot %>% 
+  filter(ndvi_below_native_threshold==1) %>% 
+  group_by(s_id, scenario, scenario_sub, ndvi_native_threshold) %>% #first summarize by s_id, over equity but by ndvi
+  summarise_ungroup_hia_by_ndvi() %>% #function created in scripts/3_HIA_for_each_scenario.R
+  group_by( scenario, scenario_sub  ) %>% #over s_id and over ndvi cat
+  #quantiles here reflect overall percentiles including both sources of variation (ndvi definition and others)
+  step_two_bootstrap_summarise_ungroup_select()
+
+hia_all_over_ndvi_over_equity_s
+names(hia_all_over_ndvi_over_equity_s)
+save(hia_all_over_ndvi_over_equity_s, file = "hia_all_over_ndvi_over_equity_s.RData")
+## over NDVI by equity-----------
+hia_all_over_ndvi_by_equity_s = hia_all_boot %>% 
+  filter(ndvi_below_native_threshold==1) %>% 
+  #first summarize by s_id, by equity and ndvi
+  group_by(s_id, scenario, scenario_sub, ndvi_native_threshold,  equity_nbhd_denver_tertile) %>% 
+  summarise_ungroup_hia_by_ndvi() %>% #function created in scripts/3_HIA_for_each_scenario.R
+  group_by( scenario, scenario_sub,  equity_nbhd_denver_tertile  ) %>% #over s_id and over ndvi cat but by equity
+  #quantiles here reflect overall percentiles including 
+  #both sources of variation (ndvi definition and others)
+  step_two_bootstrap_summarise_ungroup_select()
+
+hia_all_over_ndvi_by_equity_s
+save(hia_all_over_ndvi_by_equity_s, file = "hia_all_over_ndvi_by_equity_s.RData")
+
+## combine the bootstrapped results with the static results and point estimates------
+#Previously I had done this in the rmarkdown tables/fig doc, but I'd prefer to do it here.
+#combine these first before bind_rows
+select_vars_estimate_boot = function(df){
+  df %>% 
+  dplyr::select(
+    contains("scenario"),
+    contains("equity"),
+    contains("area_mi2_bg_int_tx"),
+    contains("area_mi2_bg_int_res"),
+    contains("ndvi_mean_alt"),
+    contains("ndvi_mean_quo"),
+    contains("ndvi_mean_alt"),
+    contains("pop_affect"),
+    contains("deaths_prevented"),
+    contains("attrib_d")
+  )
+}
+
+hia_all_over_ndvi_over_equity_est_boot = hia_all_over_ndvi %>% 
+  left_join(hia_all_over_ndvi_over_equity_s, by = c("scenario", "scenario_sub")) %>% 
+  select_vars_estimate_boot()
+
+save(hia_all_over_ndvi_over_equity_est_boot, file = "hia_all_over_ndvi_over_equity_est_boot.RData")
+names(hia_all_over_ndvi_over_equity_est_boot)
+hia_all_over_ndvi_by_equity_est_boot = hia_all_over_ndvi_by_equity %>% 
+  left_join(hia_all_over_ndvi_by_equity_s, by = c("scenario", "scenario_sub", "equity_nbhd_denver_tertile")) %>% 
+  select_vars_estimate_boot()
+
+save(hia_all_over_ndvi_by_equity_est_boot, file = "hia_all_over_ndvi_by_equity_est_boot.RData")
+names(hia_all_over_ndvi_by_equity_est_boot)
+
+# Summarize HIA - Stratify by NDVI threshold-------------
+#Note here neither the NDVI nor the area will have variance because they doesn't vary within NDVI threshold category
+##  by NDVI over equity-----------
+hia_all_by_ndvi_over_equity_s = hia_all_boot %>% 
   filter(ndvi_below_native_threshold==1) %>% 
   group_by(s_id, scenario, scenario_sub, ndvi_native_threshold) %>% 
-  summarise_ungroup_hia() %>% #function created in scripts/3_HIA_for_each_scenario.R
-  #summarize over sample id and take percentiles
-  group_by( scenario, scenario_sub, ndvi_native_threshold) %>% 
-  summarise(
-    pop_affected_ll = quantile(pop_affected, probs =c(0.025), na.rm=TRUE),
-    pop_affected_ul = quantile(pop_affected, probs =c(0.975), na.rm=TRUE),
-    attrib_d_ll = quantile(attrib_d, probs =c(0.025), na.rm=TRUE),
-    attrib_d_ul = quantile(attrib_d, probs =c(0.975), na.rm=TRUE),
-    deaths_prevented_ll = quantile(deaths_prevented, probs =c(0.025), na.rm=TRUE),
-    deaths_prevented_ul = quantile(deaths_prevented, probs =c(0.975), na.rm=TRUE),
-    deaths_prevented_per_pop_ll = quantile(deaths_prevented_per_pop, probs =c(0.025), na.rm=TRUE),
-    deaths_prevented_per_pop_ul = quantile(deaths_prevented_per_pop, probs =c(0.975), na.rm=TRUE),
-    deaths_prevented_per_pop_100k_ll = quantile(deaths_prevented_per_pop_100k, probs =c(0.025), na.rm=TRUE),
-    deaths_prevented_per_pop_100k_ul = quantile(deaths_prevented_per_pop_100k, probs =c(0.975), na.rm=TRUE)
-  ) %>% 
-  ungroup() %>% 
-  dplyr::select(
-    contains("scenario"), 
-    starts_with("ndvi_native_threshold"),
-    starts_with("equity_bg_cdphe"),
-    starts_with("pop"), 
-    starts_with("area"),
-    starts_with("ndvi"), 
-    starts_with("death"),
-    everything())
+  summarise_ungroup_hia_by_ndvi() %>% #function created in scripts/3_HIA_for_each_scenario.R
+  group_by( scenario, scenario_sub, ndvi_native_threshold) %>% #summarize over sample id and get quantiles
+  step_two_bootstrap_summarise_ungroup_select()
 
   
-hia_all_by_ndvi_s
+hia_all_by_ndvi_over_equity_s
 #save the summary but not hia_all_boot, as it's too huge and will take up too much space
 setwd(here("data-processed"))
-save(hia_all_by_ndvi_s, file = "hia_all_by_ndvi_s.RData")
+save(hia_all_by_ndvi_over_equity_s, file = "hia_all_by_ndvi_over_equity_s.RData")
 
-### overall by equity category--------------
-hia_all_by_ndvi_equity_s = hia_all_boot %>% 
+## by ndvi by equity--------------
+hia_all_by_ndvi_by_equity_s = hia_all_boot %>% 
   filter(ndvi_below_native_threshold==1) %>% 
-  group_by(s_id, scenario, scenario_sub, ndvi_native_threshold, equity_bg_cdphe_tertile_den) %>% 
-  summarise_ungroup_hia() %>% #function created in scripts/3_HIA_for_each_scenario.R
-  #summarize over sample id and take percentiles
-  group_by( scenario, scenario_sub, ndvi_native_threshold, equity_bg_cdphe_tertile_den) %>% 
-  summarise(
-    pop_affected_ll = quantile(pop_affected, probs =c(0.025), na.rm=TRUE),
-    pop_affected_ul = quantile(pop_affected, probs =c(0.975), na.rm=TRUE),
-    attrib_d_ll = quantile(attrib_d, probs =c(0.025), na.rm=TRUE),
-    attrib_d_ul = quantile(attrib_d, probs =c(0.975), na.rm=TRUE),
-    deaths_prevented_ll = quantile(deaths_prevented, probs =c(0.025), na.rm=TRUE),
-    deaths_prevented_ul = quantile(deaths_prevented, probs =c(0.975), na.rm=TRUE),
-    deaths_prevented_per_pop_ll = quantile(deaths_prevented_per_pop, probs =c(0.025), na.rm=TRUE),
-    deaths_prevented_per_pop_ul = quantile(deaths_prevented_per_pop, probs =c(0.975), na.rm=TRUE),
-    deaths_prevented_per_pop_100k_ll = quantile(deaths_prevented_per_pop_100k, probs =c(0.025), na.rm=TRUE),
-    deaths_prevented_per_pop_100k_ul = quantile(deaths_prevented_per_pop_100k, probs =c(0.975), na.rm=TRUE)
-  ) %>% 
-  ungroup() %>% 
-  dplyr::select(
-    contains("scenario"), 
-    starts_with("ndvi_native_threshold"),
-    starts_with("equity_bg_cdphe"),
-    starts_with("pop"), 
-    starts_with("area"),
-    starts_with("ndvi"), 
-    starts_with("death"),
-    everything())
+  group_by(s_id, scenario, scenario_sub, ndvi_native_threshold, equity_nbhd_denver_tertile) %>% 
+  summarise_ungroup_hia_by_ndvi() %>% #function created in scripts/3_HIA_for_each_scenario.R
+  #summarize over sample id and get quantiles
+  group_by( scenario, scenario_sub, ndvi_native_threshold, equity_nbhd_denver_tertile) %>% 
+  step_two_bootstrap_summarise_ungroup_select()
 
 
-hia_all_by_ndvi_equity_s
+hia_all_by_ndvi_by_equity_s
 #save the summary but not hia_all_boot, as it's too huge and will take up too much space
 setwd(here("data-processed"))
-save(hia_all_by_ndvi_equity_s, file = "hia_all_by_ndvi_equity_s.RData")
+save(hia_all_by_ndvi_by_equity_s, file = "hia_all_by_ndvi_by_equity_s.RData")
 
+## combine the bootstrapped results with the static results and point estimates------
+#Previously I had done this in the rmarkdown tables/fig doc, but I'd prefer to do it here.
+#combine these first before bind_rows
+hia_all_by_ndvi_over_equity_est_boot = hia_all_by_ndvi_over_equity %>% 
+  left_join(hia_all_by_ndvi_over_equity_s, by = c("scenario", "scenario_sub"  )) %>% 
+  select_vars_estimate_boot()
+names(hia_all_by_ndvi_over_equity_est_boot)
+save(hia_all_by_ndvi_over_equity_est_boot, file = "hia_all_by_ndvi_over_equity_est_boot.RData")
+hia_all_by_ndvi_by_equity_est_boot = hia_all_by_ndvi_by_equity %>% 
+  left_join(hia_all_by_ndvi_by_equity_s, by = c("scenario", "scenario_sub", "equity_nbhd_denver_tertile")) %>% 
+  select_vars_estimate_boot()
+save(hia_all_by_ndvi_over_equity_est_boot, file = "hia_all_by_ndvi_over_equity_est_boot.RData")
 
-## Summarize HIA - collapse over NDVI threshold-------------
 

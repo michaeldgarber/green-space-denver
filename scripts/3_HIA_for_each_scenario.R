@@ -446,7 +446,6 @@ den_co_bg_ndvi_alt_all_nogeo %>%
     zcol = "equity_nbhd_denver")
 
 
-
 ### Examine weighted NDVI by census block group--------
 pal_terrain = terrain.colors(100) %>% rev()#reverse the order of the palette
 mv_den_co_bg_ndvi  = den_co_bg_ndvi_geo %>% 
@@ -457,7 +456,7 @@ mv_den_co_bg_ndvi  = den_co_bg_ndvi_geo %>%
     col.regions = pal_terrain, 
     at = seq(-0.1, 1, 0.1)
   )
-mv_den_co_bg_ndvi + mv_ndvi_den_co_20210704
+mv_den_co_bg_ndvi
 
 #Examine block groups above/below native threshold
 library(shades)
@@ -2422,7 +2421,7 @@ save(lookup_scenario_sort_order, file = "lookup_scenario_sort_order.RData")
 
 # Summarize HIA------------
 #write a function for the summarise since it's used so often
-summarise_ungroup_hia = function(df){
+summarise_ungroup_hia_by_ndvi = function(df){
   df %>% 
     summarise(
       pop_affected = sum(pop_affected, na.rm=TRUE),
@@ -2452,11 +2451,11 @@ summarise_ungroup_hia = function(df){
 
 
 ## Stratify by NDVI definition--------
-### Overall overall, stratified by NDVI definition------------
-hia_all_by_ndvi = hia_all %>% 
+### by NDVI, over equity ------------
+hia_all_by_ndvi_over_equity = hia_all %>% 
   filter(ndvi_below_native_threshold==1) %>% #grouping by equity category here
   group_by(scenario, scenario_sub, ndvi_native_threshold ) %>% 
-  summarise_ungroup_hia() %>% 
+  summarise_ungroup_hia_by_ndvi() %>% 
   left_join(lookup_scenario_sort_order, by = c("scenario", "scenario_sub")) %>% 
   arrange(scenario_sort_order) %>% 
   dplyr::select(
@@ -2469,17 +2468,17 @@ hia_all_by_ndvi = hia_all %>%
     starts_with("death"),
     everything())
 
-hia_all_by_ndvi
+hia_all_by_ndvi_over_equity
 setwd(here("data-processed"))
-save(hia_all_by_ndvi, file = "hia_all_by_ndvi.RData")
+save(hia_all_by_ndvi_over_equity, file = "hia_all_by_ndvi_over_equity.RData")
 
 ### Overall, stratified by equity tertile
-hia_all_by_ndvi_equity = hia_all %>% 
+hia_all_by_ndvi_by_equity = hia_all %>% 
   filter(ndvi_below_native_threshold==1) %>% 
   #5/26 DRR suggested grouping by denver equity category rather than cdphe version
   #equity_nbhd_denver_tertile vs equity_bg_cdphe_tertile_den
   group_by(scenario, scenario_sub, ndvi_native_threshold, equity_nbhd_denver_tertile) %>% 
-  summarise_ungroup_hia() %>% 
+  summarise_ungroup_hia_by_ndvi() %>% 
   left_join(lookup_scenario_sort_order, by = c("scenario", "scenario_sub")) %>% 
   arrange(scenario_sort_order) %>% 
   dplyr::select(
@@ -2492,16 +2491,17 @@ hia_all_by_ndvi_equity = hia_all %>%
     starts_with("death"),
     everything())
 
-hia_all_by_ndvi_equity
+hia_all_by_ndvi_by_equity
 setwd(here("data-processed"))
-save(hia_all_by_ndvi_equity, file = "hia_all_by_ndvi_equity.RData")
+save(hia_all_by_ndvi_by_equity, file = "hia_all_by_ndvi_by_equity.RData")
 
-### Summarize by block group----------
+### by block group by native def----------
+
 load("lookup_den_metro_bg_geo.RData") #created 0_import_manage_denver_acs.R
 hia_all_by_ndvi_bg = hia_all %>% 
   filter(ndvi_below_native_threshold==1) %>% 
   group_by(bg_fips, scenario, scenario_sub, ndvi_native_threshold) %>% 
-  summarise_ungroup_hia() 
+  summarise_ungroup_hia_by_ndvi() 
 hia_all_by_ndvi_bg
 names(hia_all_by_ndvi_bg)
 
@@ -2517,11 +2517,11 @@ table(hia_all$age_group_acs)
 hia_all_by_ndvi_age = hia_all %>% 
   filter(ndvi_below_native_threshold==1) %>% 
   group_by(age_group_acs, scenario, scenario_sub, ndvi_native_threshold) %>% 
-  summarise_ungroup_hia() 
+  summarise_ungroup_hia_by_ndvi() 
 
 hia_all_by_ndvi_age
 
-## Collapse and summarize over NDVI definition---------
+## Summarize over NDVI definition---------
 #What varies between NDVI definitions but not between subsequent bootstrap replications,
 #which vary the risk ratio and the population?
 #treatment area, residential buffer area, baseline NDVI, alternative NDVI
@@ -2532,49 +2532,70 @@ hia_all_by_ndvi_age
 names(hia_all_by_ndvi)
 #get point estimates. mean or median? probably median, I guess?
 table(hia_all_by_ndvi$ndvi_native_threshold)
-View(hia_all_by_ndvi)
 
-hia_all_over_ndvi = hia_all_by_ndvi %>% #begin with this one, created just above.
-  as_tibble() %>% 
-  dplyr::group_by(scenario_sort_order) %>% #collapse over ndvi category here
-  dplyr::summarise(
-    n=n(),
-    pop_affected = median(pop_affected, na.rm=TRUE), #just median for pop
-    attrib_d = median(attrib_d, na.rm=TRUE), #just median for attrib deaths
-    deaths_prevented = median(deaths_prevented, na.rm=TRUE), #same
-    deaths_prevented_per_pop  = median(deaths_prevented_per_pop, na.rm=TRUE),#Same
-    deaths_prevented_per_pop_100k = median(deaths_prevented_per_pop, na.rm=TRUE),#Same
-    #the rest vary over NDVI definition but will not vary over the other replications, 
-    #so report the interval at this stage.
-    area_mi2_bg_int_tx = quantile(area_mi2_bg_int_tx, probs =c(0.5), na.rm=TRUE),
-    area_mi2_bg_int_tx_max = quantile(area_mi2_bg_int_tx, probs =c(.99), na.rm=TRUE),
-    area_mi2_bg_int_tx_min = quantile(area_mi2_bg_int_tx, probs =c(.01), na.rm=TRUE),
-    area_mi2_bg_int_res = median(area_mi2_bg_int_res, na.rm=TRUE),
-    area_mi2_bg_int_res_max = max(area_mi2_bg_int_res, na.rm=TRUE),
-    area_mi2_bg_int_res_min = min(area_mi2_bg_int_res, na.rm=TRUE),
-    ndvi_mean_alt = median(ndvi_mean_alt, na.rm=TRUE),
-    ndvi_mean_alt_max = max(ndvi_mean_alt, na.rm=TRUE),
-    ndvi_mean_alt_min = min(ndvi_mean_alt, na.rm=TRUE),
-    ndvi_quo = median(ndvi_quo, na.rm=TRUE),
-    ndvi_quo_max = max(ndvi_quo, na.rm=TRUE),
-    ndvi_quo_min = min(ndvi_quo, na.rm=TRUE)
-  ) %>% 
-  ungroup() %>% 
+skimr::skim(hia_all_by_ndvi)
+summarise_ungroup_hia_over_ndvi = function(df){
+  df %>% 
+    dplyr::summarise(
+      pop_affected_med = median(pop_affected, na.rm=TRUE), #just median for pop
+      attrib_d_med = median(attrib_d, na.rm=TRUE), #just median for attrib deaths
+      deaths_prevented_med = median(deaths_prevented, na.rm=TRUE), #same
+      deaths_prevented_per_pop_med  = median(deaths_prevented_per_pop, na.rm=TRUE),#Same
+      deaths_prevented_per_pop_100k_med = median(deaths_prevented_per_pop_100k, na.rm=TRUE),#Same
+      #the rest vary over NDVI definition but will not vary over the other replications, 
+      #so report the interval at this stage.
+      area_mi2_bg_int_tx_max = max(area_mi2_bg_int_tx,  na.rm=TRUE),
+      area_mi2_bg_int_tx_min = min(area_mi2_bg_int_tx, na.rm=TRUE),
+      area_mi2_bg_int_tx_med = median(area_mi2_bg_int_tx, na.rm=TRUE),
+      area_mi2_bg_int_res_med = median(area_mi2_bg_int_res, na.rm=TRUE),
+      area_mi2_bg_int_res_max = max(area_mi2_bg_int_res, na.rm=TRUE),
+      area_mi2_bg_int_res_min = min(area_mi2_bg_int_res, na.rm=TRUE),
+      ndvi_mean_alt_med = median(ndvi_mean_alt, na.rm=TRUE),
+      ndvi_mean_alt_max = max(ndvi_mean_alt, na.rm=TRUE),
+      ndvi_mean_alt_min = min(ndvi_mean_alt, na.rm=TRUE),
+      ndvi_quo_med = median(ndvi_quo, na.rm=TRUE),
+      ndvi_quo_max = max(ndvi_quo, na.rm=TRUE),
+      ndvi_quo_min = min(ndvi_quo, na.rm=TRUE)
+    ) %>% 
+    ungroup()
+}
+
+### over NDVI and over equity--------
+hia_all_over_ndvi_over_equity = hia_all_by_ndvi %>% #begin with this one, created just above.
+  group_by(scenario, scenario_sub) %>% #collapse over ndvi category here
+  summarise_ungroup_hia_over_ndvi() %>% 
   left_join(lookup_scenario_sort_order, by = c("scenario", "scenario_sub")) %>% 
   arrange(scenario_sort_order) %>% 
   dplyr::select(
     contains("scenario"), 
     starts_with("ndvi_native_threshold"),
-    starts_with("equity_bg_cdphe"),
-    n,
+    starts_with("equity"),
     starts_with("pop"), 
     starts_with("area"),
     starts_with("ndvi"), 
     starts_with("death"),
     everything())
 
-#this isn't working as expected. wtf?
-hia_all_over_ndvi
-View(hia_all_over_ndvi)
-names(hia_all_over_ndvi)
-summary(hia_all_over_ndvi$ndvi_mean_alt)
+hia_all_over_ndvi_over_equity
+save(hia_all_over_ndvi_over_equity, file = "hia_all_over_ndvi_over_equity.RData")
+
+### over NDVI by equity--------
+hia_all_over_ndvi_by_equity = hia_all_by_ndvi_equity %>% 
+  #collapse over ndvi category here
+  group_by(scenario, scenario_sub, equity_nbhd_denver_tertile) %>% 
+  summarise_ungroup_hia_over_ndvi() %>%   
+  left_join(lookup_scenario_sort_order, by = c("scenario", "scenario_sub")) %>% 
+  arrange(scenario_sort_order) %>% 
+  dplyr::select(
+    contains("scenario"), 
+    starts_with("ndvi_native_threshold"),
+    starts_with("equity"),
+    starts_with("pop"), 
+    starts_with("area"),
+    starts_with("ndvi"), 
+    starts_with("death"),
+    everything())
+
+hia_all_over_ndvi_by_equity
+save(hia_all_over_ndvi_by_equity, file = "hia_all_over_ndvi_by_equity.RData")
+
