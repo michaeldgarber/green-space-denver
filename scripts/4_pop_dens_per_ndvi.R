@@ -1,6 +1,5 @@
 #filename: 4_ndvi_per_pop
 
-remotes::install_github("r-spatial/mapview")
 library(tidyverse)
 library(sf)
 library(mapview)
@@ -41,7 +40,6 @@ den_co_bg_pop_per_ndvi =  den_bg_acs5_wrangle_geo %>%
   #categorize population density and explore NDVI within category?
   pop_dens_mi2_quartile = cut_number(pop_dens_mi2_all, 4),
   pop_dens_mi2_tertile = cut_number(pop_dens_mi2_all, 3),
-  
   ndvi_tertile_overall = cut_number(ndvi_mean_wt, 3)
   ) %>% 
   group_by(pop_dens_mi2_tertile) %>% #tried to convert to character to fix weird mapview factor issue
@@ -58,14 +56,75 @@ den_co_bg_pop_per_ndvi =  den_bg_acs5_wrangle_geo %>%
       ndvi_mean_wt, 3, labels = c("1", "2", "3"))) %>% 
   ungroup() %>% 
   dplyr::select(
-    ends_with("fips"), pop_tot, contains("pop_dens"), contains("ndvi"), contains("nbhd_northeast")) 
+    ends_with("fips"), pop_tot, contains("pop_dens"), contains("ndvi"), contains("nbhd_northeast")) %>% 
+  #maximum NDVI tertile within pop. density tertile.
+  #Note I can do this all in the same dataset! no need to summarise. just use group_by() and mutate()
+  #I want the median NDVI within the highest of the three NDVI tertiles within
+  #population density tertile
+  group_by(
+    pop_dens_mi2_tertile,
+    ndvi_tertile_within_pop_dens_quartile_label) %>% 
+  mutate(
+    ndvi_med_pop_dens_ndvi_tert = median(ndvi_mean_wt, na.rm=TRUE)
+  ) %>% 
+  ungroup() %>% 
+  #and now the max of that median value grouped by pop dens
+  group_by(pop_dens_mi2_tertile) %>%
+  mutate(
+    ndvi_max_med_pop_dens_ndvi_tert = max(ndvi_med_pop_dens_ndvi_tert),
+    ratio_ndvi_med_pop_dens_ndvi_tert = ndvi_med_pop_dens_ndvi_tert/ndvi_max_med_pop_dens_ndvi_tert,
+    diff_ndvi_med_pop_dens_ndvi_tert = ndvi_med_pop_dens_ndvi_tert-ndvi_max_med_pop_dens_ndvi_tert,
+  ) %>% 
+  ungroup()
 
 save(den_co_bg_pop_per_ndvi, file = "den_co_bg_pop_per_ndvi.RData")
 names(den_co_bg_pop_per_ndvi)
+class(den_co_bg_pop_per_ndvi)
 table(den_co_bg_pop_per_ndvi$ndvi_tertile_within_pop_dens_quartile)
 table(den_co_bg_pop_per_ndvi$ndvi_tertile_within_pop_dens_tertile)
 table(den_co_bg_pop_per_ndvi$ndvi_tertile_within_pop_dens_quartile_label)
 class(den_co_bg_pop_per_ndvi$ndvi_tertile_within_pop_dens_quartile_label)
+
+#get a map of just the pop-density tertiles
+pop_density_tertile_den_co_bg = den_co_bg_pop_per_ndvi %>% 
+  group_by(pop_dens_mi2_tertile) %>% 
+  summarise(pop_dens_mi2_med = median(pop_dens_mi2_all, na.rm=TRUE))
+save(pop_density_tertile_den_co_bg, file = "pop_density_tertile_den_co_bg.RData")
+
+library(RColorBrewer)
+library(shades)
+set2 = RColorBrewer::brewer.pal(n=3, "Set2")
+set2 %>% swatch()
+greys = RColorBrewer::brewer.pal(n=3, "Greys")
+mv_pop_density_tertile = pop_density_tertile_den_co_bg %>% 
+  mutate(
+    pop_dens_mi2_med_round = round(pop_dens_mi2_med)
+  ) %>% 
+  mapview(
+    layer.name = "Median pop. density within pop. dens. tertile",
+    col.regions = greys,
+  zcol = "pop_dens_mi2_med_round")
+
+den_co_bg_pop_per_ndvi %>% 
+  dplyr::select(bg_fips, pop_dens_mi2_tertile, ndvi_tertile_within_pop_dens_quartile_label, 
+                contains("ndvi_med_pop_dens_ndvi_tert")) 
+
+table(den_co_bg_pop_per_ndvi$ndvi_med_pop_dens_ndvi_tert)
+
+library(viridis)
+mv_ratio_ndvi_med_pop_dens_ndvi_tert=  den_co_bg_pop_per_ndvi %>% 
+  mapview(
+    col.regions = viridis_pal(option = "plasma", direction=-1),
+    layer.name = "Ratio of NDVI with median of highest NDVI tertile",
+    zcol = "ratio_ndvi_med_pop_dens_ndvi_tert")
+mv_diff_ndvi_med_pop_dens_ndvi_tert=  den_co_bg_pop_per_ndvi %>% 
+  mapview(
+    col.regions = viridis_pal(option = "plasma", direction=-1),
+    layer.name = "Difference of NDVI with median of highest NDVI tertile",
+    zcol = "diff_ndvi_med_pop_dens_ndvi_tert")
+
+mv_ratio_ndvi_med_pop_dens_ndvi_tert+mv_pop_density_tertile
+mv_diff_ndvi_med_pop_dens_ndvi_tert + mv_pop_density_tertile
 #are pop density and ndvi inversely correlated as expected?
 den_co_bg_pop_per_ndvi %>% 
   filter(pop_dens_mi2_all>10) %>% 
