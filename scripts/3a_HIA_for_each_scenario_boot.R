@@ -53,7 +53,7 @@ bootstrap_hia = function(s_id_val){
 
 # Run bootstrap function----------
 #run the function x times; 500 reaches memory limit. 200 is fine. don't save the data frame because it's huge
-n_boot_reps = 10
+n_boot_reps = 100
 s_id_val_list <- seq(from = 1, to = n_boot_reps, by = 1)
 
 hia_all_boot  = s_id_val_list %>% 
