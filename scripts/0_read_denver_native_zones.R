@@ -207,7 +207,7 @@ kenderick_lake_xeriscape_garden %>% mapview()
 
 # Combine them---------
 library(forcats)
-sf::sf_use_s2(TRUE) #was creating invalid spherical geometry. 
+sf::sf_use_s2(FALSE) #was creating invalid spherical geometry. 
 #note this works but then I can't get a mapview b/c geometry is mixed.
 #https://github.com/r-spatial/mapview/issues/342
 #so keep true and don't measure area.
@@ -244,7 +244,9 @@ places_native_geo = den_botanic_native_100 %>%
   arrange(desc(native_percent)) %>% 
   st_make_valid() %>% #for measuring area. doesn't work for all
   mutate(
-#    area_m2 = as.numeric(st_area(geometry)), #see above
+    area_m2 = as.numeric(st_area(geometry)), #see above
+    area_ft2 = area_m2*10.7639,
+    area_mi2 = area_ft2*3.58701e-8,
     place_id = row_number(),
     #and elsewhere, for generality, we need this to also be
     id_row_number = place_id #yes, same thing. oh well. backwards compatibility.

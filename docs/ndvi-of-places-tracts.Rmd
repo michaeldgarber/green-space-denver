@@ -152,19 +152,15 @@ places_native_nogeo %>%
 
 ### Map places of interest by type
 Map these places by type (nativity spectrum or high-plant diversity).
-```{r mapviewplacesnative, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
-webshot::install_phantomjs()
+```{r mapviewplacesnative, eval=T, echo=FALSE, warning=FALSE, message=FALSE}
 #I need a version that is just points because the polygons are hard to see on the map
+#comment 6/2/22 this is causing a recursion error:
+#https://stackoverflow.com/questions/14719349/error-c-stack-usage-is-too-close-to-the-limit
+#Just don't evaluate it.
 library(here)
 library(tidyverse)
 library(sf)
-library(terra)
-library(raster) 
 library(mapview)
-library(knitr) #to make sure kable works
-library(viridis)
-library(scales)
-library(lubridate) #for ggplot
 setwd(here("data-processed"))
 load("places_native_geo.RData")
 load("places_native_nogeo.RData")
@@ -172,13 +168,20 @@ load("native_places_ndvi_day_nogeo.RData")
 sf::sf_use_s2(FALSE) 
 places_native_geo_points = places_native_geo %>% 
   st_make_valid() %>% 
+  st_transform(2876) %>% 
   st_centroid()
 
-mv_places_native_polygons = places_native_geo %>% 
+mv_places_native_polygons = places_native_geo %>%
+  st_simplify() %>% 
+  st_transform(2876) %>% 
+  st_union(by_feature = TRUE) %>% 
+  st_cast("POLYGON") %>% #This fixed the c-stack issue. too many combined sf feature types.
+  st_as_sf() %>% 
   mapview(zcol = "place_type",
           layer.name = "Place category (as polygons)")
 
-mv_places_native_points = places_native_geo_points %>% 
+
+mv_places_native_points = places_native_geo_points %>%
   mapview(zcol = "place_type",
           layer.name = "Place category (as points)")
 
@@ -187,12 +190,12 @@ library(leaflet.extras)
 mv_places_polygons_points =mv_places_native_points+
   mv_places_native_polygons
 
-mv_places_polygons_points@map %>% 
+mv_places_polygons_points@map %>%
   addFullscreenControl()
 
 #This works, but I don't need to run every time.
-#setwd(here("results"))
-#getwd()
+# setwd(here("results"))
+# getwd()
 #mapshot(mv_places_polygons_points, file = "mv_places_polygons_points.png")
 
 ```
@@ -306,11 +309,23 @@ native_places_ndvi_day_nogeo %>%
     ndvi_med = median(ndvi_med, na.rm=TRUE), #percentile of medians
     ndvi_75th = quantile(ndvi_med, probs =c(0.75), na.rm=TRUE) ) %>% #percentile of medians
   ungroup() %>% 
+  left_join(places_native_nogeo, by = c("place_name_fac", "place_type")) %>% 
+  dplyr::select(
+    starts_with("place_type"),
+    starts_with("place_name_fac"),
+    starts_with("area_ft2"),
+    starts_with("area_mi"),
+    starts_with("ndvi_mea"),
+    starts_with("ndvi_25"),
+    starts_with("ndvi_med"),
+    starts_with("ndvi_75th"),
+  ) %>% 
   as_tibble() %>% 
   knitr::kable(
-          booktabs = TRUE,
-        col.names = c("Place type", "Place name", "NDVI, mean", "NDVI, 25th-ile", "NDVI, 50th-ile", "NDVI, 75th-ile"),
-    digits=2)
+    booktabs = TRUE,
+    col.names = c("Place type", "Place name", "Area (sq. ft.)", "Area (sq. mi.)", "NDVI, mean", "NDVI, 25th-ile", "NDVI, 50th-ile", "NDVI, 75th-ile"),
+  digits = c(0, 0, 0, 3, 2, 2, 2, 2, 2)
+  )
 ```
 
 

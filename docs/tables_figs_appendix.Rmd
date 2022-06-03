@@ -200,13 +200,20 @@ load("native_places_ndvi_day_nogeo.RData")
 sf::sf_use_s2(FALSE) 
 places_native_geo_points = places_native_geo %>% 
   st_make_valid() %>% 
+  st_transform(2876) %>% 
   st_centroid()
 
-mv_places_native_polygons = places_native_geo %>% 
+mv_places_native_polygons = places_native_geo %>%
+  st_simplify() %>% 
+  st_transform(2876) %>% 
+  st_union(by_feature = TRUE) %>% 
+  st_cast("POLYGON") %>% #This fixed the c-stack issue. too many combined sf feature types.
+  st_as_sf() %>% 
   mapview(zcol = "place_type",
           layer.name = "Place category (as polygons)")
 
-mv_places_native_points = places_native_geo_points %>% 
+
+mv_places_native_points = places_native_geo_points %>%
   mapview(zcol = "place_type",
           layer.name = "Place category (as points)")
 
@@ -215,7 +222,7 @@ library(leaflet.extras)
 mv_places_polygons_points =mv_places_native_points+
   mv_places_native_polygons
 
-mv_places_polygons_points@map %>% 
+mv_places_polygons_points@map %>%
   addFullscreenControl()
 
 ```
@@ -242,12 +249,24 @@ native_places_ndvi_day_nogeo %>%
     ndvi_med = median(ndvi_med, na.rm=TRUE), #percentile of medians
     ndvi_75th = quantile(ndvi_med, probs =c(0.75), na.rm=TRUE) ) %>% #percentile of medians
   ungroup() %>% 
+  left_join(places_native_nogeo, by = c("place_name_fac", "place_type")) %>% 
+  dplyr::select(
+    starts_with("place_type"),
+    starts_with("place_name_fac"),
+    starts_with("area_ft2"),
+    starts_with("area_mi"),
+    starts_with("ndvi_mea"),
+    starts_with("ndvi_25"),
+    starts_with("ndvi_med"),
+    starts_with("ndvi_75th"),
+  ) %>% 
   as_tibble() %>% 
   knitr::kable(
     booktabs = TRUE,
-    caption = "NDVI of selected places of varying levels of plant nativity on selected cloud-free summer (May, June, July, August) days over five years (2016-2021)",
-        col.names = c("Place type", "Place name", "NDVI, mean", "NDVI, 25th-ile", "NDVI, 50th-ile", "NDVI, 75th-ile"),
-    digits=2)
+        caption = "NDVI of selected places of varying levels of plant nativity on selected cloud-free summer (May, June, July, August) days over five years (2016-2021)",
+    col.names = c("Place type", "Place name", "Area (sq. ft.)", "Area (sq. mi.)", "NDVI, mean", "NDVI, 25th-ile", "NDVI, 50th-ile", "NDVI, 75th-ile"),
+  digits = c(0, 0, 0, 3, 2, 2, 2, 2, 2)
+  )
 ```
 
 # Equity indices
