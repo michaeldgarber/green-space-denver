@@ -253,7 +253,7 @@ native_places_ndvi_day_nogeo %>%
   dplyr::select(
     starts_with("place_type"),
     starts_with("place_name_fac"),
-    starts_with("area_ft2"),
+    starts_with("area_ac"),
     starts_with("area_mi"),
     starts_with("ndvi_mea"),
     starts_with("ndvi_25"),
@@ -264,8 +264,8 @@ native_places_ndvi_day_nogeo %>%
   knitr::kable(
     booktabs = TRUE,
         caption = "NDVI of selected places of varying levels of plant nativity on selected cloud-free summer (May, June, July, August) days over five years (2016-2021)",
-    col.names = c("Place type", "Place name", "Area (sq. ft.)", "Area (sq. mi.)", "NDVI, mean", "NDVI, 25th-ile", "NDVI, 50th-ile", "NDVI, 75th-ile"),
-  digits = c(0, 0, 0, 3, 2, 2, 2, 2, 2)
+    col.names = c("Place type", "Place name", "Area (acres)", "Area (sq. mi.)", "NDVI, mean", "NDVI, 25th-ile", "NDVI, 50th-ile", "NDVI, 75th-ile"),
+  digits = c(0, 0, 1, 2, 2, 2, 2, 2, 2)
   )
 ```
 

@@ -247,6 +247,7 @@ places_native_geo = den_botanic_native_100 %>%
     area_m2 = as.numeric(st_area(geometry)), #see above
     area_ft2 = area_m2*10.7639,
     area_mi2 = area_ft2*3.58701e-8,
+    area_ac = area_ft2/43560,
     place_id = row_number(),
     #and elsewhere, for generality, we need this to also be
     id_row_number = place_id #yes, same thing. oh well. backwards compatibility.
