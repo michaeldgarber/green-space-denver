@@ -47,7 +47,11 @@ bootstrap_hia = function(s_id_val){
       ),
       #sample dose-response function
       drf_est_log = rnorm(n=n(), mean=drf_est_log, sd = drf_sd_log_scale), #normal on log scale
-      drf_est = exp(drf_est_log)) %>%  #then exponentiate
+      drf_est = exp(drf_est_log) ,  #then exponentiate
+    
+      #sample baseline mortality rate per 100k (assume normality)
+      #https://ghdx.healthdata.org/sites/default/files/record-attached-files/IHME_LMICS_U5M_2000_2017_INFO_SHEET_Y2019M10D16.PDF
+    rate_per_100k_est = rnorm(n=n(), mean= rate_per_100k_est, sd=rate_per_100k_sd)) %>% 
     mutate_part_of_hia()   #function created in 3_HIA_for_each_scenario.R
 }  
 
@@ -62,7 +66,9 @@ hia_all_boot  = s_id_val_list %>%
     contains("fips"), contains("scenario"), 
     starts_with("ndvi_native_threshold"),
     starts_with("pop"), starts_with("area"), contains("area"),
-    contains("ndvi"), contains("drf"), starts_with("rr"), starts_with("paf"), 
+    contains("ndvi"), contains("drf"), starts_with("rr"), 
+    starts_with("rate_per_100k"),
+    starts_with("paf"), 
     starts_with("equity"),
     starts_with("attrib"),
     everything())
@@ -70,6 +76,7 @@ hia_all_boot  = s_id_val_list %>%
 hia_all_boot
 nrow(hia_all_boot)
 summary(hia_all_boot$drf_est)
+summary(hia_all_boot$rate_per_100k_est)
 
 step_two_bootstrap_summarise_ungroup_select = function(df){
   df %>% 

@@ -2264,8 +2264,14 @@ den_co_bg_sex_age_gbd_wrangle = den_metro_bg_sex_age_wrangle %>%
   filter(age_group_acs_lb>=age_lowest_to_include) %>% 
   #also apply these filters. remove as we determine additional
   #dose-response functions 
+  #Update: we decided not to use the other dose-response functions
   #(e.g., the Paul 2020; Urban green space and the risks of dementia and stroke)
   filter(measure == "deaths" & cause_short == "all") %>% 
+  mutate(
+    #calculate the standard deviation so that we can re-sample the uncertainty.
+    #note this makes a normality assumption
+    rate_per_100k_sd = abs(rate_per_100k_est-rate_per_100k_ll)/1.96
+  ) %>% 
   dplyr::select(-var_label, -var_name) #drop these
 
 #save for use in bootstrap
@@ -2391,7 +2397,21 @@ hia_all  = den_co_bg_ndvi_alt_all_nogeo %>% #scenario all bg
       scenario == "prkng" & scenario_sub == "100-pct" ~9,
       scenario == "prkng" & scenario_sub == "50-pct" ~10,
       scenario == "prkng" & scenario_sub == "30-pct" ~11
-  )) %>% 
+  ),
+  scenario_num = case_when(
+    scenario == "all-bg" & scenario_sub == "100-pct" ~1,
+    scenario == "all-bg" & scenario_sub == "30-pct" ~1,
+    scenario == "all-bg" & scenario_sub == "20-pct" ~1,
+    scenario == "riparian" & scenario_sub == "200-ft" ~2,
+    scenario == "riparian" & scenario_sub == "100-ft" ~2,
+    scenario == "riparian" & scenario_sub == "50-ft" ~2,
+    scenario == "ogi" & scenario_sub == "ogi_proj" ~3,
+    scenario == "ogi" & scenario_sub == "parcel" ~3,
+    scenario == "prkng" & scenario_sub == "100-pct" ~4,
+    scenario == "prkng" & scenario_sub == "50-pct" ~4,
+    scenario == "prkng" & scenario_sub == "30-pct" ~4
+  )
+  ) %>% 
   dplyr::select(
     contains("fips"), starts_with("scenario") ,
     starts_with("ndvi_native_threshold"),
@@ -2404,8 +2424,12 @@ save(hia_all, file = "hia_all.RData")
 #create a lookup for scenario_main_text
 lookup_scenario_main_text = hia_all %>% 
   distinct(scenario, scenario_sub, scenario_main_text)
-lookup_scenario_main_text
 save(lookup_scenario_main_text, file = "lookup_scenario_main_text.RData")
+
+lookup_scenario_num = hia_all %>% 
+  distinct(scenario, scenario_sub, scenario_num)
+save(lookup_scenario_num, file = "lookup_scenario_num.RData")
+lookup_scenario_num
 #checks
 table(hia_all$scenario)
 table(hia_all$scenario_sub)

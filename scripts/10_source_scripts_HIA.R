@@ -26,3 +26,5 @@ source(here("scripts", "3a_HIA_for_each_scenario_boot.R")) #boot the HIA
 #confirm the rmarkdown scripts work to render html
 rmarkdown::render(here("docs", "ndvi-of-places-tracts.Rmd"))
 rmarkdown::render(here("docs", "hia-results.Rmd"))
+rmarkdown::render(here("docs", "tables_figs_main_text.Rmd"))
+rmarkdown::render(here("docs", "tables_figs_appendix.Rmd"))

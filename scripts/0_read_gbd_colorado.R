@@ -15,6 +15,8 @@ here()
 
 #data downloaded from http://ghdx.healthdata.org/gbd-results-tool and saved locally
 #consider getting county-level data from https://hdpulse.nimhd.nih.gov/data/deathrates/index.php
+#see here on what the confidence intervals are. they're posterior quantiles (2.5th and 97.5th). good
+#https://ghdx.healthdata.org/sites/default/files/record-attached-files/IHME_LMICS_U5M_2000_2017_INFO_SHEET_Y2019M10D16.PDF
 
 setwd(here("data-input", "GBD data-CO"))
 ihme_co <- read_csv("IHME-GBD_2019_DATA-96be8737-1.csv") %>% 
