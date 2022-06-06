@@ -1356,6 +1356,7 @@ map_over_native_ndvi_all_ogi_proj = function(ndvi_native_threshold_val){
       ndvi_native_threshold = ndvi_native_threshold_val, #define it here as a variable
       #whether treatment area was above native threshold. note this is different than the scenarios
       #at the block-group level
+      #note! ndvi_mean_wt_tx is created in the pivot_wider calculation above
       ndvi_below_native_threshold = case_when( 
         ndvi_mean_wt_tx   < ndvi_native_threshold ~1,
         TRUE ~0),
@@ -2321,7 +2322,11 @@ mutate_part_of_hia = function(df){ #make a function out of it since
     )
 }
 names(den_co_bg_ndvi_alt_all_nogeo)
+names(den_bg_int_wtr_ndvi_all_nogeo)
 hia_all  = den_co_bg_ndvi_alt_all_nogeo %>% #scenario all bg
+  #to make sure that ndvi_mean_wt_tx works throughout, add it here for the block-group-level scenario
+  #as simply equal to ndvi_mean_wt
+  mutate(ndvi_mean_wt_tx = ndvi_mean_wt) %>% 
   bind_rows(
     den_bg_int_wtr_ndvi_all_nogeo, #  riparian
     den_bg_int_ogi_proj_ndvi_wide, # ogi proj
@@ -2377,12 +2382,14 @@ hia_all  = den_co_bg_ndvi_alt_all_nogeo %>% #scenario all bg
       TRUE ~0
     ),
     
-    #to re-calculate the weighted average, I need these intermediate values.
+    #to re-calculate the weighted average for later summaries, I need these intermediate values
+    #(products of the value times its weight, and then will divide by weights later).
     #easiest to put them here:
     
     #re-calculate weighted average ndvi - baseline and alternate
     ndvi_mean_alt_int = ndvi_mean_alt*area_mi2_bg_int_res,
     ndvi_quo_int = ndvi_quo*area_mi2_bg_int_res,
+    ndvi_mean_wt_tx_int = ndvi_mean_wt_tx*area_mi2_bg_int_tx,
       
     #I thought I could get these to sort based on factor order, but nope, sort this way
     scenario_sort_order = case_when(
@@ -2436,6 +2443,8 @@ table(hia_all$scenario_sub)
 table(hia_all$scenario_main_text)
 names(hia_all)
 table(hia_all$ndvi_below_native_threshold)
+summary(hia_all$ndvi_mean_wt_tx)
+summary(hia_all$ndvi_quo)
 nrow(hia_all)
 hia_all
 #look up scenario sort order
@@ -2452,20 +2461,23 @@ summarise_ungroup_hia_by_ndvi = function(df){
       pop_affected = sum(pop_affected, na.rm=TRUE),
       attrib_d = sum(attrib_d, na.rm=TRUE),
       deaths_prevented = sum(deaths_prevented, na.rm=TRUE),
-      area_mi2_bg_int_tx = sum(area_mi2_bg_int_tx, na.rm=TRUE), #treatment area
       
       #recall, area_mi2_bg_int_res also works for the block-group-level ones
       area_mi2_bg_int_res = sum(area_mi2_bg_int_res, na.rm=TRUE), #residential buffer area
-      
-      #sum these products before computing the weighted average below
+      area_mi2_bg_int_tx = sum(area_mi2_bg_int_tx, na.rm=TRUE), #treatment area; same for bg-level ones
+
+      #sum these products before computing the weighted average below.
+      #note these _int values are products of the block-group-level value and the corresponding area (weight)
       ndvi_mean_alt_int = sum(ndvi_mean_alt_int, na.rm=TRUE),
-      ndvi_quo_int = sum(ndvi_quo_int, na.rm=TRUE)
+      ndvi_quo_int = sum(ndvi_quo_int, na.rm=TRUE),
+      ndvi_mean_wt_tx_int = sum(ndvi_mean_wt_tx_int, na.rm=TRUE) #keep track of this for summary
     ) %>% 
     ungroup() %>% 
     mutate(
       ndvi_mean_alt =ndvi_mean_alt_int/area_mi2_bg_int_res, #weighted mean
       ndvi_quo =ndvi_quo_int/area_mi2_bg_int_res, #weighted mean
       ndvi_diff = ndvi_mean_alt-ndvi_quo, #useful to keep
+      ndvi_mean_wt_tx = ndvi_mean_wt_tx_int/area_mi2_bg_int_tx , #weighted average of NDVI over treatment area only. note diff denom
       
       #this has to be in its own separate mutate by order of operations
       deaths_prevented_per_pop = deaths_prevented/pop_affected,
@@ -2496,6 +2508,7 @@ hia_all_by_ndvi_over_equity = hia_all %>%
 hia_all_by_ndvi_over_equity
 setwd(here("data-processed"))
 save(hia_all_by_ndvi_over_equity, file = "hia_all_by_ndvi_over_equity.RData")
+View(hia_all_by_ndvi_over_equity)
 
 ### Overall, stratified by equity tertile
 hia_all_by_ndvi_by_equity = hia_all %>% 
@@ -2579,6 +2592,9 @@ summarise_ungroup_hia_over_ndvi = function(df){
       ndvi_quo_med = median(ndvi_quo, na.rm=TRUE),
       ndvi_quo_min = min(ndvi_quo, na.rm=TRUE),
       ndvi_quo_max = max(ndvi_quo, na.rm=TRUE),
+      ndvi_mean_wt_tx_med = median(ndvi_mean_wt_tx, na.rm=TRUE), #adding these to tables 6/6/22
+      ndvi_mean_wt_tx_min = min(ndvi_mean_wt_tx, na.rm=TRUE), #adding these to tables 6/6/22
+      ndvi_mean_wt_tx_max = max(ndvi_mean_wt_tx, na.rm=TRUE), #adding these to tables 6/6/22
       ndvi_mean_alt_med = median(ndvi_mean_alt, na.rm=TRUE),
       ndvi_mean_alt_min = min(ndvi_mean_alt, na.rm=TRUE),
       ndvi_mean_alt_max = max(ndvi_mean_alt, na.rm=TRUE),

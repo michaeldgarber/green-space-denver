@@ -146,6 +146,7 @@ select_vars_estimate_boot = function(df){
     contains("ndvi_quo"),
     contains("ndvi_mean_alt"),
     contains("ndvi_diff"),
+    contains("ndvi_mean_wt_tx"),
     contains("pop_affect"),
     #have to hard code these to get them in the desired order
     starts_with("deaths_prevented_cou"),

@@ -118,6 +118,7 @@ hia_all_over_ndvi_over_equity_est_boot %>%
     scenario_num,
     scenario, 
     starts_with("equity_nbhd_denver_tertile"),
+    starts_with("ndvi_mean_wt_tx"),
     starts_with("ndvi_quo"),
     starts_with("ndvi_mean_alt"),
     starts_with("ndvi_diff")
@@ -129,18 +130,21 @@ hia_all_over_ndvi_over_equity_est_boot %>%
       "Scenario num.",
       "Scenario", 
       "Equity Tertile", 
-      "Baseline NDVI, Med.",
-      "Baseline NDVI, LL",
-      "Baseline NDVI, UL",
-      "Alternative NDVI, Med.",
-      "Alternative NDVI, LL",
-      "Alternative NDVI, UL",
-      "NDVI, Diff., Med.",
-      "NDVI, Diff., LL",
-      "NDVI, Diff., UL"
+      "Baseline NDVI, tx area, Med.",
+      "Baseline NDVI, tx area, LL",
+      "Baseline NDVI, tx area, UL",
+      "Baseline NDVI, res. area, Med.",
+      "Baseline NDVI, res. area, LL",
+      "Baseline NDVI, res. area, UL",
+      "Alternative NDVI, res. area, Med.",
+      "Alternative NDVI, res. area, LL",
+      "Alternative NDVI, res. area, UL",
+      "Difference: NDVI, res. area, Med.",
+      "Difference: NDVI, res. area, LL",
+      "Difference: NDVI, res. area, UL"
       ),
     format.args = list(big.mark = ","),
-    digits = c(0,0,2,2,2,2,2,2,2,3,3,3)) #max digits after decimal
+    digits = c(0,0,0,2,2,2,2,2,2,2,2,2,3,3,3)) #max digits after decimal
 ```
 
 ## Table 3: Estimated deaths averted (total and rate per 100k) under each scenario
