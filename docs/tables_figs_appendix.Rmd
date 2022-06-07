@@ -621,31 +621,8 @@ mv_prkng_both@map %>%
 ```
 
 # Supplementary tables
-These tables are an expanded version of the main-text tables, including a few more scenario possibilities.
+These tables are expanded versions of the corresponding main-text tables. They include a few more sub-scenarios, varying, for example, the percentage of land that would be converted to native plants (Scenarios 1 and 4) or the buffer size around the riparian areas (Scenario 2).
 
-# Scenario 1
-Note this is directlty copied from the appendix version.
-The weighted block-group-level mean NDVI on July 4, 2021 is presented here.
-
-```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE, fig.cap = "Mean normalized difference vegetation index (NDVI) of census block groups in Denver, Colorado (excluding some in the northeast, described in main text) on July 4, 2021 as measured by the Landsat-8 satellite on July 4, 2021. NDVI is measured at a spatial resolution of 30 meters squared. The weighted block-group-level mean NDVI is weighted by the proportion Landsat pixels overlap the water-free land area of the block group"}
-#update may 11 2022 to add figure caption
-setwd(here("data-processed"))
-load("den_co_bg_ndvi_geo.RData") #updated april 18 2022
-#names(den_co_bg_ndvi_geo)
-pal_terrain = terrain.colors(100) %>% rev()#reverse the order of the palette
-mv_den_co_bg_ndvi  = den_co_bg_ndvi_geo %>% 
-  dplyr::select(bg_fips, ndvi_mean_wt) %>% 
-  mapview(
-    layer.name = "NDVI, block group",
-    zcol = "ndvi_mean_wt",
-    col.regions = pal_terrain, 
-    at = seq(-0.1, 1, 0.1)
-  )
-mv_den_co_bg_ndvi@map %>% 
-  addFullscreenControl()
-```
-
-# Tables: summarize over native-plants NDVI definition
 ## Table 1: Description of scenarios (area, pop affecteds)
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
