@@ -166,6 +166,8 @@ lookup_row_id_int = den_co_bg_no_wtr_filtered_4326 %>%
   distinct(row_id_int, bg_fips) %>% 
   as_tibble()
 
+nrow(lookup_row_id_int)
+n_distinct(lookup_row_id_int$bg_fips)
 #a lookup for the no-water block group geometry
 lookup_den_co_bg_no_wtr_geo = den_co_bg_no_wtr_filtered_geo  %>% 
   distinct(bg_fips, geometry)
@@ -223,6 +225,7 @@ extract_wrangle_ndvi_bg_int = function(df1, df2){
     #link census tract or census-tract piece with the terra::extract id, renamed above
     left_join(df2, by = "row_id_int") %>% # 
     group_by(date, bg_fips) %>% #grouping by date is redundant but it generalizes just in case
+    #6/6/22 reminder. these all summarize by bg_fips so there should be no repeating within bg_fips
     summarise(
       #don't add the suffixes just yet to ease replicability.
       #eventually will add suffixes to specify which NDVI
@@ -277,7 +280,12 @@ mutate_ndvi_diff_bg_itself = function(df){
       #renamed may 20 2022 from ndvi_alt_avg. i use ndvi_mean elsewhere, so this is more consistent.
       ndvi_mean_alt = prop_area_tx*ndvi_native_threshold+(1-prop_area_tx)*ndvi_mean_wt,
       ndvi_quo = ndvi_mean_wt, #rename this to _quo to be consistent with other scenarios
-      ndvi_diff = ndvi_mean_alt-ndvi_quo
+      ndvi_diff = ndvi_mean_alt-ndvi_quo,
+      
+      #for consistency with the below
+      #6/6/22. because I may have block groups IDs that repeat here, I need a unique identifier.
+      #how about this, just to be sure we can keep track of the area measurements.
+      row_id_int = row_number()
   )
 }
 
@@ -366,7 +374,9 @@ map_over_native_ndvi_all_bg = function(ndvi_native_threshold_val){
         levels = c("100-pct", "30-pct", "20-pct"))
     ) %>% 
       dplyr::select(
-        contains("bg_fips"), starts_with("tract_fips"),
+        contains("bg_fips"), 
+        starts_with("row_id_int"),
+        starts_with("tract_fips"),
         starts_with("equity"),
         starts_with("nbhd"),
         contains("scenario"), contains("ndvi"), contains("prop_")
@@ -415,7 +425,8 @@ table(den_co_bg_ndvi_alt_all_nogeo$scenario_sub)
 save(den_co_bg_ndvi_alt_all_nogeo, file = "den_co_bg_ndvi_alt_all_nogeo.RData")
 den_co_bg_ndvi_alt_all_nogeo
 names(den_co_bg_ndvi_alt_all_nogeo)
-
+nrow(den_co_bg_ndvi_alt_all_nogeo)
+n_distinct(den_co_bg_ndvi_alt_all_nogeo$bg_int_row_id)
 ## intermediate mapviews--------
 ### visualize ndvi diff for one scenario------------
 den_co_bg_ndvi_alt_all_nogeo %>% 
@@ -654,19 +665,21 @@ names(den_bg_acs5_wrangle_geo)
 #otherwise
 bg_int_wrangle_last_steps = function(df){
   df %>% 
+
+    st_transform(2876) %>% #just to be sure before we take the area measurements
+          #6/6/22 this fixed a major error.
     #update 4/14/22 making these area variables long form (i.e., the same)
     #for every object
-    #the area of piece of the block group overlapping the buffer
+    #the area of piece of the block group overlapping the buffer OR TREATMENT
     mutate(
       area_ft2_bg_int = as.numeric(st_area(geometry)),
       area_mi2_bg_int = area_ft2_bg_int/(5280**2), #miles squared
     #Update 4/3/22 rather than link in the northeast exclusions, I'm
     #beginning with a file that doesn't have it.
     #more straightforward.
-    #create a new row ID as you have elsewhere for this sort order.
-      row_id_int = row_number()) %>% #make this the same for all of them
-    st_transform(4326)  # the NDVI raster file is in 4326
-  ##Note I removed the select out of this function, as it can vary by scenario
+    
+    row_id_int = row_number()) %>%  # to keep track
+      st_transform(4326)   # the NDVI raster file is in 4326
 }
 
 #Note I removed this out of the function 4/3/22
@@ -1991,11 +2004,11 @@ names(den_bg_int_prkng_res)
 den_bg_int_prkng_res_ndvi = ndvi_den_co_20210704 %>% 
   extract_wrangle_ndvi_bg_int(df2=den_bg_int_prkng_res) %>%  
   mutate(
-    scenario_sub = "prkng",  
     buff_type = "res"  
   ) %>%
   dplyr::select(  
-    bg_fips, buff_type, scenario_sub, starts_with("ndvi_mean"), contains("ndvi_below"), contains("area") #keep ndvi_below here
+    bg_fips, buff_type,  starts_with("ndvi_mean"), 
+    contains("ndvi_below"), contains("area") #keep ndvi_below here
   )
 
 names(den_bg_int_prkng_res_ndvi)
@@ -2012,10 +2025,9 @@ names(den_bg_int_prkng_comp)
 den_bg_int_prkng_comp_ndvi = ndvi_den_co_20210704 %>% 
   extract_wrangle_ndvi_bg_int(df2=den_bg_int_prkng_comp) %>%  
   mutate(
-    scenario_sub = "prkng",  
     buff_type = "comp"  
   ) %>%
-  dplyr::select( bg_fips, buff_type, scenario_sub, starts_with("ndvi_mean"), contains("area"))
+  dplyr::select( bg_fips, buff_type,  starts_with("ndvi_mean"), contains("area"))
 
 save(den_bg_int_prkng_comp_ndvi, 
      file = "den_bg_int_prkng_comp_ndvi.RData")
@@ -2048,11 +2060,10 @@ den_bg_int_prkng_tx_ndvi = ndvi_den_co_20210704 %>%
   ) %>% 
   ungroup() %>% 
   st_as_sf() %>% 
-  bg_int_wrangle_last_steps() %>% #re-calculate area
+  bg_int_wrangle_last_steps() %>% #re-calculate area at level of bg_fips
   mutate(   
-    scenario_sub = "prkng",  
     buff_type = "tx" ) %>%
-  dplyr::select( bg_fips, buff_type, scenario_sub, starts_with("ndvi_mean"), contains("area"))
+  dplyr::select( bg_fips, buff_type,  starts_with("ndvi_mean"), contains("area"))
 
 save(den_bg_int_prkng_tx_ndvi, 
      file = "den_bg_int_prkng_tx_ndvi.RData")
@@ -2061,6 +2072,14 @@ den_bg_int_prkng_tx_ndvi %>%
     zcol = "ndvi_mean_wt",
     col.regions = pal_terrain)
 names(den_bg_int_prkng_tx_ndvi)
+
+#check. does this add up to the total parking area?
+den_bg_int_prkng_tx_ndvi %>% 
+  st_set_geometry(NULL) %>% 
+  mutate(dummy=1) %>% 
+  group_by(dummy) %>% 
+  summarise(area_mi2_bg_int = sum(area_mi2_bg_int, na.rm=TRUE))
+  
 
 ##  Compute weighted average NDVI -------
 ### Visualize the elements that will be averaged-----
@@ -2082,7 +2101,19 @@ mv_den_bg_int_prkng_tx_ndvi= den_bg_int_prkng_tx_ndvi %>%
     layer.name = "NDVI, prkngs only",
     zcol = "ndvi_mean_wt")
 
+#test another visual. see how these vary by block group. the area measurement isn't
+#working as expected
 mv_den_bg_int_prkng_tx_ndvi
+
+mv_den_bg_int_prkng_tx_bg= den_bg_int_prkng_tx_ndvi %>% 
+  mapview(
+    col.regions = rainbow(n=n_distinct(den_bg_int_prkng_tx_ndvi$bg_fips)),
+    layer.name = "Block group FIPS",
+    zcol = "bg_fips")
+
+mv_den_bg_int_prkng_tx_bg
+
+
 #### Bodies of water 
 load("den_co_osm_water_union.RData")
 load("den_co_osm_water.RData")
@@ -2120,12 +2151,10 @@ den_bg_int_prkng_ndvi_wide = den_bg_int_prkng_res_ndvi_nogeo %>%
   pivot_wider(
     names_from = buff_type,
     values_from = c(ndvi_mean_wt, area_mi2_bg_int)
-  ) %>% 
-  mutate(#add this info now
-    scenario = "ogi",
-    scenario_sub = "prkng"
   ) 
 
+n_distinct(den_bg_int_ogi_proj_ndvi_wide$bg_fips)
+nrow(den_bg_int_prkng_ndvi_wide)
 #Now consider a few different scenarios for the proportion of the parking lots that we would change
 #100%; 50%; 20%
 names(den_bg_int_prkng_ndvi_wide)
@@ -2150,6 +2179,7 @@ den_bg_int_prkng_alt_30 = den_bg_int_prkng_ndvi_wide %>%
     prop_tx_itself_veg=.3
   ) 
 
+den_bg_int_prkng_alt_100
 ### Combine them all here----------
 map_over_native_ndvi_all_ogi_prkng = function(ndvi_native_threshold_val){
   df = den_bg_int_prkng_alt_100 %>% 
@@ -2181,6 +2211,8 @@ map_over_native_ndvi_all_ogi_prkng = function(ndvi_native_threshold_val){
 
 den_bg_int_prkng_alt_all = ndvi_native_threshold_values %>% 
   map_dfr(map_over_native_ndvi_all_ogi_prkng)
+names(den_bg_int_prkng_alt_all)
+summary(den_bg_int_prkng_alt_all$area_mi2_bg_int_tx)
 table(den_bg_int_prkng_alt_all$ndvi_native_threshold)
 #save for use in bootstrap code
 save(den_bg_int_prkng_alt_all, file = "den_bg_int_prkng_alt_all.RData")
@@ -2441,6 +2473,7 @@ lookup_scenario_num
 table(hia_all$scenario)
 table(hia_all$scenario_sub)
 table(hia_all$scenario_main_text)
+table(hia_all$scenario_sort_order)
 names(hia_all)
 table(hia_all$ndvi_below_native_threshold)
 summary(hia_all$ndvi_mean_wt_tx)
@@ -2453,19 +2486,59 @@ lookup_scenario_sort_order = hia_all %>%
 lookup_scenario_sort_order
 save(lookup_scenario_sort_order, file = "lookup_scenario_sort_order.RData")
 
+#first extract area values at the level of the bg or bg_int to avoid the error
+#of summarizing over all the age-groups. do this before the below function.
+#I actually think we should do this as a look up rather than as a function. Simpler.
+lookup_bg_fips_scenario_area = hia_all %>% 
+  distinct(
+    bg_fips,
+    scenario, scenario_sub, 
+    # ndvi_native_threshold, 
+    ##not necessary for lookup. doesn't change the size of each bg. just affects what bgs are excluded/included
+    area_mi2_bg_int_tx, area_mi2_bg_int_res ) %>% 
+  arrange(bg_fips)
+# 
+# lookup_bg_fips_scenario_area %>% 
+#   group_by(bg_fips,
+#            scenario, scenario_sub, ndvi_native_threshold, area_mi2_bg_int_tx, area_mi2_bg_int_res) %>% 
+#   summarise(n=n()) %>% 
+#   View()
+lookup_bg_fips_scenario_area
+n_distinct(lookup_bg_fips_scenario_area$bg_fips)
+nrow(lookup_bg_fips_scenario_area)
+n_distinct(lookup_bg_fips_scenario_area$scenario)
+n_distinct(lookup_bg_fips_scenario_area$scenario_sub)
+
+11*3*531
 # Summarize HIA------------
+
+
+#Separate it in two. One for pop-related and one for area-related.
+#I was having issues correctly calculating area in the same group-by-summarise call
+
 #write a function for the summarise since it's used so often
-summarise_ungroup_hia_by_ndvi = function(df){
+summarise_ungroup_hia_pop_stuff_by_ndvi = function(df){
   df %>% 
     summarise(
       pop_affected = sum(pop_affected, na.rm=TRUE),
       attrib_d = sum(attrib_d, na.rm=TRUE),
-      deaths_prevented = sum(deaths_prevented, na.rm=TRUE),
-      
+      deaths_prevented = sum(deaths_prevented, na.rm=TRUE)
+    ) %>% 
+    ungroup() %>% 
+    mutate(
+      #this has to be in its own separate mutate by order of operations
+      deaths_prevented_per_pop = deaths_prevented/pop_affected,
+      deaths_prevented_per_pop_100k = deaths_prevented_per_pop*100000
+    ) 
+}
+
+summarise_ungroup_hia_area_stuff_by_ndvi = function(df){
+  df %>% 
+    summarise(
       #recall, area_mi2_bg_int_res also works for the block-group-level ones
       area_mi2_bg_int_res = sum(area_mi2_bg_int_res, na.rm=TRUE), #residential buffer area
       area_mi2_bg_int_tx = sum(area_mi2_bg_int_tx, na.rm=TRUE), #treatment area; same for bg-level ones
-
+      
       #sum these products before computing the weighted average below.
       #note these _int values are products of the block-group-level value and the corresponding area (weight)
       ndvi_mean_alt_int = sum(ndvi_mean_alt_int, na.rm=TRUE),
@@ -2477,28 +2550,57 @@ summarise_ungroup_hia_by_ndvi = function(df){
       ndvi_mean_alt =ndvi_mean_alt_int/area_mi2_bg_int_res, #weighted mean
       ndvi_quo =ndvi_quo_int/area_mi2_bg_int_res, #weighted mean
       ndvi_diff = ndvi_mean_alt-ndvi_quo, #useful to keep
-      ndvi_mean_wt_tx = ndvi_mean_wt_tx_int/area_mi2_bg_int_tx , #weighted average of NDVI over treatment area only. note diff denom
-      
-      #this has to be in its own separate mutate by order of operations
-      deaths_prevented_per_pop = deaths_prevented/pop_affected,
-      deaths_prevented_per_pop_100k = deaths_prevented_per_pop*100000
+      ndvi_mean_wt_tx = ndvi_mean_wt_tx_int/area_mi2_bg_int_tx  #weighted average of NDVI over treatment area only. note diff denom
     ) 
 }
-
+  
 
 
 ## Stratify by NDVI definition--------
 ### by NDVI, over equity ------------
-hia_all_by_ndvi_over_equity = hia_all %>% 
-  filter(ndvi_below_native_threshold==1) %>% #grouping by equity category here
+#Update 6/6/22 I have to separate this in two to fix the area calculations
+table(hia_all$scenario)
+table(hia_all$scenario_sub)
+table(hia_all$ndvi_native_threshold)
+hia_all_pop_stuff_by_ndvi_over_equity = hia_all %>% 
+  filter(ndvi_below_native_threshold==1) %>%  
   group_by(scenario, scenario_sub, ndvi_native_threshold ) %>% 
-  summarise_ungroup_hia_by_ndvi() %>% 
+  summarise_ungroup_hia_pop_stuff_by_ndvi()
+
+
+hia_all_area_stuff_by_ndvi_over_equity = hia_all %>% 
+  filter(ndvi_below_native_threshold==1) %>%  
+  group_by(bg_fips, scenario, scenario_sub, ndvi_native_threshold) %>% 
+  distinct(
+    area_mi2_bg_int_res, area_mi2_bg_int_tx,
+    ndvi_mean_alt_int, ndvi_quo_int, ndvi_mean_wt_tx_int ) %>% 
+  group_by(scenario, scenario_sub, ndvi_native_threshold) %>% #now lose block group
+  summarise_ungroup_hia_area_stuff_by_ndvi()#see definition above.
+
+#check the parking area measurement is right.
+hia_all_area_stuff_by_ndvi_over_equity %>% 
+  filter(scenario == "prkng") %>% 
+  filter(ndvi_native_threshold >.5) %>% 
+  group_by(scenario_sub) %>% 
+  summarise(area_mi2_bg_int_tx = sum(area_mi2_bg_int_tx)) #yes, it is good now.
+
+#and the riparian areas?
+hia_all_area_stuff_by_ndvi_over_equity %>% 
+  filter(scenario == "riparian") %>% 
+  filter(ndvi_native_threshold >.5) %>% 
+  group_by(scenario_sub) %>% 
+  summarise(area_mi2_bg_int_tx = sum(area_mi2_bg_int_tx)) #yes, it is good now.
+
+hia_all_area_stuff_by_ndvi_over_equity
+  
+hia_all_by_ndvi_over_equity=hia_all_pop_stuff_by_ndvi_over_equity %>% 
+  left_join(hia_all_area_stuff_by_ndvi_over_equity, by = c("scenario", "scenario_sub", "ndvi_native_threshold")) %>% 
   left_join(lookup_scenario_sort_order, by = c("scenario", "scenario_sub")) %>% 
   arrange(scenario_sort_order) %>% 
   dplyr::select(
     contains("scenario"), 
     starts_with("ndvi_native_threshold"),
-    starts_with("equity_bg_cdphe"),
+    starts_with("equity"),
     starts_with("pop"), 
     starts_with("area"),
     starts_with("ndvi"), 
@@ -2508,21 +2610,50 @@ hia_all_by_ndvi_over_equity = hia_all %>%
 hia_all_by_ndvi_over_equity
 setwd(here("data-processed"))
 save(hia_all_by_ndvi_over_equity, file = "hia_all_by_ndvi_over_equity.RData")
-View(hia_all_by_ndvi_over_equity)
 
-### Overall, stratified by equity tertile
-hia_all_by_ndvi_by_equity = hia_all %>% 
-  filter(ndvi_below_native_threshold==1) %>% 
-  #5/26 DRR suggested grouping by denver equity category rather than cdphe version
-  #equity_nbhd_denver_tertile vs equity_bg_cdphe_tertile_den
-  group_by(scenario, scenario_sub, ndvi_native_threshold, equity_nbhd_denver_tertile) %>% 
-  summarise_ungroup_hia_by_ndvi() %>% 
+
+### by NDVI by equity-----------
+table(hia_all$equity_nbhd_denver_tertile)
+hia_all_pop_stuff_by_ndvi_by_equity = hia_all %>% 
+  filter(ndvi_below_native_threshold==1) %>%  
+  group_by(scenario, scenario_sub, ndvi_native_threshold, equity_nbhd_denver_tertile ) %>% 
+  summarise_ungroup_hia_pop_stuff_by_ndvi()
+
+
+hia_all_area_stuff_by_ndvi_by_equity = hia_all %>% 
+  filter(ndvi_below_native_threshold==1) %>%  
+  group_by(bg_fips, scenario, scenario_sub, ndvi_native_threshold, equity_nbhd_denver_tertile) %>% 
+  distinct(
+    area_mi2_bg_int_res, area_mi2_bg_int_tx,
+    ndvi_mean_alt_int, ndvi_quo_int, ndvi_mean_wt_tx_int, equity_nbhd_denver_tertile) %>% 
+  group_by(scenario, scenario_sub, ndvi_native_threshold, equity_nbhd_denver_tertile) %>% #now lose block group
+  summarise_ungroup_hia_area_stuff_by_ndvi()#see definition above.
+
+#check the parking area measurement is right.
+hia_all_area_stuff_by_ndvi_by_equity %>% 
+  filter(scenario == "prkng") %>% 
+  filter(ndvi_native_threshold >.5) %>% 
+  group_by(scenario_sub,  equity_nbhd_denver_tertile) %>% 
+  summarise(area_mi2_bg_int_tx = sum(area_mi2_bg_int_tx)) 
+
+#and the riparian areas?
+hia_all_area_stuff_by_ndvi_by_equity %>% 
+  filter(scenario == "riparian") %>% 
+  filter(ndvi_native_threshold >.5) %>% 
+  group_by(scenario_sub, equity_nbhd_denver_tertile) %>% 
+  summarise(area_mi2_bg_int_tx = sum(area_mi2_bg_int_tx))  
+
+
+hia_all_by_ndvi_by_equity=hia_all_pop_stuff_by_ndvi_by_equity %>% 
+  left_join(
+    hia_all_area_stuff_by_ndvi_by_equity, 
+    by = c("scenario", "scenario_sub", "ndvi_native_threshold", "equity_nbhd_denver_tertile")) %>% 
   left_join(lookup_scenario_sort_order, by = c("scenario", "scenario_sub")) %>% 
   arrange(scenario_sort_order) %>% 
   dplyr::select(
     contains("scenario"), 
     starts_with("ndvi_native_threshold"),
-    starts_with("equity_bg_cdphe"),
+    starts_with("equity"),
     starts_with("pop"), 
     starts_with("area"),
     starts_with("ndvi"), 
@@ -2536,26 +2667,79 @@ save(hia_all_by_ndvi_by_equity, file = "hia_all_by_ndvi_by_equity.RData")
 ### by block group by native def----------
 
 load("lookup_den_metro_bg_geo.RData") #created 0_import_manage_denver_acs.R
-hia_all_by_ndvi_bg = hia_all %>% 
+hia_all_pop_stuff_by_ndvi_bg = hia_all %>% 
   filter(ndvi_below_native_threshold==1) %>% 
-  group_by(bg_fips, scenario, scenario_sub, ndvi_native_threshold) %>% 
-  summarise_ungroup_hia_by_ndvi() 
-hia_all_by_ndvi_bg
+  group_by(bg_fips, scenario, scenario_sub, ndvi_native_threshold, equity_nbhd_denver_tertile ) %>% 
+  summarise_ungroup_hia_pop_stuff_by_ndvi()
+
+hia_all_area_stuff_by_ndvi_bg = hia_all %>% 
+  filter(ndvi_below_native_threshold==1) %>%  
+  group_by(bg_fips, scenario, scenario_sub, ndvi_native_threshold, equity_nbhd_denver_tertile) %>% 
+  distinct(
+    area_mi2_bg_int_res, area_mi2_bg_int_tx,
+    ndvi_mean_alt_int, ndvi_quo_int, ndvi_mean_wt_tx_int, equity_nbhd_denver_tertile) %>% 
+  group_by(bg_fips, scenario, scenario_sub, ndvi_native_threshold, equity_nbhd_denver_tertile) %>% #now lose block group
+  summarise_ungroup_hia_area_stuff_by_ndvi()#see definition above.
+
+
+hia_all_by_ndvi_bg = hia_all_pop_stuff_by_ndvi_bg %>% 
+  left_join(
+    hia_all_area_stuff_by_ndvi_bg, 
+    by = c("bg_fips", "scenario", "scenario_sub", "ndvi_native_threshold")) %>% 
+  left_join(lookup_scenario_sort_order, by = c("scenario", "scenario_sub")) %>% 
+  arrange(scenario_sort_order) %>% 
+  dplyr::select(
+    contains("scenario"), 
+    starts_with("ndvi_native_threshold"),
+    starts_with("equity"),
+    starts_with("pop"), 
+    starts_with("area"),
+    starts_with("ndvi"), 
+    starts_with("death"),
+    everything())
 names(hia_all_by_ndvi_bg)
 
 hia_all_by_ndvi_bg %>% 
   filter(scenario == "all-bg") %>% 
   filter(scenario_sub == "100-pct") %>% 
+  filter(ndvi_native_threshold>.5) %>% 
   left_join(lookup_den_metro_bg_geo, by = "bg_fips") %>% 
   st_as_sf() %>% 
   mapview(zcol = "deaths_prevented_per_pop_100k")
   
-### Summarize by age group
+### by NDVI by age group-----------
 table(hia_all$age_group_acs)
-hia_all_by_ndvi_age = hia_all %>% 
+hia_all_pop_stuff_by_ndvi_age = hia_all %>% 
   filter(ndvi_below_native_threshold==1) %>% 
-  group_by(age_group_acs, scenario, scenario_sub, ndvi_native_threshold) %>% 
-  summarise_ungroup_hia_by_ndvi() 
+  group_by( scenario, scenario_sub, ndvi_native_threshold, age_group_acs ) %>% 
+  summarise_ungroup_hia_pop_stuff_by_ndvi()
+
+
+hia_all_area_stuff_by_ndvi_age = hia_all %>% 
+  filter(ndvi_below_native_threshold==1) %>%  
+  group_by(bg_fips, scenario, scenario_sub, ndvi_native_threshold, age_group_acs) %>% 
+  distinct(bg_fips,
+    area_mi2_bg_int_res, area_mi2_bg_int_tx,
+    ndvi_mean_alt_int, ndvi_quo_int, ndvi_mean_wt_tx_int, age_group_acs) %>% 
+  group_by(age_group_acs, scenario, scenario_sub, ndvi_native_threshold ) %>% #now lose block group
+  summarise_ungroup_hia_area_stuff_by_ndvi()#see definition above.
+
+
+hia_all_by_ndvi_age = hia_all_pop_stuff_by_ndvi_age %>% 
+  left_join(
+    hia_all_area_stuff_by_ndvi_age, 
+    by = c("age_group_acs", "scenario", "scenario_sub", "ndvi_native_threshold")) %>% 
+  left_join(lookup_scenario_sort_order, by = c("scenario", "scenario_sub")) %>% 
+  arrange(scenario_sort_order) %>% 
+  dplyr::select(
+    contains("scenario"), 
+    starts_with("ndvi_native_threshold"),
+    starts_with("equity"),
+    starts_with("pop"), 
+    starts_with("area"),
+    starts_with("ndvi"), 
+    starts_with("death"),
+    everything())
 
 hia_all_by_ndvi_age
 
@@ -2622,12 +2806,11 @@ hia_all_over_ndvi_over_equity = hia_all_by_ndvi_over_equity %>% #begin with this
     everything())
 
 hia_all_over_ndvi_over_equity
-save(hia_all_over_ndvi_over_equity, file = "hia_all_over_ndvi_over_equity.RData")
 
+save(hia_all_over_ndvi_over_equity, file = "hia_all_over_ndvi_over_equity.RData")
 ### over NDVI by equity--------
 hia_all_over_ndvi_by_equity = hia_all_by_ndvi_by_equity %>% 
-  #collapse over ndvi category here
-  group_by(scenario, scenario_sub, equity_nbhd_denver_tertile) %>% 
+  group_by(scenario, scenario_sub, equity_nbhd_denver_tertile) %>%   #collapse over ndvi category here
   summarise_ungroup_hia_over_ndvi() %>%   
   left_join(lookup_scenario_sort_order, by = c("scenario", "scenario_sub")) %>% 
   arrange(scenario_sort_order) %>% 

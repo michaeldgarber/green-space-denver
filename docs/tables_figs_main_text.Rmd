@@ -51,7 +51,7 @@ mv_den_co_bg_ndvi@map %>%
   addFullscreenControl()
 ```
 
-# Tables option 1: summarize over native-plants NDVI definition
+# Tables: summarize over native-plants NDVI definition
 ## Table 1: Description of scenarios (area, pop affecteds)
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
@@ -83,7 +83,7 @@ hia_all_over_ndvi_over_equity_est_boot %>%
     caption = "The cumulative area of the treatment, its corresponding residential buffer, and the population affected",
     booktabs = TRUE,
     format.args = list(big.mark = ","),
-    digits = c(0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0),
+    digits = c(0, 0, 0, 1, 1, 1, 1, 1, 1,0, 0,0),
     col.names = c(
             "Scenario num.",
       "Scenario",

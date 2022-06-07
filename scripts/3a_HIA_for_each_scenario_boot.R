@@ -9,7 +9,8 @@ setwd(here("data-processed"))
 #revised 5/26/22
 
 #This is the bootstrapping code for the HIA
-#Two sources of error for first group (stratified by native definition): population estimates and the dose-response function
+#Three sources of error for first group (stratified by native definition): 
+#   population estimates and the dose-response function and the mortality rate
 # three sources of error when summarizing over native definition: native definition, population estimates, and dose-response f
 
 #https://www.census.gov/content/dam/Census/programs-surveys/acs/guidance/training-presentations/20180418_MOE.pdf
@@ -57,7 +58,7 @@ bootstrap_hia = function(s_id_val){
 
 # Run bootstrap function----------
 #run the function x times; 500 reaches memory limit. 200 is fine. don't save the data frame because it's huge
-n_boot_reps = 100
+n_boot_reps = 200
 s_id_val_list <- seq(from = 1, to = n_boot_reps, by = 1)
 
 hia_all_boot  = s_id_val_list %>% 
@@ -111,7 +112,7 @@ step_two_bootstrap_summarise_ungroup_select = function(df){
 hia_all_over_ndvi_over_equity_s = hia_all_boot %>% 
   filter(ndvi_below_native_threshold==1) %>% 
   group_by(s_id, scenario, scenario_sub, ndvi_native_threshold) %>% #first summarize by s_id, over equity but by ndvi
-  summarise_ungroup_hia_by_ndvi() %>% #function created in scripts/3_HIA_for_each_scenario.R
+  summarise_ungroup_hia_pop_stuff_by_ndvi() %>% #function created in scripts/3_HIA_for_each_scenario.R
   group_by( scenario, scenario_sub  ) %>% #over s_id and over ndvi cat
   #quantiles here reflect overall percentiles including both sources of variation (ndvi definition and others)
   step_two_bootstrap_summarise_ungroup_select()
@@ -122,9 +123,8 @@ save(hia_all_over_ndvi_over_equity_s, file = "hia_all_over_ndvi_over_equity_s.RD
 ## over NDVI by equity-----------
 hia_all_over_ndvi_by_equity_s = hia_all_boot %>% 
   filter(ndvi_below_native_threshold==1) %>% 
-  #first summarize by s_id, by equity and ndvi
-  group_by(s_id, scenario, scenario_sub, ndvi_native_threshold,  equity_nbhd_denver_tertile) %>% 
-  summarise_ungroup_hia_by_ndvi() %>% #function created in scripts/3_HIA_for_each_scenario.R
+  group_by(s_id, scenario, scenario_sub, ndvi_native_threshold,  equity_nbhd_denver_tertile) %>% #by sample id, etc.
+  summarise_ungroup_hia_pop_stuff_by_ndvi() %>% #function created in scripts/3_HIA_for_each_scenario.R
   group_by( scenario, scenario_sub,  equity_nbhd_denver_tertile  ) %>% #over s_id and over ndvi cat but by equity
   #quantiles here reflect overall percentiles including 
   #both sources of variation (ndvi definition and others)
@@ -170,12 +170,13 @@ save(hia_all_over_ndvi_by_equity_est_boot, file = "hia_all_over_ndvi_by_equity_e
 names(hia_all_over_ndvi_by_equity_est_boot)
 
 # Summarize HIA - Stratify by NDVI threshold-------------
-#Note here neither the NDVI nor the area will have variance because they doesn't vary within NDVI threshold category
+#Note here neither the NDVI nor the area will have variance because they don't vary within NDVI threshold category
 ##  by NDVI over equity-----------
+
 hia_all_by_ndvi_over_equity_s = hia_all_boot %>% 
   filter(ndvi_below_native_threshold==1) %>% 
   group_by(s_id, scenario, scenario_sub, ndvi_native_threshold) %>% 
-  summarise_ungroup_hia_by_ndvi() %>% #function created in scripts/3_HIA_for_each_scenario.R
+  summarise_ungroup_hia_pop_stuff_by_ndvi() %>% 
   group_by( scenario, scenario_sub, ndvi_native_threshold) %>% #summarize over sample id and get quantiles
   step_two_bootstrap_summarise_ungroup_select()
 
@@ -185,12 +186,12 @@ hia_all_by_ndvi_over_equity_s
 setwd(here("data-processed"))
 save(hia_all_by_ndvi_over_equity_s, file = "hia_all_by_ndvi_over_equity_s.RData")
 
+
 ## by ndvi by equity--------------
 hia_all_by_ndvi_by_equity_s = hia_all_boot %>% 
   filter(ndvi_below_native_threshold==1) %>% 
   group_by(s_id, scenario, scenario_sub, ndvi_native_threshold, equity_nbhd_denver_tertile) %>% 
-  summarise_ungroup_hia_by_ndvi() %>% #function created in scripts/3_HIA_for_each_scenario.R
-  #summarize over sample id and get quantiles
+  summarise_ungroup_hia_pop_stuff_by_ndvi() %>% 
   group_by( scenario, scenario_sub, ndvi_native_threshold, equity_nbhd_denver_tertile) %>% 
   step_two_bootstrap_summarise_ungroup_select()
 
@@ -199,6 +200,9 @@ hia_all_by_ndvi_by_equity_s
 #save the summary but not hia_all_boot, as it's too huge and will take up too much space
 setwd(here("data-processed"))
 save(hia_all_by_ndvi_by_equity_s, file = "hia_all_by_ndvi_by_equity_s.RData")
+
+
+
 
 ## combine the bootstrapped results with the static results and point estimates------
 #Previously I had done this in the rmarkdown tables/fig doc, but I'd prefer to do it here.

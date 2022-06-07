@@ -620,4 +620,169 @@ mv_prkng_both@map %>%
   addFullscreenControl()
 ```
 
+# Supplementary tables
+These tables are an expanded version of the main-text tables, including a few more scenario possibilities.
+
+# Scenario 1
+Note this is directlty copied from the appendix version.
+The weighted block-group-level mean NDVI on July 4, 2021 is presented here.
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE, fig.cap = "Mean normalized difference vegetation index (NDVI) of census block groups in Denver, Colorado (excluding some in the northeast, described in main text) on July 4, 2021 as measured by the Landsat-8 satellite on July 4, 2021. NDVI is measured at a spatial resolution of 30 meters squared. The weighted block-group-level mean NDVI is weighted by the proportion Landsat pixels overlap the water-free land area of the block group"}
+#update may 11 2022 to add figure caption
+setwd(here("data-processed"))
+load("den_co_bg_ndvi_geo.RData") #updated april 18 2022
+#names(den_co_bg_ndvi_geo)
+pal_terrain = terrain.colors(100) %>% rev()#reverse the order of the palette
+mv_den_co_bg_ndvi  = den_co_bg_ndvi_geo %>% 
+  dplyr::select(bg_fips, ndvi_mean_wt) %>% 
+  mapview(
+    layer.name = "NDVI, block group",
+    zcol = "ndvi_mean_wt",
+    col.regions = pal_terrain, 
+    at = seq(-0.1, 1, 0.1)
+  )
+mv_den_co_bg_ndvi@map %>% 
+  addFullscreenControl()
+```
+
+# Tables: summarize over native-plants NDVI definition
+## Table 1: Description of scenarios (area, pop affecteds)
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("hia_all_over_ndvi_over_equity_est_boot.RData")
+load("hia_all_over_ndvi_by_equity_est_boot.RData")
+load("lookup_scenario_sort_order.RData") #to get it to sort how I want
+load("lookup_scenario_main_text.RData") #to restrict to those in the main text if necessary
+load("lookup_scenario_num.RData")
+hia_all_over_ndvi_over_equity_est_boot %>% 
+  bind_rows(hia_all_over_ndvi_by_equity_est_boot) %>% 
+  arrange(scenario_sort_order) %>% 
+  left_join(lookup_scenario_main_text, by = c("scenario", "scenario_sub")) %>% 
+#  filter(scenario_main_text==1) %>% #remove from appendix but include in main-text tables
+  left_join(lookup_scenario_num , by = c("scenario", "scenario_sub")) %>% #add this for presentation
+  dplyr::select(
+    scenario_num,
+    scenario, 
+    scenario_sub, #not presenting sub-scenarios in the main text table but yes in appendix
+    starts_with("equity_nbhd_denver_tertile"),
+    starts_with("area_mi2_bg_int_tx"),
+    starts_with("area_mi2_bg_int_res"),
+#    starts_with("ndvi_quo"),
+#    starts_with("ndvi_mean_alt"),
+    starts_with("pop_affected")
+  ) %>%
+  ungroup() %>% 
+  knitr::kable(
+    caption = "The cumulative area of the treatment, its corresponding residential buffer, and the population affected",
+    booktabs = TRUE,
+    format.args = list(big.mark = ","),
+    digits = c(0, 0, 0, 1, 1, 1, 1, 1, 1,0, 0,0),
+    col.names = c(
+            "Scenario num.",
+      "Scenario",
+      "Sub-scenario",
+      "Equity Tertile",
+      "Area, treatment (mi^2^), Med.",
+      "Area, treatment (mi^2^), LL",
+      "Area, treatment (mi^2^), UL",
+      "Area, residential buffer (mi^2^), Med.",
+      "Area, residential buffer (mi^2^), LL",
+      "Area, residential buffer (mi^2^), UL",
+      "Pop. affected, est.",
+      "Pop. affected, LL",
+      "Pop. affected, UL"
+      )  )
+```
+## Table 2: NDVI at baseline, alternative, and difference therein
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("hia_all_over_ndvi_over_equity_est_boot.RData")
+load("hia_all_over_ndvi_by_equity_est_boot.RData")
+load("lookup_scenario_sort_order.RData") #to get it to sort how I want
+load("lookup_scenario_main_text.RData") #to restrict to those in the main text if necessary
+load("lookup_scenario_num.RData")
+hia_all_over_ndvi_over_equity_est_boot %>% 
+  bind_rows(hia_all_over_ndvi_by_equity_est_boot) %>% 
+  arrange(scenario_sort_order) %>% 
+  #filter to just the main sub-scenarios to present in the main text
+  left_join(lookup_scenario_main_text, by = c("scenario", "scenario_sub")) %>% 
+#  filter(scenario_main_text==1) %>% #remove from appendix but include in main-text tables
+  left_join(lookup_scenario_num , by = c("scenario", "scenario_sub")) %>% #add this for presentation
+  dplyr::select(
+    scenario_num,
+    scenario, 
+    scenario_sub,
+    starts_with("equity_nbhd_denver_tertile"),
+    starts_with("ndvi_mean_wt_tx"),
+    starts_with("ndvi_quo"),
+    starts_with("ndvi_mean_alt"),
+    starts_with("ndvi_diff")
+  ) %>% 
+  knitr::kable(
+    caption = "NDVI before, after, and difference",
+    booktabs = TRUE,
+    col.names = c(
+      "Scenario num.",
+      "Scenario", 
+      "Sub-scenario",
+      "Equity Tertile", 
+      "Baseline NDVI, tx area, Med.",
+      "Baseline NDVI, tx area, LL",
+      "Baseline NDVI, tx area, UL",
+      "Baseline NDVI, res. area, Med.",
+      "Baseline NDVI, res. area, LL",
+      "Baseline NDVI, res. area, UL",
+      "Alternative NDVI, res. area, Med.",
+      "Alternative NDVI, res. area, LL",
+      "Alternative NDVI, res. area, UL",
+      "Difference: NDVI, res. area, Med.",
+      "Difference: NDVI, res. area, LL",
+      "Difference: NDVI, res. area, UL"
+      ),
+    format.args = list(big.mark = ","),
+    digits = c(0,0,0,2,2,2,2,2,2,2,2,2,3,3,3)) #max digits after decimal
+```
+
+## Table 3: Estimated deaths averted (total and rate per 100k) under each scenario
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("hia_all_over_ndvi_over_equity_est_boot.RData")
+load("hia_all_over_ndvi_by_equity_est_boot.RData")
+load("lookup_scenario_sort_order.RData") #to get it to sort how I want
+load("lookup_scenario_main_text.RData") #to restrict to those in the main text if necessary
+load("lookup_scenario_num.RData")
+hia_all_over_ndvi_over_equity_est_boot %>% 
+  bind_rows(hia_all_over_ndvi_by_equity_est_boot) %>% 
+  arrange(scenario_sort_order) %>% 
+#  filter(scenario_main_text==1) %>% #remove from appendix but include in main-text tables
+  left_join(lookup_scenario_main_text, by = c("scenario", "scenario_sub")) %>% 
+  left_join(lookup_scenario_num , by = c("scenario", "scenario_sub")) %>% #add this for presentation
+  dplyr::select(
+    scenario_num,
+    scenario, 
+    scenario_sub, #in supp. tables but not main text.
+    starts_with("equity_nbhd_denver_tertile"),
+    starts_with("deaths_prevented_coun"),
+    starts_with("deaths_prevented_per_pop_100k")
+  ) %>% 
+  knitr::kable(
+    caption = "Estimated deaths averted",
+    booktabs = TRUE,
+    col.names = c(
+      "Scenario num.",
+      "Scenario", 
+      "Sub-scenario",
+      "Equity Tertile", 
+      "Deaths prevented, est.", 
+      "Deaths prevented, LL", 
+      "Deaths prevented, UL",
+      "Deaths prevented per 100k, est.", 
+      "Deaths prevented per 100k, LL", 
+      "Deaths prevented per 100k, UL"
+      ),
+    format.args = list(big.mark = ","),
+    digits = c(0,0,0,0,0,0,0,0)) #max digits after decimal
+```
+
+
 # References
