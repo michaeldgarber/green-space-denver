@@ -676,7 +676,7 @@ hia_all_over_ndvi_over_equity_est_boot %>%
     caption = "The cumulative area of the treatment, its corresponding residential buffer, and the population affected",
     booktabs = TRUE,
     format.args = list(big.mark = ","),
-    digits = c(0, 0, 0, 1, 1, 1, 1, 1, 1,0, 0,0),
+    digits = c(0, 0, 0, 0, 1, 1, 1, 1, 1, 1,0, 0,0),
     col.names = c(
             "Scenario num.",
       "Scenario",
@@ -740,7 +740,7 @@ hia_all_over_ndvi_over_equity_est_boot %>%
       "Difference: NDVI, res. area, UL"
       ),
     format.args = list(big.mark = ","),
-    digits = c(0,0,0,2,2,2,2,2,2,2,2,2,3,3,3)) #max digits after decimal
+    digits = c(0,0,0,0, 2,2,2,2,2,2,2,2,2,3,3,3)) #max digits after decimal
 ```
 
 ## Table 3: Estimated deaths averted (total and rate per 100k) under each scenario
@@ -781,7 +781,7 @@ hia_all_over_ndvi_over_equity_est_boot %>%
       "Deaths prevented per 100k, UL"
       ),
     format.args = list(big.mark = ","),
-    digits = c(0,0,0,0,0,0,0,0)) #max digits after decimal
+    digits = c(0,0,0,0,0,0,0,0,0)) #max digits after decimal
 ```
 
 
