@@ -290,6 +290,7 @@ mutate_ndvi_diff_bg_itself = function(df){
 }
 
 ## Define scenarios-----------
+#Update June 21, 2022, creating another variable called scenario label for the table
 #100 percent native
 den_co_bg_ndvi_alt_100_nogeo = den_co_bg_ndvi_geo %>% 
   st_set_geometry(NULL) %>% 
@@ -368,6 +369,7 @@ map_over_native_ndvi_all_bg = function(ndvi_native_threshold_val){
     mutate_ndvi_diff_bg_itself() %>% 
     link_equity_indices() %>% #see above
     mutate(
+      scenario_label = "Block-group level", #added June 21, 2022
       #re-order scenario_sub to be a factor; this doesn't really work.
       scenario_sub = factor(
         scenario_sub, 
@@ -418,6 +420,7 @@ ndvi_native_threshold_values
  
 den_co_bg_ndvi_alt_all_nogeo = ndvi_native_threshold_values %>% 
   map_dfr(map_over_native_ndvi_all_bg)
+
 
 table(den_co_bg_ndvi_alt_all_nogeo$ndvi_native_threshold)
 class(den_co_bg_ndvi_alt_all_nogeo$ndvi_below_native_threshold)
@@ -1088,7 +1091,9 @@ map_over_native_ndvi_rip = function(ndvi_native_threshold_val){
       ndvi_alt_tx_only = prop_tx_itself_veg*ndvi_native_threshold + (1-prop_tx_itself_veg)*ndvi_mean_wt_tx 
     ) %>% 
     mutate_ndvi_diff_bg_int() %>% 
-    mutate(   #re-order scenario_sub to be a factor
+    mutate(  
+      scenario_label = "Riparian areas", #added June 21, 2022
+      #re-order scenario_sub to be a factor
       scenario_sub = factor(
         scenario_sub, 
         levels = c("200-ft", "100-ft", "50-ft"))
@@ -1101,7 +1106,7 @@ table(den_bg_int_wtr_ndvi_all_nogeo$ndvi_native_threshold)
 table(den_bg_int_wtr_ndvi_all_nogeo$scenario_sub)
 save(den_bg_int_wtr_ndvi_all_nogeo, file = "den_bg_int_wtr_ndvi_all_nogeo.RData")
 den_bg_int_wtr_ndvi_all_nogeo
-
+names(den_bg_int_wtr_ndvi_all_nogeo)
 
 # 3. Scenario 3. Office of Green Infrastructure initiatives---------------
 
@@ -1361,7 +1366,8 @@ map_over_native_ndvi_all_ogi_proj = function(ndvi_native_threshold_val){
     ) %>% 
     mutate(#add this info now
       scenario = "ogi",
-      scenario_sub = "ogi_proj"
+      scenario_sub = "ogi_proj",
+      scenario_label = "Retention basins" #added June 21, 2022
     ) %>% 
     mutate(
       #add the native-plants NDVI value here instead of above so I can loop it through
@@ -1836,6 +1842,7 @@ map_over_native_ndvi_all_ogi_parcel = function(ndvi_native_threshold_val){
     ) %>% 
     mutate(#add this info here
       scenario = "ogi",
+      scenario_label = "Parcel regulations", #added June 21, 2022
       scenario_sub = "parcel"
     ) %>% 
     mutate(  
@@ -2188,6 +2195,7 @@ map_over_native_ndvi_all_ogi_prkng = function(ndvi_native_threshold_val){
       den_bg_int_prkng_alt_30
     ) %>% 
     mutate(
+      scenario_label = "Parking", #added June 21, 2022
       #re-order scenario_sub to be a factor
       scenario_sub = factor(
         scenario_sub, 
@@ -2485,6 +2493,12 @@ lookup_scenario_sort_order = hia_all %>%
   distinct(scenario, scenario_sub, scenario_sort_order)
 lookup_scenario_sort_order
 save(lookup_scenario_sort_order, file = "lookup_scenario_sort_order.RData")
+
+#look up scenario label
+lookup_scenario_label = hia_all %>% 
+  distinct(scenario, scenario_sub, scenario_label)
+save(lookup_scenario_label, file = "lookup_scenario_label.RData")
+lookup_scenario_label
 
 #first extract area values at the level of the bg or bg_int to avoid the error
 #of summarizing over all the age-groups. do this before the below function.
