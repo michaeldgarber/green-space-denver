@@ -21,12 +21,26 @@ union_station_geo = mutate_geocode(union_station_tib, address, force=TRUE) %>%
            
 union_station_geo %>% mapview()
 
+# Buffers around Union Station--------
+## 1-mile buffer around Union Station-----------
 union_station_1_mi_2876 = union_station_geo %>% 
   st_buffer(5280)
 union_station_1_mi_2876 %>% mapview()
 setwd(here("data-processed"))
-save(union_station_1_mi_2876, file = "union_station_1_mi.RData")
-union_station_1_mi_4326 = union_station_1_mi %>% 
+save(union_station_1_mi_2876, file = "union_station_1_mi_2876.RData")
+union_station_1_mi_4326 = union_station_1_mi_2876 %>% 
   st_transform(4326)
 save(union_station_1_mi_4326, file = "union_station_1_mi_4326.RData")
+
+## 2-mile buffer around Union Station-----------
+union_station_2_mi_2876 = union_station_geo %>% 
+  st_buffer(5280*2)
+union_station_2_mi_2876 %>% mapview()
+setwd(here("data-processed"))
+save(union_station_2_mi_2876, file = "union_station_2_mi_2876.RData")
+union_station_2_mi_4326 = union_station_2_mi_2876 %>% 
+  st_transform(4326)
+save(union_station_2_mi_4326, file = "union_station_2_mi_4326.RData")
+union_station_2_mi_2876 %>% mapview()
+
 

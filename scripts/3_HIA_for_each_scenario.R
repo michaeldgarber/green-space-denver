@@ -2121,6 +2121,26 @@ mv_den_bg_int_prkng_tx_bg= den_bg_int_prkng_tx_ndvi %>%
 mv_den_bg_int_prkng_tx_bg
 
 
+### Union the parking lots and their corresponding residential buffer for an alternate visual------
+names(den_bg_int_prkng_tx_ndvi)
+den_bg_int_prkng_tx_union = den_bg_int_prkng_tx_ndvi %>% 
+  mutate(dummy=1) %>% 
+  group_by(dummy) %>% 
+  summarise(area_mi2_bg_int = sum(area_mi2_bg_int, na.rm=TRUE)) %>% 
+  ungroup() %>% 
+  dplyr::select(-dummy)
+
+save(den_bg_int_prkng_tx_union, file = "den_bg_int_prkng_tx_union.RData")
+den_bg_int_prkng_comp_union = den_bg_int_prkng_comp_ndvi %>% 
+  mutate(dummy=1) %>% 
+  st_make_valid() %>% 
+  group_by(dummy) %>% 
+  summarise(area_mi2_bg_int = sum(area_mi2_bg_int, na.rm=TRUE)) %>% 
+  ungroup() %>% 
+  dplyr::select(-dummy)
+save(den_bg_int_prkng_comp_union, file = "den_bg_int_prkng_comp_union.RData")
+
+
 #### Bodies of water 
 load("den_co_osm_water_union.RData")
 load("den_co_osm_water.RData")

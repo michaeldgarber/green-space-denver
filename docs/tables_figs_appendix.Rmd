@@ -20,14 +20,13 @@ link-citations: true
 
 Filename: tables_figs_appendix
 
-This document conatains supplementary material, mostly tables and figures, as well as some additional text and description. Eventually, this could be rendered as a Word Doc or PDF for an appendix corresponding to a submitted manuscript. 
+This document contains supplementary material, mostly tables and figures, as well as some additional text and description. This web page could plausibly be rendered as a PDF or Word Doc for submission.
 
 The tables and figures intended for the main text are here:
 
-~/green-space-denver/docs/tables_figs_appendix.html
+https://michaeldgarber.github.io/green-space-denver/tables_figs_main_text.html
 
 As of now, this also contains all of the information presented in the main text. That is, the tables and figures presented in the main text are a subset of those presented here.
-
 
 # Denver demographics
 
@@ -580,7 +579,7 @@ den_prkng_tx_marg %>%
     digits = 2)
 ```
 
-We similarly measured the NDVI on the parking lots as well as the NDVI in the census block groups within a 500-m buffer radius of any parking lot (which is almost the whole city). We present a small subset of these areas near Union Station (the data are too large to upload):
+We similarly measured the NDVI on the parking lots as well as the NDVI in the census block groups within a 500-m buffer radius of any parking lot (which is almost the whole city). We present a subset of these areas in a 2-mile radius around Union Station (the complete data are too large to upload):
 
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
@@ -588,13 +587,19 @@ load("den_bg_int_prkng_comp_ndvi.RData")
 load("den_bg_int_prkng_tx_ndvi.RData")
 load("study_area_2876.RData")
 load("union_station_1_mi_4326.RData") # we will limit to a 1-mi radius around union station
+load("union_station_1_mi_2876.RData")
+load("union_station_2_mi_4326.RData") 
+load("union_station_2_mi_2876.RData")
+
 pal_terrain_col = rev(terrain.colors(100)) 
 library(leaflet.extras)
 library(mapview)
 #### Buffer excluding the parking---------
 sf::sf_use_s2(FALSE) #have to use this as I was getting an error that loop not valid
 mv_union_sta_den_bg_int_prkng_comp_ndvi= den_bg_int_prkng_comp_ndvi %>% 
-  st_intersection(union_station_1_mi_4326) %>% 
+  st_transform(2876) %>% 
+  st_simplify(dTolerance = 20) %>%  #make size much smaller for visual. intentionally ordered here
+  st_intersection(union_station_2_mi_2876) %>% 
   st_make_valid() %>% 
   st_buffer(0) %>% 
   mapview(
@@ -604,7 +609,9 @@ mv_union_sta_den_bg_int_prkng_comp_ndvi= den_bg_int_prkng_comp_ndvi %>%
 
 #### The parking only----------
 mv_union_sta_den_bg_int_prkng_tx_ndvi= den_bg_int_prkng_tx_ndvi %>% 
-  st_intersection(union_station_1_mi_4326) %>% 
+  st_transform(2876) %>% 
+  st_simplify(dTolerance = 20) %>%  #make size much smaller for visual. intentionally ordered here
+  st_intersection(union_station_2_mi_2876) %>% 
   st_make_valid() %>% 
   st_buffer(0) %>% 
   mapview(
@@ -618,6 +625,18 @@ mv_prkng_both = mv_union_sta_den_bg_int_prkng_comp_ndvi+
 
 mv_prkng_both@map %>% 
   addFullscreenControl()
+```
+
+Due to space constraints, we cannot map each parking lot interactively on this website. Below is a static map of the parking lots in the Denver study area.
+
+```{r parking-union,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("den_bg_int_prkng_tx_union.RData")
+load("den_bg_int_prkng_comp_union.RData")
+den_bg_int_prkng_tx_union %>% 
+  ggplot()+
+  geom_sf()+
+  theme_bw()
 ```
 
 # Supplementary tables

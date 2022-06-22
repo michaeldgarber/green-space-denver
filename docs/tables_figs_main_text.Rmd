@@ -17,9 +17,9 @@ output:
 
 Filename: tables_figs_main_text
 
-This document contains tables and figures presented in the main text. It is a subset of those presented in the appendix, which is here:
+This document contains tables and figures presented in the main text. Additional detail is presented in the appendix:
+https://michaeldgarber.github.io/green-space-denver/tables_figs_appendix.html
 
-~green-space-denver/docs/tables_figs_appendix.html
 
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 library(here)
