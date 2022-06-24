@@ -58,7 +58,7 @@ bootstrap_hia = function(s_id_val){
 
 # Run bootstrap function----------
 #run the function x times; 500 reaches memory limit. 200 is fine. don't save the data frame because it's huge
-n_boot_reps = 200
+n_boot_reps = 200 #200 good.
 s_id_val_list <- seq(from = 1, to = n_boot_reps, by = 1)
 
 hia_all_boot  = s_id_val_list %>% 
@@ -143,6 +143,7 @@ select_vars_estimate_boot = function(df){
     contains("equity"),
     contains("area_mi2_bg_int_tx"),
     contains("area_mi2_bg_int_res"),
+    contains("area_prop_tx"),
     contains("ndvi_quo"),
     contains("ndvi_mean_alt"),
     contains("ndvi_diff"),
@@ -156,6 +157,7 @@ select_vars_estimate_boot = function(df){
   )
 }
 
+names(hia_all_over_ndvi_over_equity)
 hia_all_over_ndvi_over_equity_est_boot = hia_all_over_ndvi_over_equity %>% 
   left_join(hia_all_over_ndvi_over_equity_s, by = c("scenario", "scenario_sub")) %>% 
   select_vars_estimate_boot()

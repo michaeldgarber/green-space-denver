@@ -665,6 +665,7 @@ hia_all_over_ndvi_over_equity_est_boot %>%
     starts_with("equity_nbhd_denver_tertile"),
     starts_with("area_mi2_bg_int_tx"),
     starts_with("area_mi2_bg_int_res"),
+    starts_with("area_prop_tx"),
 #    starts_with("ndvi_quo"),
 #    starts_with("ndvi_mean_alt"),
     starts_with("pop_affected")
@@ -674,10 +675,10 @@ hia_all_over_ndvi_over_equity_est_boot %>%
     caption = "The cumulative area of the treatment, its corresponding residential buffer, and the population affected",
     booktabs = TRUE,
     format.args = list(big.mark = ","),
-    digits = c(0, 0, 0, 0, 1, 1, 1, 1, 1, 1,0, 0,0),
+    digits = c(0, 0, 0, 0, 1, 1, 1, 1, 1, 1,2,2,2,0, 0,0),
     col.names = c(
-            "Scenario num.",
-      "Scenario",
+      "Scenario num.",
+      "Scenario", 
       "Sub-scenario",
       "Equity Tertile",
       "Area, treatment (mi^2^), Med.",
@@ -686,6 +687,9 @@ hia_all_over_ndvi_over_equity_est_boot %>%
       "Area, residential buffer (mi^2^), Med.",
       "Area, residential buffer (mi^2^), LL",
       "Area, residential buffer (mi^2^), UL",
+      "Prop.of residential buffer treated, Med.",
+      "Prop. of residential buffer treated, LL",
+      "Prop. of residential buffer treated, UL",
       "Pop. affected, est.",
       "Pop. affected, LL",
       "Pop. affected, UL"
@@ -783,6 +787,36 @@ hia_all_over_ndvi_over_equity_est_boot %>%
     format.args = list(big.mark = ","),
     digits = c(0,0,0,0,0,0,0,0,0)) #max digits after decimal
 ```
-
+# Scatterplot of equity and NDVI at the block-group level
+The horizontal lines correspond to the three NDVI defitions of native plants.
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("den_co_bg_pop_per_ndvi.RData") #made in scripts/4_pop_dens_per_ndvi.R
+load("hia_all.RData")
+library(shades)
+ndvi_native_threshold_vector = hia_all %>% 
+  distinct(ndvi_native_threshold) %>% 
+  arrange(ndvi_native_threshold) %>% 
+  pull()
+terrain_colors_4= terrain.colors(4) %>% rev()
+den_co_bg_pop_per_ndvi %>% 
+  dplyr::select(-tract_fips) %>% 
+  link_equity_indices() %>% 
+  ggplot(aes(x=equity_nbhd_denver, y=ndvi_mean_wt )) + 
+  geom_point()+
+  ylab("NDVI") +
+  xlab("Denver Equity Index (lower is more disadvantaged)") +
+  theme_bw(base_size = 14) +
+  geom_hline(
+    yintercept = ndvi_native_threshold_vector[1],
+    linetype = "dashed", color = terrain_colors_4[4], lwd=1)+
+  geom_hline(
+    yintercept = ndvi_native_threshold_vector[2], lwd=1,
+    linetype = "dashed", color = terrain_colors_4[4]) +
+  geom_hline(
+    yintercept = ndvi_native_threshold_vector[3], lwd=1,
+    color = terrain_colors_4[4], #I thought about changing but I think one color is good
+             linetype = "dashed")
+```
 
 # References

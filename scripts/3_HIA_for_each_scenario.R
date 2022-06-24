@@ -2581,6 +2581,11 @@ summarise_ungroup_hia_area_stuff_by_ndvi = function(df){
     ) %>% 
     ungroup() %>% 
     mutate(
+      #adding this 6/24/22 - what proportion of the residential area is
+      #covered by the treatment area? I think this is useful to show how how dependent results are
+      #on use of 500 m buffer
+      area_prop_tx_res = area_mi2_bg_int_tx/area_mi2_bg_int_res,
+      
       ndvi_mean_alt =ndvi_mean_alt_int/area_mi2_bg_int_res, #weighted mean
       ndvi_quo =ndvi_quo_int/area_mi2_bg_int_res, #weighted mean
       ndvi_diff = ndvi_mean_alt-ndvi_quo, #useful to keep
@@ -2610,6 +2615,7 @@ hia_all_area_stuff_by_ndvi_over_equity = hia_all %>%
     ndvi_mean_alt_int, ndvi_quo_int, ndvi_mean_wt_tx_int ) %>% 
   group_by(scenario, scenario_sub, ndvi_native_threshold) %>% #now lose block group
   summarise_ungroup_hia_area_stuff_by_ndvi()#see definition above.
+
 
 #check the parking area measurement is right.
 hia_all_area_stuff_by_ndvi_over_equity %>% 
@@ -2807,6 +2813,9 @@ summarise_ungroup_hia_over_ndvi = function(df){
       area_mi2_bg_int_res_med = median(area_mi2_bg_int_res, na.rm=TRUE),
       area_mi2_bg_int_res_min = min(area_mi2_bg_int_res, na.rm=TRUE),
       area_mi2_bg_int_res_max = max(area_mi2_bg_int_res, na.rm=TRUE),
+      area_prop_tx_res_med = median(area_prop_tx_res, na.rm=TRUE), #adding 6/24/22
+      area_prop_tx_res_min = min(area_prop_tx_res, na.rm=TRUE), #adding 6/24/22
+      area_prop_tx_res_max = max(area_prop_tx_res, na.rm=TRUE), #adding 6/24/22
       ndvi_quo_med = median(ndvi_quo, na.rm=TRUE),
       ndvi_quo_min = min(ndvi_quo, na.rm=TRUE),
       ndvi_quo_max = max(ndvi_quo, na.rm=TRUE),
@@ -2840,7 +2849,7 @@ hia_all_over_ndvi_over_equity = hia_all_by_ndvi_over_equity %>% #begin with this
     everything())
 
 hia_all_over_ndvi_over_equity
-
+View(hia_all_over_ndvi_over_equity)
 save(hia_all_over_ndvi_over_equity, file = "hia_all_over_ndvi_over_equity.RData")
 ### over NDVI by equity--------
 hia_all_over_ndvi_by_equity = hia_all_by_ndvi_by_equity %>% 
