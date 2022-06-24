@@ -1,7 +1,7 @@
-#philadelphia sample calculations to compare rates 
-# from Health impact assessment of Philadelphia’s 2025 tree canopy cover goals
+#Philadelphia sample calculations to compare rates 
+# from Kondo et al., 2020, Lancet Planetary Health, Health impact assessment of Philadelphia’s 2025 tree canopy cover goals
 #
-#following age distribution here: https://censusreporter.org/profiles/16000US4260000-philadelphia-pa/
+#Following age distribution here: https://censusreporter.org/profiles/16000US4260000-philadelphia-pa/
 philly_adult_pop = 0.76*1557306 #76% adults and pop reported in paper above
 
 philly_deaths = c("low", "moderate", "ambitious") %>% 
@@ -18,4 +18,5 @@ philly_deaths = c("low", "moderate", "ambitious") %>%
   )
 
 philly_deaths
+#rates between 25.5 per 100k and 34.1 per 100k
   
