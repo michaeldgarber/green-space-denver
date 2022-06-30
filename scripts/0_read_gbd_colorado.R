@@ -48,9 +48,15 @@ ihme_co <- read_csv("IHME-GBD_2019_DATA-96be8737-1.csv") %>%
   rename(
     rate_per_100k_est = val,
     rate_per_100k_ul = upper, #upper limit
-    rate_per_100k_ll = lower  #upper limit
+    rate_per_100k_ll = lower,  #upper limit
   ) %>% 
-  #drop a few
+  #drop a few vars
+  #for comparison with philadelphia, add rates per 1,000
+  mutate(
+    rate_per_1k_est = rate_per_100k_est/100, #convert deaths per 100,000 to deaths per 1,000
+    rate_per_1k_ul = rate_per_100k_ul/100, #upper limit
+    rate_per_1k_ll = rate_per_100k_ll/100,  #upper limit
+  ) %>% 
   #again, we know they're rates, and we have a shorter cause
   dplyr::select(-metric, -cause) 
 
@@ -64,4 +70,14 @@ table(ihme_co$measure)
 summary(ihme_co$rate_per_100k_est)
 class(ihme_co$age_group_gbd)
 ihme_co
+table(ihme_co$age_group_gbd)
+table(ihme_co$year)
+#adult mortality rate, overall (20+)
+ihme_co %>% 
+  filter(age_group_gbd == "20 plus") %>% 
+  filter(sex == "all") %>% 
+  filter(cause_short == "all") %>% 
+  filter(measure == "deaths") %>% 
+  dplyr::select(starts_with("rate_per_1"))
+
 

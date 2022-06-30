@@ -927,6 +927,7 @@ save(den_tract_acs5_wrangle_geo,
      file = "den_tract_acs5_wrangle_geo.RData")
 names(den_tract_acs5_wrangle_geo)
 den_tract_acs5_wrangle_geo %>% mapview(zcol = "pop_dens_mi2_all")
+den_tract_acs5_wrangle_geo
 
 #make a no-geo version for linking
 den_tract_acs5_wrangle_nogeo=den_tract_acs5_wrangle_geo %>% 

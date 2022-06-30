@@ -187,6 +187,8 @@ save(den_metro_bg_no_wtr_4326_geo, file = "den_metro_bg_no_wtr_4326_geo.RData")
 # source(here("scripts","0_read_wrangle_denver_land_use.R")) #this takes ~10 s
 #update: actually don't takes too long
 
+# Miscellaneous calculations in preparation for appendix tables------
+
 
 #I'm first computing NDVI diff for each scenario, and then in a subsequent
 #major section, calculating avoidable deaths.
@@ -2308,7 +2310,6 @@ ihme_co_w_drf = ihme_co %>%
 setwd(here("data-processed"))
 lookup_acs_gbd_age = readxl::read_excel("lookup_acs_gbd_age.xlsx")
 load("den_metro_bg_sex_age_wrangle.RData") #long form
-
 ### Link GBD to bg data & restrict to certain age groups----------
 #begin with the long-form metro data, restrict to denver only, link with GBD,
 #### Define lower bound for age-----------
@@ -2331,9 +2332,20 @@ den_co_bg_sex_age_gbd_wrangle = den_metro_bg_sex_age_wrangle %>%
   mutate(
     #calculate the standard deviation so that we can re-sample the uncertainty.
     #note this makes a normality assumption
-    rate_per_100k_sd = abs(rate_per_100k_est-rate_per_100k_ll)/1.96
+    rate_per_100k_sd = abs(rate_per_100k_est-rate_per_100k_ll)/1.96,
+    #calculate total deaths for easier collapsed rate calc. below
+    deaths_annual_est = pop_est*(rate_per_100k_est/100000),
+    deaths_annual_ll = pop_est*(rate_per_100k_ll/100000),
+    deaths_annual_ul = pop_est*(rate_per_100k_ul/100000)
   ) %>% 
   dplyr::select(-var_label, -var_name) #drop these
+
+
+#Note I had some calculations here that I moved to
+# scripts/4_mortality_area_study_area.R
+#because they were superfluous to the calculation of the HIA results
+den_co_bg_sex_age_gbd_wrangle
+table(den_co_bg_sex_age_gbd_wrangle$age_group_acs_30_plus)
 
 #save for use in bootstrap
 save(den_co_bg_sex_age_gbd_wrangle, file = "den_co_bg_sex_age_gbd_wrangle.RData") 

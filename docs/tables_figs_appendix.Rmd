@@ -28,9 +28,9 @@ https://michaeldgarber.github.io/green-space-denver/tables_figs_main_text.html
 
 As of now, this also contains all of the information presented in the main text. That is, the tables and figures presented in the main text are a subset of those presented here.
 
-# Denver demographics
+# Demographics of Denver and study area
 
-## Table of total population, population density, age, race, and poverty of study area
+## Table of total population, population density, age, race, and poverty of all of Denver and study area
 
 ```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 library(here)
@@ -42,9 +42,19 @@ library(sf)
 setwd(here("data-processed"))
 load("lookup_tract_nbhd_northeast_exclude.RData")
 load("den_tract_acs5_wrangle_geo.RData")
-#names(den_tract_acs5_wrangle_geo)
+
+#See for where these are created:
+source(here("scripts", "4_mortality_area_study_area.R")) 
+
+mortality_rate_per1k_30_plus_study_area_pull = mortality_rate_per1k_30_plus_study_area %>% pull()
+mortality_rate_per1k_18_plus_denver_pull = mortality_rate_per1k_18_plus_denver %>% pull()
+
+area_mi2_bg_med_denver_pull = bg_size_average_denver %>% dplyr::select(area_mi2_bg_med) %>% pull()
+area_mi2_bg_med_study_area_pull = bg_size_average_study_area %>% dplyr::select(area_mi2_bg_med) %>% pull()
+### --------All of Denver---------------------------------------#
+#-------Tract-level data for most of the table------------------#
 #use tract-level data for the overall table
-den_tract_acs5_wrangle_geo %>% 
+t1_denver_all = den_tract_acs5_wrangle_geo %>% 
   filter(county_fips=="031") %>% 
   left_join(lookup_tract_nbhd_northeast_exclude, by = "tract_fips") %>% 
 #  filter(nbhd_northeast_exclude==0) %>% #Decide not to exclude, actually
@@ -75,22 +85,101 @@ den_tract_acs5_wrangle_geo %>%
     race_nw_prop = 1-race_w_prop, #nw for nonwhite (i.e, 1-white)
     race_o_prop = 1-(race_b_prop + race_w_prop +race_h_prop),
     
-    pov_last_12_prop = pov_last_12/pov_last_12_tot  #percent poverty
+    pov_last_12_prop = pov_last_12/pov_last_12_tot,  #percent poverty
+    #add mortality rate for reference
+    rate_per_1k_est = mortality_rate_per1k_18_plus_denver_pull,
+    area_mi2_bg_med = area_mi2_bg_med_denver_pull
   ) %>% 
   dplyr::select(
     area_mi2, pop_tot, pop_dens_mi2, race_w_prop, race_b_prop, race_h_prop, race_o_prop,
     age_med,
     pov_last_12_prop,
-    hh_inc_med
+    hh_inc_med, rate_per_1k_est, area_mi2_bg_med
   ) %>% 
   pivot_longer(
     cols = everything(),
-    names_to = "Measure"
-    ) %>% 
+    names_to = "measure_var_name",
+    values_to = "Denver"
+    ) 
+
+
+#------------Just the study area-----------------------#
+t1_study_area = den_tract_acs5_wrangle_geo %>% 
+  filter(county_fips=="031") %>% 
+  left_join(lookup_tract_nbhd_northeast_exclude, by = "tract_fips") %>% 
+  filter(nbhd_northeast_exclude==0) %>% 
+  st_set_geometry(NULL) %>% 
+  group_by(county_fips) %>% 
+  summarise(
+    area_mi2 = sum(area_mi2_tract, na.rm=TRUE),
+    pop_tot = sum(pop_tot, na.rm=TRUE),
+    
+    age_med = median(age_med , na.rm=TRUE),
+    hh_inc_med = median(hh_inc_med, na.rm=TRUE),
+    
+    race_tot = sum(race_tot, na.rm=TRUE),
+    race_w = sum(race_w, na.rm=TRUE),
+    race_h = sum(race_h, na.rm=TRUE),
+    race_b = sum(race_b, na.rm=TRUE),
+    
+    pov_last_12 = sum(pov_last_12, na.rm=TRUE),
+    pov_last_12_tot = sum(pov_last_12_tot, na.rm=TRUE),
+
+  ) %>% 
+  ungroup() %>% 
+  mutate(
+    pop_dens_mi2 = pop_tot/area_mi2,
+    race_w_prop = race_w/race_tot,           #prop for proportion
+    race_b_prop = race_b/race_tot,
+    race_h_prop = race_h/race_tot, 
+    race_nw_prop = 1-race_w_prop, #nw for nonwhite (i.e, 1-white)
+    race_o_prop = 1-(race_b_prop + race_w_prop +race_h_prop),
+    
+    pov_last_12_prop = pov_last_12/pov_last_12_tot,  #percent poverty
+    #add mortality rate for reference
+    rate_per_1k_est = mortality_rate_per1k_30_plus_study_area_pull,
+    area_mi2_bg_med = area_mi2_bg_med_study_area_pull
+  ) %>% 
+  dplyr::select(
+    area_mi2, pop_tot, pop_dens_mi2, race_w_prop, race_b_prop, race_h_prop, race_o_prop,
+    age_med,
+    pov_last_12_prop,
+    hh_inc_med, rate_per_1k_est, area_mi2_bg_med
+  ) %>% 
+  pivot_longer(
+    cols = everything(),
+    names_to = "measure_var_name",
+    values_to = "Study"
+    ) 
+
+
+#-------Combine them and print kable---------------------------#
+t1_appendix_denver_study_area = t1_denver_all %>% 
+  left_join(t1_study_area, by = "measure_var_name") %>% 
+  #change the name so easier to read
+  mutate(
+    Measure = case_when(
+      measure_var_name == "area_mi2" ~ "Area (sq. mi.)",
+      measure_var_name == "pop_tot" ~ "Population",
+      measure_var_name == "pop_dens_mi2" ~ "Population density (per sq. mi.)",
+      measure_var_name == "race_w_prop" ~ "Proportion White race",
+      measure_var_name == "race_b_prop" ~ "Proportion Black race",
+      measure_var_name == "race_h_prop" ~ "Proportion Hispanic or Latino race",
+      measure_var_name == "race_o_prop" ~ "Proportion other race",
+      measure_var_name == "age_med" ~ "Median age (years)",
+      measure_var_name == "pov_last_12_prop" ~ "Proportion in poverty, last 12 mos.",
+      measure_var_name == "hh_inc_med" ~ "Median household income (USD)",
+      measure_var_name == "rate_per_1k_est" ~ "Estimated all-cause mortality rate per 1,000",
+      measure_var_name == "area_mi2_bg_med" ~ "Median block-group area (sq. mi.)"
+    )
+  ) %>% 
+  dplyr::select(Measure, Denver, Study) %>% 
   knitr::kable(
-    booktabs = TRUE,
-    caption = "Summary of study-area demographics",
+    caption = "Summary of study-area demographics. The study restricts to adults 30 years and older and excludes certain census tracts in Denver's northeast.",
     digits = 2)
+
+
+t1_appendix_denver_study_area
 
 ```
 
