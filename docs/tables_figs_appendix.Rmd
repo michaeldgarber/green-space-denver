@@ -30,7 +30,7 @@ As of now, this also contains all of the information presented in the main text.
 
 # Demographics of Denver and study area
 
-## Table of total population, population density, age, race, and poverty of all of Denver and study area
+## Table describing demographics of Denver and the study area
 
 ```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 library(here)
