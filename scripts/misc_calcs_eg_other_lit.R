@@ -78,3 +78,29 @@ europe_mortality_by_age_wrangle =  europe_mortality_by_age%>%
   ungroup() 
 
 europe_mortality_by_age_wrangle
+
+# e-value calculation--------
+#e-value = RR + sqrt(RR*(RR-1))
+#note that this formula applies to a formula greater than 1.
+#for a risk ratio less than 1, first take the inverse of the observed RR
+#and then apply the formula.
+rr_inv_pt = 1/.96
+rr_inv_ll = 1/0.94
+rr_inv_ul = 1/0.97
+rr_inv_pt
+rr_inv_ll
+rr_inv_ul
+
+e_val_pt = (rr_inv_pt+sqrt(rr_inv_pt*(rr_inv_pt-1)))
+e_value_ll = (rr_inv_ll+sqrt(rr_inv_ll*(rr_inv_ll-1)))
+e_value_ul = (rr_inv_ul+sqrt(rr_inv_ul*(rr_inv_ul-1)))
+
+e_val_pt
+e_value_ll
+e_value_ul
+
+# Denver vs Colorado Mortality rate
+colorado_mort_rate_age_adjust = 738.74
+denver_mort_rate_age_adjust = 806.77
+
+denver_mort_rate_age_adjust/colorado_mort_rate_age_adjust

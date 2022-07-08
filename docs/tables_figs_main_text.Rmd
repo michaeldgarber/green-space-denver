@@ -15,11 +15,12 @@ output:
     toc: true 
 ---
 
-Filename: tables_figs_main_text
+This document contains tables and figures presented in the main text. The URL for this page is https://michaeldgarber.github.io/green-space-denver/tables_figs_main_text.html
 
-This document contains tables and figures presented in the main text. Additional detail is presented in the appendix:
+Additional detail is presented in the appendix:
 https://michaeldgarber.github.io/green-space-denver/tables_figs_appendix.html
 
+7/8/22 Update to concatenate (paste0) confidence intervals, so they're all in the same cell.
 
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 library(here)
@@ -29,8 +30,8 @@ library(sf)
 library(leaflet.extras)
 ```
 
-# Scenario 1
-Note this is directlty copied from the appendix version.
+# Figure 1
+Note this is directly copied from the appendix version.
 The weighted block-group-level mean NDVI on July 4, 2021 is presented here.
 
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE, fig.cap = "Mean normalized difference vegetation index (NDVI) of census block groups in Denver, Colorado (excluding some in the northeast, described in main text) on July 4, 2021 as measured by the Landsat-8 satellite on July 4, 2021. NDVI is measured at a spatial resolution of 30 meters squared. The weighted block-group-level mean NDVI is weighted by the proportion Landsat pixels overlap the water-free land area of the block group"}
@@ -51,8 +52,8 @@ mv_den_co_bg_ndvi@map %>%
   addFullscreenControl()
 ```
 
-# Tables: summarize over native-plants NDVI definition
-## Table 1: Description of scenarios (area, pop affecteds)
+# Tables 
+## Table 1: Description of scenarios (area, pop affected)
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
 load("hia_all_over_ndvi_over_equity_est_boot.RData")
@@ -61,6 +62,7 @@ load("lookup_scenario_sort_order.RData") #to get it to sort how I want
 load("lookup_scenario_main_text.RData") #to restrict to those in the main text if necessary
 load("lookup_scenario_num.RData")
 load("lookup_scenario_label.RData")
+library(scales)
 hia_all_over_ndvi_over_equity_est_boot %>% 
   bind_rows(hia_all_over_ndvi_by_equity_est_boot) %>% 
   arrange(scenario_sort_order) %>% 
@@ -69,40 +71,64 @@ hia_all_over_ndvi_over_equity_est_boot %>%
   filter(scenario_main_text==1) %>% 
   left_join(lookup_scenario_num , by = c("scenario", "scenario_sub")) %>% #add this for presentation
   left_join(lookup_scenario_label, by=  c("scenario", "scenario_sub")) %>% #add better scenario labels
+  #Create concatenated version of estimates + confidence intervals in one cell
+  #I learned about formatC, which I have never used before 
+  #https://stackoverflow.com/questions/3443687/formatting-decimal-places-in-r
+  mutate(
+    area_mi2_bg_int_tx_conc = paste0(
+      as.character(formatC(area_mi2_bg_int_tx_med,digits=1, format = "f")),
+      " (", 
+      as.character(formatC(area_mi2_bg_int_tx_min,digits=1, format = "f")),
+      ", ",
+      as.character(formatC(area_mi2_bg_int_tx_max,digits=1, format="f")),
+      ")")
+    ,
+    area_mi2_bg_int_res_conc = paste0(
+      as.character(formatC(area_mi2_bg_int_res_med,digits=1, format = "f")),
+      " (", 
+      as.character(formatC(area_mi2_bg_int_res_min,digits=1, format = "f")),
+      ", ",
+      as.character(formatC(area_mi2_bg_int_res_max,digits=1, format="f")),
+      ")")
+    ,
+    area_prop_tx_res_conc = paste0(
+      as.character(formatC(area_prop_tx_res_med,digits=2, format = "f")),
+      " (", 
+      as.character(formatC(area_prop_tx_res_min,digits=2, format = "f")),
+      ", ",
+      as.character(formatC(area_prop_tx_res_max,digits=2, format="f")),
+      ")"),
+    #here, use big.mark to add a comma.
+    pop_affected_conc =  paste0(
+        as.character(formatC(pop_affected_med,digits=0, format = "f", big.mark=",")),
+        " (", 
+        as.character(formatC(pop_affected_ll,digits=0, format = "f", big.mark=",")),
+        "; ", #using a semi-colon as a separator instead to avoid confusion with comma
+        #for every thousand.
+        as.character(formatC(pop_affected_ul,digits=0, format="f", big.mark=",")),
+        ")")
+  ) %>% 
   dplyr::select(
     scenario_num,
     scenario_label, 
   #  scenario_sub, #not presenting sub-scenarios in the main text table
     starts_with("equity_nbhd_denver_tertile"),
-    starts_with("area_mi2_bg_int_tx"),
-    starts_with("area_mi2_bg_int_res"),
-    starts_with("area_prop_tx"),
-#    starts_with("ndvi_quo"),
-#    starts_with("ndvi_mean_alt"),
-    starts_with("pop_affected")
+    ends_with("_conc") #this picks up all the variables you just created with formatC
   ) %>%
   ungroup() %>% 
   knitr::kable(
     caption = "The cumulative area of the treatment, its corresponding residential buffer, and the population affected",
     booktabs = TRUE,
     format.args = list(big.mark = ","),
-    digits = c(0, 0, 0, 1, 1, 1, 1, 1, 1,2,2,2,0, 0,0),
+#    digits = c(0, 0, 0, 1, 1, 1, 1, 1, 1,2,2,2,0, 0,0),
     col.names = c(
             "Scenario num.",
       "Scenario",
       "Equity Tertile",
-      "Area, treatment (mi^2^), Med.",
-      "Area, treatment (mi^2^), LL",
-      "Area, treatment (mi^2^), UL",
-      "Area, residential buffer (mi^2^), Med.",
-      "Area, residential buffer (mi^2^), LL",
-      "Area, residential buffer (mi^2^), UL",
-      "Prop.of residential buffer treated, Med.",
-      "Prop. of residential buffer treated, LL",
-      "Prop. of residential buffer treated, UL",
-      "Pop. affected, est.",
-      "Pop. affected, LL",
-      "Pop. affected, UL"
+      "Area, treatment (mi^2^), median (95% UI)",
+      "Area, residential buffer (mi^2^), median (95% UI)",
+      "Prop. of residential buffer treated, median (95% UI)",
+      "Pop. affected, estimate (95% UI)"
       )  )
 ```
 ## Table 2: NDVI at baseline, alternative, and difference therein
@@ -121,37 +147,63 @@ hia_all_over_ndvi_over_equity_est_boot %>%
   filter(scenario_main_text==1) %>% 
   left_join(lookup_scenario_num , by = c("scenario", "scenario_sub")) %>% #add this for presentation
   left_join(lookup_scenario_label, by=  c("scenario", "scenario_sub")) %>% #add better scenario labels
+    #more concatenate
+  mutate(
+    
+    #baseline ndvi of the treatment area 
+    ndvi_mean_wt_tx_conc = paste0(
+      as.character(formatC(ndvi_mean_wt_tx_med,digits=2, format = "f")),
+      " (", 
+      as.character(formatC(ndvi_mean_wt_tx_min,digits=2, format = "f")),
+      ", ",
+      as.character(formatC(ndvi_mean_wt_tx_max,digits=2, format="f")),
+      ")"),
+    
+    #baseline NDVI of the full residential area
+    ndvi_quo_conc = paste0(
+      as.character(formatC(ndvi_quo_med,digits=2, format = "f")),
+      " (", 
+      as.character(formatC(ndvi_quo_min,digits=2, format = "f")),
+      ", ",
+      as.character(formatC(ndvi_quo_max,digits=2, format="f")),
+      ")")
+    ,
+    ndvi_mean_alt_conc = paste0(
+      as.character(formatC(ndvi_mean_alt_med,digits=2, format = "f")),
+      " (", 
+      as.character(formatC(ndvi_mean_alt_min,digits=2, format = "f")),
+      ", ",
+      as.character(formatC(ndvi_mean_alt_max,digits=2, format="f")),
+      ")"),
+    ndvi_diff_conc = paste0(
+      as.character(formatC(ndvi_diff_med,digits=3, format = "f")),
+      " (", 
+      as.character(formatC(ndvi_diff_min,digits=3, format = "f")),
+      ", ",
+      as.character(formatC(ndvi_diff_max,digits=3, format="f")),
+      ")")
+  ) %>% 
   dplyr::select(
     scenario_num,
     scenario_label, 
     starts_with("equity_nbhd_denver_tertile"),
-    starts_with("ndvi_mean_wt_tx"),
-    starts_with("ndvi_quo"),
-    starts_with("ndvi_mean_alt"),
-    starts_with("ndvi_diff")
+    ends_with("_conc") #this picks up all the variables you just created with formatC
   ) %>% 
   knitr::kable(
-    caption = "NDVI before, after, and difference",
+    caption = "Baseline and alternative NDVI of the residential buffer and the corresponding difference",
     booktabs = TRUE,
+#    format.args = list(big.mark = ","), #not necessary because we formatted in the paste0
+#    digits = c(0,0,0,2,2,2,2,2,2,2,2,2,3,3,3), ##max digits after decimal. also not necessary
     col.names = c(
       "Scenario num.",
       "Scenario", 
       "Equity Tertile", 
-      "Baseline NDVI, tx area, Med.",
-      "Baseline NDVI, tx area, LL",
-      "Baseline NDVI, tx area, UL",
-      "Baseline NDVI, res. area, Med.",
-      "Baseline NDVI, res. area, LL",
-      "Baseline NDVI, res. area, UL",
-      "Alternative NDVI, res. area, Med.",
-      "Alternative NDVI, res. area, LL",
-      "Alternative NDVI, res. area, UL",
-      "Difference: NDVI, res. area, Med.",
-      "Difference: NDVI, res. area, LL",
-      "Difference: NDVI, res. area, UL"
-      ),
-    format.args = list(big.mark = ","),
-    digits = c(0,0,0,2,2,2,2,2,2,2,2,2,3,3,3)) #max digits after decimal
+      "Baseline NDVI, treatment area, median (95% UI)",
+      "Baseline NDVI, residential buffer, median (95% UI)",
+      "Alternative NDVI, residential buffer, median (95% UI)",
+      "Difference: NDVI, residential buffer, median (95% UI)"
+      )
+) 
 ```
 
 ## Table 3: Estimated deaths averted (total and rate per 100k) under each scenario
@@ -170,29 +222,41 @@ hia_all_over_ndvi_over_equity_est_boot %>%
   filter(scenario_main_text==1) %>% 
   left_join(lookup_scenario_num , by = c("scenario", "scenario_sub")) %>% #add this for presentation
   left_join(lookup_scenario_label, by=  c("scenario", "scenario_sub")) %>% #add better scenario labels
+    #more concatenate
+  mutate(
+    deaths_prevented_count_conc = paste0(
+      as.character(formatC(deaths_prevented_count_med,digits=0, format = "f")),
+      " (", 
+      as.character(formatC(deaths_prevented_count_ll,digits=0, format = "f")),
+      ", ",
+      as.character(formatC(deaths_prevented_count_ul,digits=0, format="f")),
+      ")"),
+    
+    deaths_prevented_per_pop_100k_conc = paste0(
+      as.character(formatC(deaths_prevented_per_pop_100k_med,digits=0, format = "f")),
+      " (", 
+      as.character(formatC(deaths_prevented_per_pop_100k_ll,digits=0, format = "f")),
+      ", ",
+      as.character(formatC(deaths_prevented_per_pop_100k_ul,digits=0, format="f")),
+      ")")
+  ) %>% 
   dplyr::select(
     scenario_num,
     scenario_label, 
     starts_with("equity_nbhd_denver_tertile"),
-    starts_with("deaths_prevented_coun"),
-    starts_with("deaths_prevented_per_pop_100k")
+    ends_with("conc")
   ) %>% 
   knitr::kable(
-    caption = "Estimated deaths averted",
+    caption = "Estimated annual premature deaths prevented",
     booktabs = TRUE,
-    col.names = c(
+        col.names = c(
       "Scenario num.",
       "Scenario", 
       "Equity Tertile", 
-      "Deaths prevented, est.", 
-      "Deaths prevented, LL", 
-      "Deaths prevented, UL",
-      "Deaths prevented per 100k, est.", 
-      "Deaths prevented per 100k, LL", 
-      "Deaths prevented per 100k, UL"
-      ),
-    format.args = list(big.mark = ","),
-    digits = c(0,0,0,0,0,0,0,0)) #max digits after decimal
+      "Deaths prevented, estimate (95% UI)", 
+      "Deaths prevented per 100k, estimate (95% UI)"
+      )
+  )
 ```
 
 

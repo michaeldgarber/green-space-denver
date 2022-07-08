@@ -78,6 +78,14 @@ ihme_co %>%
   filter(sex == "all") %>% 
   filter(cause_short == "all") %>% 
   filter(measure == "deaths") %>% 
-  dplyr::select(starts_with("rate_per_1"))
+  dplyr::select(age_group_gbd, starts_with("rate_per_1"))
+
+#compare with Appendix Table s3 from European Cities HIA - 
+#mortality rates stratified by age group
+ihme_co %>% 
+  filter(sex == "all") %>% 
+  filter(cause_short == "all") %>% 
+  filter(measure == "deaths") %>% 
+  dplyr::select(age_group_gbd, starts_with("rate_per_1"))
 
 

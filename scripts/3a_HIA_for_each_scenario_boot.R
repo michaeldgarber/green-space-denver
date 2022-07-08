@@ -218,6 +218,7 @@ save(hia_all_by_ndvi_over_equity_est_boot, file = "hia_all_by_ndvi_over_equity_e
 hia_all_by_ndvi_by_equity_est_boot = hia_all_by_ndvi_by_equity %>% 
   left_join(hia_all_by_ndvi_by_equity_s, by = c("scenario", "scenario_sub", "equity_nbhd_denver_tertile")) %>% 
   select_vars_estimate_boot()
+
 save(hia_all_by_ndvi_over_equity_est_boot, file = "hia_all_by_ndvi_over_equity_est_boot.RData")
 
 
