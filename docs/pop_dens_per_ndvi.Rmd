@@ -4,6 +4,7 @@ author: "Michael D Garber"
 date: '2022-05-24'
 #always_allow_html: true
 #note word doesn't seem to render unless I render the whole site ()rmarkdown::render_site(encoding = 'UTF-8')
+#update 7/8/22 I removed the word output
 output:
   bookdown::html_document2:
     toc: true
@@ -11,8 +12,8 @@ output:
     toc_depth: 4
     include: 
       after_body: footer.html
-  bookdown::word_document2:
-    toc: true 
+#  bookdown::word_document2:
+#    toc: true 
 ---
 
 This page presents some ideas for expressing NDVI in terms of population density for the City of Denver, Colorado.
