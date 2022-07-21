@@ -1,5 +1,7 @@
 #filename: 4_ndvi_per_pop
 
+#Explore measures considering both population density and NDVI for the City of Denver
+#Revised July 20, 2022
 library(tidyverse)
 library(sf)
 library(mapview)
@@ -15,6 +17,7 @@ load("den_bg_acs5_wrangle_geo.RData") #from ~scripts/0_import_manage_denver_acs.
 load("lookup_den_co_bg_ndvi_mean_wt.RData")
 load("lookup_tract_nbhd_northeast_exclude.RData")
 
+# Define NDVI in terms of population density------------
 #make sure that this has been run recently, and now use this function but over
 den_co_bg_pop_per_ndvi =  den_bg_acs5_wrangle_geo %>% 
   filter(county_fips == "031") %>% 
@@ -68,12 +71,15 @@ den_co_bg_pop_per_ndvi =  den_bg_acs5_wrangle_geo %>%
     ndvi_med_pop_dens_ndvi_tert = median(ndvi_mean_wt, na.rm=TRUE)
   ) %>% 
   ungroup() %>% 
-  #and now the max of that median value grouped by pop dens
   group_by(pop_dens_mi2_tertile) %>%
   mutate(
-    ndvi_max_med_pop_dens_ndvi_tert = max(ndvi_med_pop_dens_ndvi_tert),
-    ratio_ndvi_med_pop_dens_ndvi_tert = ndvi_med_pop_dens_ndvi_tert/ndvi_max_med_pop_dens_ndvi_tert,
-    diff_ndvi_med_pop_dens_ndvi_tert = ndvi_med_pop_dens_ndvi_tert-ndvi_max_med_pop_dens_ndvi_tert,
+    #so in each pop dens. tertiles, we have three medians now. take the max.
+    ndvi_max_med_pop_dens_ndvi_tert = max(ndvi_med_pop_dens_ndvi_tert), 
+    #the ratio is the NDVI of that block group divided by the median NDVI
+    #of the highest tertile
+    #I changed these measures on July 20, 2022
+    ratio_ndvi_med_pop_dens_ndvi_tert = ndvi_mean_wt/ndvi_max_med_pop_dens_ndvi_tert,
+    diff_ndvi_med_pop_dens_ndvi_tert = ndvi_mean_wt-ndvi_max_med_pop_dens_ndvi_tert,
   ) %>% 
   ungroup()
 

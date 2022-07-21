@@ -1,7 +1,7 @@
 ---
 title: "Population density and NDVI: possible measures considering both"
 author: "Michael D Garber"
-date: '2022-05-24'
+date: 'Revised 2022-07-24'
 #always_allow_html: true
 #note word doesn't seem to render unless I render the whole site ()rmarkdown::render_site(encoding = 'UTF-8')
 #update 7/8/22 I removed the word output
