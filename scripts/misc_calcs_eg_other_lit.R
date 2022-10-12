@@ -3,6 +3,8 @@
 #
 library(tidyverse)
 
+# Other studies--------
+## Philly (Kondo) study------
 #Following age distribution here: https://censusreporter.org/profiles/16000US4260000-philadelphia-pa/
 philly_adult_pop = 0.76*1557306 #76% adults and pop reported in paper above
 philly_adult_pop 
@@ -52,6 +54,7 @@ area_circle_500m2 = pi*(500**2)
 area_circle_500m2_in_mi2 = area_circle_500m2*3.86102e-7
 area_circle_500m2_in_mi2
 
+## Europe study-------
 # Calculate population-standardized mortality rates in Europe study--------#
 setwd(here("data-processed"))
 load("ihme_co.RData")

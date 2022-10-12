@@ -2,6 +2,9 @@
 #Began March 4 2022
 #Revised Mar 30 2022
 #filename: 0_read_office_green_inf_data
+# Comment: September 8, 2022:
+#It looks like some of this GIS data is mixing the large green infra capital projects
+#with the proposed green streets.
 
 library(tidyverse)
 library(sf)
@@ -42,7 +45,8 @@ library(here)
 # •	Glenbrook Detention Basin - 39°37'50.9"N 105°06'12.1"W
 # •	Hampden Heights Bioretention EBD – Located at the Joe Shoemaker School in Denver, 
     #at the end of Girard Ave near Cherry Creek
-# •	La Lomita Park – located at Asbury and Tejon intersection. Two basins exist on either side of the street.
+# •	La Lomita Park – located at Asbury and Tejon intersection. 
+# Two basins exist on either side of the street.
 
 
 ##  2. 	Green Infrastructure Capital Projects – Green Streets--------
@@ -88,7 +92,8 @@ ogi_proj  = st_read(dsn ="reg-proj-take-2") %>%
   st_make_valid() %>% 
   st_simplify(dTolerance = 5) %>% #every five feet
   mutate(
-    #As elsewhere, I'm making the area variables verbose in case they get mixed with other areal units
+    #As elsewhere, I'm making the area variables verbose in 
+    #case they get mixed with other areal units
     area_ft2_ogi_proj =  as.numeric(st_area(geometry)),
     area_ac_ogi_proj = area_ft2_ogi_proj/43560, #acres
     area_mi2_ogi_proj = area_ft2_ogi_proj/(5280**2)  ,

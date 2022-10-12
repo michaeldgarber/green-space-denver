@@ -11,7 +11,7 @@ setwd(here("data-processed"))
 #Date began 12/12/21
 #Revised 4/16/22 to include the 2020 ACS
 #simplifying object names. removing date from the object name. can add to a variable if I want
-#or just look at the code to note that the data are fromm 2020
+#or just look at the code to note that the data are from 2020
 
 # Objective-----------
 #This code accomplishes three main things:

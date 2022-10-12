@@ -1129,7 +1129,8 @@ names(ogi_proj)
 ogi_proj_tx_marg  = ogi_proj %>% 
   mutate(dummy=1) %>%
   group_by(dummy) %>%
-  summarise( #4/15/22 I had area measurements here before, but I don't need them. and it gets messy.
+  #4/15/22 I had area measurements here before, but I don't need them. and it gets messy.
+  summarise( 
     n=n()
   ) %>% 
   ungroup() %>% 
@@ -1398,6 +1399,9 @@ names(den_bg_int_ogi_proj_ndvi_wide)
 
 ## OGI: Green streets---------------
 #Update May 23 2022 I decided to completely scratch the green-streets work.
+#Comment September 8, 2022: there are some green streets in the ogi_project
+#shapefile above. They should probably be deleted so that these projects
+#are separated.
 #Overarching question here should be:
 #Status quo:
 # 2.7 miles per year, and each mile of street equates to 0.15 acres
