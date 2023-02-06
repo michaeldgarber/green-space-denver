@@ -195,10 +195,7 @@ mv_den_co_bg_ndvi_filtered_lo = den_co_bg_ndvi_geo %>%
     layer.name = "NDVI, block group",
     zcol = "ndvi_mean_wt",
     lwd=1.5,
-    #Trying different palettes.  Don't use terrain as bad for colorblindness
-    #    col.regions = viridis_pal(direction=-1),
     col.regions= viridis_pal(option = "G", direction = 1),
-    #    col.regions = pal_terrain, 
     homebutton=FALSE, #this removes the small label on the bottom right
     at = seq(0, 1, 0.1)  #there are none that are -1, so why go to negative?
   )
@@ -432,7 +429,8 @@ mv_den_bg_int_prkng_comp_ndvi_no_lines
 ##### complement without legend for vis below--------
 mv_den_bg_int_prkng_comp_ndvi_no_lines_no_legend= den_bg_int_prkng_comp_ndvi %>% 
   st_transform(2876) %>% 
-  st_simplify(dTolerance = 20) %>%  #make size much smaller for visual. intentionally ordered here
+  st_simplify(dTolerance = 20) %>%  
+  ##make size much smaller for visual. intentionally ordered here
   #on the website, I use this intersection. In the script, I don't need to.
   #  st_intersection(union_station_2_mi_2876) %>% 
   st_make_valid() %>% 
@@ -459,7 +457,7 @@ mv_den_bg_int_prkng_tx_ndvi= den_bg_int_prkng_tx_ndvi %>%
   st_buffer(0) %>% 
   mapview(
     at = seq(-.1, 1, 0.1), #0 to 1 by .1; 
-    col.regions = pal_terrain_col,
+    col.regions= viridis_pal(option = "G", direction = 1),
     lwd=0, #added on script version
     layer.name = "NDVI, parking only",
     zcol = "ndvi_mean_wt")
@@ -522,7 +520,6 @@ mv_prkng_for_paper %>% #works
 #for some of them, so this will ensure that the treatment layer stays on top.
 
 
-  
 
 ## Retention ponds------
 names(den_bg_int_ogi_proj_tx_ndvi)
