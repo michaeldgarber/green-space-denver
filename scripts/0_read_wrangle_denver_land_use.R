@@ -69,6 +69,13 @@ names(den_landuse_2018)
 #   filter(parcel_size_cat == "<0.5 acre") %>%
 #   mapview(zcol = "area_ac_parcel")
 
+#Update Oct 13, 2022: If I group it by CPD_LANDUS, I think it'll be faster to map.
+den_landuse_2018_grouped = den_landuse_2018 %>% 
+  group_by(CPD_LANDUS) %>% 
+  summarise(n=n())
+save(den_landuse_2018_grouped, file = "den_landuse_2018_grouped.RData")
+
+
 head(den_landuse_2018)
 #Examine a subset, since the data are pretty big.
 #NW corner #39.760199, -104.977148

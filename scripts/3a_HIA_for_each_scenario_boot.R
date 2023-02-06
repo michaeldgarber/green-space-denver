@@ -7,11 +7,16 @@ library(truncnorm)
 setwd(here("data-processed"))
 #started 4/16/22
 #revised 5/26/22
+# Rerunning February 2, 2023 including the 
+#new definition for native plants (July 4, 2021)
+#Run functions here:
+#scripts/3_hia_functions_needed_for_boot.R
 
 #This is the bootstrapping code for the HIA
 #Three sources of error for first group (stratified by native definition): 
 #   population estimates and the dose-response function and the mortality rate
-# three sources of error when summarizing over native definition: native definition, population estimates, and dose-response f
+# three sources of error when summarizing over native definition: 
+#native definition, population estimates, and dose-response f
 
 #https://www.census.gov/content/dam/Census/programs-surveys/acs/guidance/training-presentations/20180418_MOE.pdf
 #For the census data, assume a normal distribution, where the margin of error represents a 90%
@@ -29,6 +34,8 @@ table(hia_all$scenario)
 table(hia_all$scenario_sub)
 summary(hia_all$drf_est_log)
 nrow(hia_all)
+
+
 # Define bootstrap function-----------
 #as with other projects, e.g.,
 #/diss/scripts/aim1_1_1_hex_acs_bootstrap.R
@@ -58,7 +65,10 @@ bootstrap_hia = function(s_id_val){
 
 # Run bootstrap function----------
 #run the function x times; 500 reaches memory limit. 200 is fine. don't save the data frame because it's huge
-n_boot_reps = 200 #200 good.
+# Feb 2, 2023: 200 is reaching memory limit. hmm. Let me try with no applications open.
+#2 pm: still failed - trying with 100 (worked). 150? worked. 175 good. 200 and 199 failed. Trying 190.
+#180 failed. Let's go with 175 and maybe we can change later by rewriting code
+n_boot_reps = 175 #200 good.
 s_id_val_list <- seq(from = 1, to = n_boot_reps, by = 1)
 
 hia_all_boot  = s_id_val_list %>% 
@@ -106,6 +116,12 @@ step_two_bootstrap_summarise_ungroup_select = function(df){
       everything())
 }
 
+
+# Load point-estimate summaries------
+load("hia_all_over_ndvi_by_equity.RData")
+load("hia_all_over_ndvi_over_equity.RData")
+load("hia_all_by_ndvi_over_equity.RData")
+load("hia_all_by_ndvi_by_equity.RData")
 
 # Summarize HIA - collapse over NDVI threshold-------------
 ## over NDVI over equity--------
@@ -157,7 +173,7 @@ select_vars_estimate_boot = function(df){
   )
 }
 
-names(hia_all_over_ndvi_over_equity)
+
 hia_all_over_ndvi_over_equity_est_boot = hia_all_over_ndvi_over_equity %>% 
   left_join(hia_all_over_ndvi_over_equity_s, by = c("scenario", "scenario_sub")) %>% 
   select_vars_estimate_boot()
@@ -172,7 +188,8 @@ save(hia_all_over_ndvi_by_equity_est_boot, file = "hia_all_over_ndvi_by_equity_e
 names(hia_all_over_ndvi_by_equity_est_boot)
 
 # Summarize HIA - Stratify by NDVI threshold-------------
-#Note here neither the NDVI nor the area will have variance because they don't vary within NDVI threshold category
+#Note here neither the NDVI nor the area will have variance because 
+#they don't vary within NDVI threshold category
 ##  by NDVI over equity-----------
 
 hia_all_by_ndvi_over_equity_s = hia_all_boot %>% 

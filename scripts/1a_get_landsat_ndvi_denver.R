@@ -125,7 +125,9 @@ ndvi_den_metro_rast_2016 = landsat_8_ndvi_image_coll_2016 %>%
     dsn = "ndvi_den_metro_rast_2016", #very important to specify this; 
                                   #otherwise will overwrite and  duplicate info
     region = den_metro_ee, #use metro to ensure coverage throughout region
-    scale = n_m_per_pixel,  #number of meters per pixel. smaller number...slower speed...better resolution
+    #number of meters per pixel. 
+    #smaller number...slower speed...better resolution
+    scale = n_m_per_pixel,  
     via = "drive" #worked after I updated the googledrive package.
   )
 

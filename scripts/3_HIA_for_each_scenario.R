@@ -13,10 +13,13 @@ setwd(here("data-processed"))
 
 
 
-#Major revision april 14 2022 to make scenario datasets long form
+#Major revision April 14 2022 to make scenario datasets long form
 # code is less repetitive and will be easier to bootstrap
 # Update May 20 2022 to remove the equity-focused scenario and instead
 # will plan to stratify all scenarios by equity
+
+#Revised February 2, 2023 to measure NDVI of native plants
+#using the same day baseline measurements were taken: July 4, 2021
 
 #This code should
 #-extract baseline NDVI for each polygon
@@ -246,8 +249,9 @@ extract_wrangle_ndvi_bg_int = function(df1, df2){
 
 names(den_co_bg_no_wtr_filtered_geo)
 names(den_co_bg_no_wtr_filtered_4326)
-#Update April 6 2022
-#Update April 14 2022. Decision to make long form so my var names are shorter and for easier bootstrapping. 
+
+#Update April 14 2022. Decision to make long form so my var names are shorter and 
+#for easier bootstrapping. 
 #It will be aspatial. That's fine. can always filter and then add the geo.
 #adding a 30% scenario per interview with parks dept.
 den_co_bg_ndvi_geo = ndvi_den_co_20210704 %>% 
@@ -388,6 +392,7 @@ map_over_native_ndvi_all_bg = function(ndvi_native_threshold_val){
 }
 
 # define NDVI of native plants-----------
+## old way: 5-year average--------
 # note in meeting on May 2, 2022 we decided we would use the lower value
 #corresponding to the NDVI of the denver botanic gardens green roof
 #and the upper value corresponding to the lager native plot in denver botanic gardens
@@ -395,6 +400,7 @@ map_over_native_ndvi_all_bg = function(ndvi_native_threshold_val){
 #https://michaeldgarber.github.io/green-space-denver/ndvi-of-places-tracts.html
 #pull out the actual values here
 
+setwd(here("data-processed"))
 load("native_places_ndvi_day_nogeo.RData")
 ndvi_native_places_summary = native_places_ndvi_day_nogeo %>% 
   filter(date_is_valid_all==1) %>% 
@@ -407,9 +413,16 @@ ndvi_native_places_summary = native_places_ndvi_day_nogeo %>%
   ungroup() 
 # 0.3228 for a lower value
 # 0.4909 for denver botanic gardens
+ndvi_native_places_summary
 
 #iterate over three values of ndvi for native plants
 #May 25, 2022: I want to add green mountain park and then
+ndvi_native_places_summary %>% 
+  filter( 
+    place_name_fac == "Denver Botanic Gardens Green Roof" |
+      place_name_fac == "Denver Botanic Gardens, 100% Native" |
+      place_name_fac == "Green Mountain Park, 85% Native") %>% 
+  dplyr::select(place_name_fac, ndvi_mean) 
 ndvi_native_threshold_values = ndvi_native_places_summary %>% 
   filter( 
     place_name_fac == "Denver Botanic Gardens Green Roof" |
@@ -419,8 +432,33 @@ ndvi_native_threshold_values = ndvi_native_places_summary %>%
   pull()
 
 ndvi_native_threshold_values
+
+## New way: July 4, 2021-----
+#This way, it's consistent alternative vs baseline,
+#much more clear.
+native_places_ndvi_day_nogeo %>% 
+  filter(date == "2021-07-04") %>% 
+  filter( 
+    place_name_fac == "Denver Botanic Gardens Green Roof" |
+      place_name_fac == "Denver Botanic Gardens, 100% Native" |
+      place_name_fac == "Green Mountain Park, 85% Native") %>% 
+  group_by(date, place_name_short) %>% 
+  summarise(ndvi_mean_wt = mean(ndvi_mean_wt, na.rm=TRUE)) %>% 
+  ungroup() 
+
+ndvi_native_3_values = native_places_ndvi_day_nogeo %>% 
+  filter(date == "2021-07-04") %>% 
+  filter( 
+    place_name_fac == "Denver Botanic Gardens Green Roof" |
+      place_name_fac == "Denver Botanic Gardens, 100% Native" |
+      place_name_fac == "Green Mountain Park, 85% Native") %>% 
+  group_by(date, place_name_short) %>% 
+  summarise(ndvi_mean_wt = mean(ndvi_mean_wt, na.rm=TRUE)) %>% 
+  ungroup() %>% 
+  dplyr::select(starts_with("ndvi_mean")) %>% 
+  pull()
  
-den_co_bg_ndvi_alt_all_nogeo = ndvi_native_threshold_values %>% 
+den_co_bg_ndvi_alt_all_nogeo = ndvi_native_3_values %>% 
   map_dfr(map_over_native_ndvi_all_bg)
 
 
@@ -670,7 +708,6 @@ names(den_bg_acs5_wrangle_geo)
 #otherwise
 bg_int_wrangle_last_steps = function(df){
   df %>% 
-
     st_transform(2876) %>% #just to be sure before we take the area measurements
           #6/6/22 this fixed a major error.
     #update 4/14/22 making these area variables long form (i.e., the same)
@@ -1102,7 +1139,7 @@ map_over_native_ndvi_rip = function(ndvi_native_threshold_val){
     )
 }
 
-den_bg_int_wtr_ndvi_all_nogeo = ndvi_native_threshold_values %>% 
+den_bg_int_wtr_ndvi_all_nogeo = ndvi_native_3_values %>% 
   map_dfr(map_over_native_ndvi_rip)
 table(den_bg_int_wtr_ndvi_all_nogeo$ndvi_native_threshold)
 table(den_bg_int_wtr_ndvi_all_nogeo$scenario_sub)
@@ -1121,12 +1158,21 @@ names(den_bg_int_wtr_ndvi_all_nogeo)
 setwd(here("data-processed"))
 load("ogi_proj.RData") 
 
+#Comment February 6th 2023 - see comment below.
+#There are some green streets in the regional projects file,
+#and these green streets should probably be removed, since
+#they're a separate intervention.
+
+table(ogi_proj$GREEN_STRE)
+ogi_proj %>% filter(GREEN_STRE=="YES") %>% mapview()
 ## Prep buffers around regional OGI projects--------
 # Data managed here: ~0_read_office_green_inf_data.R
 
 ### 500 m buffer around all projects 
 names(ogi_proj)
 ogi_proj_tx_marg  = ogi_proj %>% 
+  #Feb 6, 2023: Remove green streets from the stormwater retention projects
+  filter(GREEN_STRE == "NO") %>% 
   mutate(dummy=1) %>%
   group_by(dummy) %>%
   #4/15/22 I had area measurements here before, but I don't need them. and it gets messy.
@@ -1155,8 +1201,10 @@ ogi_proj_res %>% mapview()
 table(ogi_proj$short_term_proj)
 ogi_proj %>% mapview(zcol = "short_term_proj")
 ogi_proj_by_term  = ogi_proj %>% 
+  #Feb 6, 2023: Remove green streets from the stormwater retention projects
+  filter(GREEN_STRE == "NO") %>% 
   group_by(short_term_proj) %>%
-  summarise( #4/15/22 I had area measurements here before, but I don't need them. and it gets messy.
+  summarise( 
     n=n()
   ) %>% 
   ungroup() %>% 
@@ -1279,7 +1327,8 @@ den_bg_int_ogi_proj_comp_ndvi = ndvi_den_co_20210704 %>%
     scenario_sub = "ogi_proj", #possibly needed for all scenarios
     buff_type = "comp" #residential buffer
   ) %>%
-  dplyr::select(bg_fips, buff_type, scenario_sub, starts_with("ndvi_mean"),  contains("area")  )
+  dplyr::select(
+    bg_fips, buff_type, scenario_sub, starts_with("ndvi_mean"),  contains("area")  )
 
 
 save(den_bg_int_ogi_proj_comp_ndvi, 
@@ -1390,7 +1439,7 @@ map_over_native_ndvi_all_ogi_proj = function(ndvi_native_threshold_val){
 }
 
 #save for use in bootstrap code
-den_bg_int_ogi_proj_ndvi_wide = ndvi_native_threshold_values %>% 
+den_bg_int_ogi_proj_ndvi_wide = ndvi_native_3_values %>% 
   map_dfr(map_over_native_ndvi_all_ogi_proj)
 table(den_bg_int_ogi_proj_ndvi_wide$ndvi_native_threshold)
 save(den_bg_int_ogi_proj_ndvi_wide, file = "den_bg_int_ogi_proj_ndvi_wide.RData")
@@ -1631,7 +1680,8 @@ den_parcel_comp %>% mapview()
 bg_int_wrangle_last_steps
 den_bg_int_parcel_comp = den_co_bg_no_wtr_filtered_geo %>% #we already dropped water
   st_intersection(den_parcel_comp) %>% #grouped is fine here
-  #it seems as though some of these might be points. I'm going to try adding a small buffer. worked.
+  #it seems as though some of these might be points. 
+  #I'm going to try adding a small buffer. worked.
   st_as_sf() %>% 
   st_buffer(0) %>% 
   mutate(   
@@ -1690,11 +1740,14 @@ den_bg_int_parcel_tx_marg = den_co_bg_no_wtr_filtered_geo %>% #
     unioned = "yes" #this is the unioned geometry 
   ) %>%
   bg_int_wrangle_last_steps() %>% 
-  rename(   #for this one, we have to rename the area to specify that it's from the full unioned (marg) area
+  rename(  
+    #for this one, we have to rename the area to specify that it's from the full 
+    #unioned (marg) area
     area_ft2_bg_int_marg = area_ft2_bg_int,
     area_mi2_bg_int_marg = area_mi2_bg_int
   ) %>% 
-  dplyr::select(bg_fips, buff_type, starts_with("union"), starts_with("area")) #not measuring NDVI on this.
+  #not measuring NDVI on this.
+  dplyr::select(bg_fips, buff_type, starts_with("union"), starts_with("area")) 
 
 save(den_bg_int_parcel_tx_marg, file = "den_bg_int_parcel_tx_marg.RData")
 den_bg_int_parcel_tx_marg %>% 
@@ -1719,7 +1772,8 @@ den_bg_int_parcel_res_ndvi = ndvi_den_co_20210704 %>%
     buff_type = "res"  
   ) %>%
   dplyr::select(  
-    bg_fips, buff_type, scenario_sub, starts_with("ndvi_mean"), contains("ndvi_below"), contains("area") #keep ndvi_below here
+    bg_fips, buff_type, scenario_sub, starts_with("ndvi_mean"), 
+    contains("ndvi_below"), contains("area") #keep ndvi_below here
   )
 
 names(den_bg_int_parcel_res_ndvi)
@@ -1739,7 +1793,8 @@ den_bg_int_parcel_comp_ndvi = ndvi_den_co_20210704 %>%
     scenario_sub = "parcel",  
     buff_type = "comp"  
   ) %>%
-  dplyr::select( bg_fips, buff_type, scenario_sub, starts_with("ndvi_mean"), contains("area"))
+  dplyr::select( 
+    bg_fips, buff_type, scenario_sub, starts_with("ndvi_mean"), contains("area"))
 
 save(den_bg_int_parcel_comp_ndvi, 
      file = "den_bg_int_parcel_comp_ndvi.RData")
@@ -1753,7 +1808,8 @@ den_bg_int_parcel_tx_by_feat %>% mapview()
 class(den_bg_int_parcel_tx_by_feat)
 names(den_bg_int_parcel_tx_by_feat)
 den_bg_int_parcel_tx_ndvi = ndvi_den_co_20210704 %>% 
-  extract_wrangle_ndvi_bg_int(df2=den_bg_int_parcel_tx_by_feat) %>% #distinct for each project within bg
+  #distinct for each project within bg
+  extract_wrangle_ndvi_bg_int(df2=den_bg_int_parcel_tx_by_feat) %>% 
   #for the measurements of the intervention area itself, we need
   #to take another weighted average, summing over parcel to the bg level
   #as is, the weighted average is summed over parcel-bg chunk from pixels, 
@@ -1868,7 +1924,7 @@ map_over_native_ndvi_all_ogi_parcel = function(ndvi_native_threshold_val){
 }
 
 
-den_bg_int_parcel_ndvi_wide = ndvi_native_threshold_values %>% 
+den_bg_int_parcel_ndvi_wide = ndvi_native_3_values %>% 
   map_dfr(map_over_native_ndvi_all_ogi_parcel)
 table(den_bg_int_parcel_ndvi_wide$scenario)
 table(den_bg_int_ogi_proj_ndvi_wide$ndvi_native_threshold)
@@ -2243,7 +2299,7 @@ map_over_native_ndvi_all_ogi_prkng = function(ndvi_native_threshold_val){
       mutate_ndvi_diff_bg_int() 
 }
 
-den_bg_int_prkng_alt_all = ndvi_native_threshold_values %>% 
+den_bg_int_prkng_alt_all = ndvi_native_3_values %>% 
   map_dfr(map_over_native_ndvi_all_ogi_prkng)
 names(den_bg_int_prkng_alt_all)
 summary(den_bg_int_prkng_alt_all$area_mi2_bg_int_tx)
@@ -2399,6 +2455,7 @@ mutate_part_of_hia = function(df){ #make a function out of it since
 }
 names(den_co_bg_ndvi_alt_all_nogeo)
 names(den_bg_int_wtr_ndvi_all_nogeo)
+nrow(den_co_bg_ndvi_alt_30_nogeo)
 hia_all  = den_co_bg_ndvi_alt_all_nogeo %>% #scenario all bg
   #to make sure that ndvi_mean_wt_tx works throughout, add it here for the block-group-level scenario
   #as simply equal to ndvi_mean_wt

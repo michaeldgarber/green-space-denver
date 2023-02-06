@@ -36,19 +36,29 @@ ndvi_den_metro_terr_5_yr$`20210704_NDVI` %>%
 
 
 ndvi_den_metro_terr_5_yr$`20210704_NDVI` %>% values()
-ndvi_den_metro_terr_5_yr$`20210626_NDVI` %>% raster::raster() %>% 
+ndvi_den_metro_terr_5_yr$`20210626_NDVI` %>% 
+  raster::raster() %>% 
   mapview() #mostly cloudy. toss.
-ndvi_den_metro_terr_5_yr$`20210712_NDVI` %>% raster::raster() %>% 
+ndvi_den_metro_terr_5_yr$`20210712_NDVI` %>% 
+  raster::raster() %>% 
   mapview() #all very cloudy
-ndvi_den_metro_terr_5_yr$`20210720_NDVI` %>% raster::raster() %>% 
+ndvi_den_metro_terr_5_yr$`20210720_NDVI` %>% 
+  raster::raster() %>% 
   mapview() #partly cloudy. would probably toss.
-ndvi_den_metro_terr_5_yr$`20210728_NDVI` %>% raster::raster() %>% 
+ndvi_den_metro_terr_5_yr$`20210728_NDVI` %>% 
+  raster::raster() %>% 
   mapview() 
 
 #Note data are more missing in 2020...less frequent for some reason.
-ndvi_den_metro_terr_5_yr$`20200101_NDVI`  %>% raster::raster() %>% mapview() #data available
-ndvi_den_metro_terr_5_yr$`20200109_NDVI` %>% raster::raster() %>% mapview() #missing
-ndvi_den_metro_terr_5_yr$`20200703_NDVI` %>% raster::raster() %>% mapview() 
+ndvi_den_metro_terr_5_yr$`20200101_NDVI`  %>% 
+  raster::raster() %>% 
+  mapview() #data available
+ndvi_den_metro_terr_5_yr$`20200109_NDVI` %>% 
+  raster::raster() %>% 
+  mapview() #missing
+ndvi_den_metro_terr_5_yr$`20200703_NDVI` %>% 
+  raster::raster() %>% 
+  mapview() 
 
 
 #okay, so workflow:
@@ -202,14 +212,19 @@ ndvi_den_metro_terr_5_yr_indian_tree_golf_day %>%
   filter(month>=5&month<=8)
 
 #check these 6. if they're all bad, then can confidently exclude.
-ndvi_den_metro_terr_5_yr$`20160516_NDVI` %>% raster::raster() %>% mapview() #for sure cloudy...exclude
-ndvi_den_metro_terr_5_yr$`20170805_NDVI` %>% raster::raster() %>% mapview()
+ndvi_den_metro_terr_5_yr$`20160516_NDVI` %>% raster::raster() %>% 
+  mapview() #for sure cloudy...exclude
+ndvi_den_metro_terr_5_yr$`20170805_NDVI` %>% raster::raster() %>% 
+  mapview()
 #denver itself v cloudy...maybe some areas are valid but can't trust the whole image
-ndvi_den_metro_terr_5_yr$`20190602_NDVI` %>% raster::raster() %>% mapview()
+ndvi_den_metro_terr_5_yr$`20190602_NDVI` %>% raster::raster() %>% 
+  mapview()
 #east not bad but denver and golden very cloudy...exclude
-ndvi_den_metro_terr_5_yr$`20190610_NDVI` %>% raster::raster() %>% mapview()
+ndvi_den_metro_terr_5_yr$`20190610_NDVI` %>% raster::raster() %>% 
+  mapview()
 #partly cloudy...maybe the most borderline of the bunch...but probably exclude
-ndvi_den_metro_terr_5_yr$`20160406_NDVI`  %>% raster::raster() %>% mapview()  
+ndvi_den_metro_terr_5_yr$`20160406_NDVI`  %>% raster::raster() %>% 
+  mapview()  
 
 ## City Park (downtown Denver)-------------
 #using the southwest corner...not the golf course part or any of the fountains

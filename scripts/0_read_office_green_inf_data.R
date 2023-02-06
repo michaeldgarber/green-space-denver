@@ -2,9 +2,9 @@
 #Began March 4 2022
 #Revised Mar 30 2022
 #filename: 0_read_office_green_inf_data
-# Comment: September 8, 2022:
-#It looks like some of this GIS data is mixing the large green infra capital projects
-#with the proposed green streets.
+# Comment: September 8, 2022:It looks like some of this GIS data is mixing the 
+#large green infra capital projects with the proposed green streets. Because green
+#streets are not described, I should remove them.
 
 library(tidyverse)
 library(sf)
@@ -16,12 +16,14 @@ library(here)
 ## 1. Green Infrastructure Capital Projects - Regional----------
 #Background: 
   #The Office of Green Infrastructure has a budget to design, build, establish, and monitor 
-  #green infrastructure facilities which treat stormwater quality. One part of the portfolio is regional projects, 
+  #green infrastructure facilities which treat stormwater quality. 
+#One part of the portfolio is regional projects, 
 #which are large ponds or basins located on public property that collect and treat stormwater 
-#after it has been collected in a storm pipe. These are usually vegetated, very often with native/adapted landscapes.
+#after it has been collected in a storm pipe.
+#These are usually vegetated, very often with native/adapted landscapes.
 
-#In 2017 the Office of Green Infrastructure produced a Green Infrastructure Implementation Strategy which 
-#identified potential regional projects. These were subsequently mapped in GIS. 
+#In 2017 the Office of Green Infrastructure produced a Green Infrastructure Implementation Strategy
+#which  identified potential regional projects. These were subsequently mapped in GIS.
 #A selection of the table has been included in the attached files.
 
 # Calculating area suggestions:
@@ -31,7 +33,7 @@ library(here)
 #constrain the actual footprint.
 # •	We would expect ~75% of a facility footprint to have native/adapted vegetation
 # •	Short term / likely program goals are the build these projects:
-#   o	2020MCDONOUGH_PK
+# o	2020MCDONOUGH_PK
 # o	2020_SUB_WBVWPARK
 # o	2020WEIRIRV
 # o	2020SUNK
@@ -111,6 +113,7 @@ ogi_proj  = st_read(dsn ="reg-proj-take-2") %>%
 class(ogi_proj)
 table(ogi_proj$PROJECT_ID)
 table(ogi_proj$short_term_proj)
+table(ogi_proj$GREEN_STRE)
 nrow(ogi_proj)
 ogi_proj %>% dplyr::select(PROJECT_ID) %>% 
   st_set_geometry(NULL) %>% 
@@ -131,5 +134,5 @@ ogi_proj %>%
 
 #The code continues in the HIA code. The files aren't very big,
 #so it's easier to have everything there so I don't have to switch between scripts.
-
+## Remove green streets----------
 

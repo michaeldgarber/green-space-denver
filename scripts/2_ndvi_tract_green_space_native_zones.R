@@ -1,6 +1,7 @@
 #filename: 2_summarize_ndvi_tract_parks_den
 
-#The goal of this script is to link the landsat raster file with the ACS census-tract data to 
+#The goal of this script is to link the landsat raster file 
+#with the ACS census-tract data to 
 #begin to characterize census tracts by NDVI
 #And do the same for the parks and public green spaces
 
@@ -22,7 +23,12 @@ setwd(here("data-processed"))
 load("den_metro_tract_no_wtr_geo.RData")
 #from scripts/1b_wrangle_check_landsat_ndvi_denver.R
 load("lookup_date_is_valid_all.RData")
-lookup_date_is_valid_all
+library(lubridate)
+lookup_date_is_valid_all %>% 
+  mutate(year=year(date)) %>% 
+  filter(year==2021) %>% 
+  print(n=100)
+
 load("den_metro_co_nogeo.RData")
 
 #read raster data. see for additional discussion on the nuances of reading and writing raster data
@@ -30,6 +36,7 @@ load("den_metro_co_nogeo.RData")
 #~/1a_get_landsat_ndvi_denver.R
 #~/1b_wrangle_check_landsat_ndvi_denver.R
 ndvi_den_metro_terr_5_yr = terra::rast("ndvi_den_metro_terr_5_yr.tif")
+names(ndvi_den_metro_terr_5_yr)
 # Compare raster bounding box with administrative boundaries
 load("den_metro_bbox_custom_sf.RData") #load bounding box
 names(den_metro_tract_no_wtr_geo)
@@ -56,9 +63,13 @@ den_co_tract_no_wtr_4326 = den_metro_tract_no_wtr_geo %>%
   filter(county_fips == "031") %>% 
   st_transform(4326) 
 
-mv_ndvi_layer = ndvi_den_metro_terr_5_yr$`20200101_NDVI`%>% 
+mv_ndvi_layer = ndvi_den_metro_terr_5_yr$`20210704_NDVI`%>% 
   raster::raster() %>% 
   mapview(layer.name = "ndvi") 
+mv_ndvi_layer
+
+
+
 
 mv_den_co_tract_no_wtr_4326 =  den_co_tract_no_wtr_4326 %>% 
   mapview(layer.name = "tracts")
@@ -129,6 +140,7 @@ den_co_tract_ndvi_day_geo = ndvi_den_metro_terr_5_yr %>%
 
 save(den_co_tract_ndvi_day_geo, file = "den_co_tract_ndvi_day_geo.RData")
 load("den_co_tract_ndvi_day_geo.RData")
+den_co_tract_ndvi_day_geo
 
 
 ## wrangle day-level census tract NDVI---------
@@ -223,8 +235,7 @@ den_metro_green_space_ndvi_day_nogeo = den_metro_green_space_ndvi_day_geo %>%
   as_tibble()
 
 save(den_metro_green_space_ndvi_day_nogeo, file = "den_metro_green_space_ndvi_day_nogeo.RData")
-
-
+load("den_metro_green_space_ndvi_day_geo.RData")
 ## visualize NDVI of parks and green space------------
 load("den_jeff_co_geo.RData")
 pal_viridis_trunc=viridis::viridis_pal(end=.9) #trunc for truncated
@@ -283,10 +294,13 @@ names(native_places_ndvi_day_geo)
 setwd(here("data-processed"))
 save(native_places_ndvi_day_geo, file = "native_places_ndvi_day_geo.RData")
 names(native_places_ndvi_day_geo)
+load("native_places_ndvi_day_geo.RData")
 native_places_ndvi_day_nogeo = native_places_ndvi_day_geo %>% 
   st_set_geometry(NULL) %>% 
   as_tibble()
+setwd(here("data-processed"))
 save(native_places_ndvi_day_nogeo, file = "native_places_ndvi_day_nogeo.RData")
+
 
 ## test NDVI on a cloud-free day--------------
 table(lookup_date_is_valid_all$date_is_valid_all)
@@ -299,6 +313,28 @@ native_places_ndvi_day_geo %>%
     col.regions = pal_viridis_trunc,
     zcol = "ndvi_mean_wt" 
   )
+
+## July 4, 2021-------
+native_places_ndvi_day_geo %>% 
+  st_set_geometry(NULL) %>% 
+  filter(date == "2021-07-04") %>% 
+  filter( 
+      place_name_fac == "Denver Botanic Gardens Green Roof" |
+      place_name_fac == "Denver Botanic Gardens, 100% Native" |
+      place_name_fac == "Green Mountain Park, 85% Native") %>% 
+  group_by(date, place_name_short) %>% 
+  summarise(ndvi_mean_wt = mean(ndvi_mean_wt, na.rm=TRUE)) %>% 
+  ungroup() 
+  
+
+native_places_ndvi_day_geo %>% 
+  filter(date == "2021-07-04") %>% 
+  mapview(
+    layer.name = "NDVI, Mean",
+    col.regions = pal_viridis_trunc,
+    zcol = "ndvi_mean_wt" 
+  )
+
 
 ## ggplot - line graph of NDVI over time with median, 
 #25th, and 75th as ribbon by area-------
