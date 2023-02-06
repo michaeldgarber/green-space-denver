@@ -16,7 +16,7 @@ This page presents some work-in-progress updates for the Denver green-space heal
 
 -   Tables and figures (main text and appendix; revised Feb 6, 2023):
 
-    -   <https://michaeldgarber.github.io/green-space-denver/tables-main-text.html>
+    -   <https://michaeldgarber.github.io/green-space-denver/tables-main-text-web.html>
 
     -   <https://michaeldgarber.github.io/green-space-denver/tables-figs-appendix-web.html>
 
