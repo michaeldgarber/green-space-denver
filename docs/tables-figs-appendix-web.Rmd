@@ -369,12 +369,302 @@ native_places_ndvi_day_nogeo %>%
   )
 ```
 
-# Equity indices
+
+# Visualization of scenarios
+
+Note to self: This section is mostly copied from ~green-space-denver/docs/hia-results.Rmd
+
+## Scenario 1: fixed proportion of all block groups
+
+The weighted block-group-level mean NDVI on July 4, 2021 is presented here.
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE, fig.cap = "Mean normalized difference vegetation index (NDVI) of census block groups in Denver, Colorado (excluding some in the northeast, described in main text) on July 4, 2021 as measured by the Landsat-8 satellite on July 4, 2021. NDVI is measured at a spatial resolution of 30 meters squared. The weighted block-group-level mean NDVI is weighted by the proportion Landsat pixels overlap the water-free land area of the block group"}
+#update may 11 2022 to add figure caption
+#Rwevise Feb 6 2023 to use colorblind-friendly color palette
+setwd(here("data-processed"))
+load("den_co_bg_ndvi_geo.RData") #updated april 18 2022
+#names(den_co_bg_ndvi_geo)
+pal_terrain = terrain.colors(100) %>% rev()#reverse the order of the palette
+mv_den_co_bg_ndvi  = den_co_bg_ndvi_geo %>% 
+  dplyr::select(bg_fips, ndvi_mean_wt) %>% 
+  mapview(
+    layer.name = "NDVI, block group",
+    zcol = "ndvi_mean_wt",
+    col.regions= viridis_pal(option = "G", direction = 1),
+    at = seq(-0.1, 1, 0.1)
+  )
+mv_den_co_bg_ndvi@map %>% 
+  addFullscreenControl()
+```
+
+For each definition of native-plants NDVI, We excluded census blocks whose baseline NDVI was above the threshold. The following map categorizes census block groups by at the NDVI cutoffs of 0.34, 0.42, and 0.54:
+
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+#revised this section july 8, 2022
+library(RColorBrewer)
+library(mapview)
+library(tidyverse)
+setwd(here("data-processed"))
+load("den_co_bg_ndvi_geo.RData")
+#names(den_co_bg_ndvi_geo)
+mv_bg_native_cat = den_co_bg_ndvi_geo %>% 
+  dplyr::select(bg_fips, ndvi_mean_wt) %>% 
+  mutate(ndvi_native_cat = cut(ndvi_mean_wt, breaks= c(0, 0.34, 0.42, 0.54,1))) %>% 
+  mapview(
+    layer.name = "NDVI category",
+    zcol = "ndvi_native_cat"
+  )
+mv_bg_native_cat
+```
+
+## Scenario 2: riparian areas
+
+We measured NDVI in a 200-foot buffer, a 100-foot buffer, and a 50-foot buffer around all bodies of water in Denver. We downloaded bodies of water from OpenStreetMap (code [here](https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_load_denver_osm_parks_water.R)). We defined residential exposure to these riparian areas as those individuals living within a 500-meter buffer.
+
+The below map depicts mean NDVI in the portions of census block groups that intersect a 200-foot buffer as well as those pieces that intersect the part of the 500 m buffer that would not be intervened upon, i.e., the part between the 200-foot buffer and the edge of the 500 m residential buffer.
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("den_bg_int_wtr_200ft_comp_ndvi.RData")
+load("den_bg_int_wtr_200ft_tx_ndvi.RData")
+load("den_co_osm_wtr.RData")
+load("study_area_2876.RData")
+pal_terrain_col = rev(terrain.colors(100)) 
+mv_den_bg_int_wtr_200ft_comp_ndvi= den_bg_int_wtr_200ft_comp_ndvi %>% 
+  mapview(
+    col.regions= viridis_pal(option = "G", direction = 1),
+    at = seq(-.1, 1, 0.1), #0 to 1 by .1; define the breaks so consistent between layers
+    layer.name = "NDVI, 200 ft - 500 m",
+    zcol = "ndvi_mean_wt")
+
+mv_den_bg_int_wtr_200ft_tx_ndvi= den_bg_int_wtr_200ft_tx_ndvi %>% 
+  mapview(
+    col.regions= viridis_pal(option = "G", direction = 1),
+    at = seq(-.1, 1, 0.1), #0 to 1 by .1; define the breaks so consistent between layers
+    layer.name = "NDVI, 200 ft",
+    zcol = "ndvi_mean_wt")
+
+mv_den_co_osm_wtr = den_co_osm_wtr %>% 
+  st_intersection(study_area_2876) %>% 
+  mapview(
+    layer.name = "Water type",
+    col.regions = rainbow(n_distinct(den_co_osm_wtr$water_type)),
+    zcol = "water_type")
+
+#### Visualize all at once--------
+mv_rip_all3 = mv_den_bg_int_wtr_200ft_tx_ndvi+ mv_den_bg_int_wtr_200ft_comp_ndvi +mv_den_co_osm_wtr
+mv_rip_all3@map %>% 
+  addFullscreenControl()
+```
+
+## Scenario 3: green infrastructure
+
+### Scenario 3.1. stormwater retention projects
+
+We were provided a list of planned projects throughout Denver. Per our conversations, we assume that about 75% of the project's footprint would consist of native or vegetation. Like for riparian areas, we defined exposure to the projects as those individuals living within a 500 m buffer of the projects. A map of baseline NDVI of the projects themselves and of a 500 m residential buffer around the projects is below.
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("den_bg_int_ogi_proj_comp_ndvi.RData")
+load("den_bg_int_ogi_proj_tx_ndvi.RData")
+load("den_co_osm_wtr.RData")
+load("study_area_2876.RData")
+pal_terrain_col = rev(terrain.colors(100)) 
+
+#### 500 m Buffer excluding the project---------
+mv_den_bg_int_ogi_proj_comp_ndvi= den_bg_int_ogi_proj_comp_ndvi %>% 
+  mapview(
+    col.regions= viridis_pal(option = "G", direction = 1),
+    at = seq(-.1, 1, 0.1), #0 to 1 by .1; define the breaks so consistent between layers
+    layer.name = "NDVI, 500m buffer, projects",
+    zcol = "ndvi_mean_wt")
+
+#### The project only----------
+mv_den_bg_int_ogi_proj_tx_ndvi= den_bg_int_ogi_proj_tx_ndvi %>% 
+  mapview(
+    col.regions= viridis_pal(option = "G", direction = 1),
+    at = seq(-.1, 1, 0.1), #0 to 1 by .1; define the breaks so consistent between layers
+    layer.name = "NDVI, projects only",
+    zcol = "ndvi_mean_wt")
+
+#### Bodies of water--------
+load("den_co_osm_water.RData")
+mv_den_co_osm_water = den_co_osm_water %>% 
+  st_intersection(study_area_2876) %>% 
+  mapview(
+    layer.name = "Water type",
+    col.regions = viridis::turbo(n_distinct(den_co_osm_water$water_type)),
+    zcol = "water_type")
+
+#### Visualize all at once--------------
+mv_ogi_proj_all3 = mv_den_bg_int_ogi_proj_comp_ndvi+ 
+  mv_den_bg_int_ogi_proj_tx_ndvi +mv_den_co_osm_wtr
+mv_ogi_proj_all3@map %>% 
+  addFullscreenControl()
+```
+
+### Scenario 3.2. Site new or re-development storwmater controls
+
+A regulatory scenario suggested by this agency is stormwater controls on new and re-development to offset the negative impacts to flooding and water quality due to the increase in impervious surfaces added by development. These stormwater control measures would add vegetation using native or adapted plants. The approach for estimating the health impact of the redevelopment controls is distinct in that we will not know where the re-developments will occur. We thus simulated possible locations. Per our conversations with the stakeholder, we anticipate the following number of parcels will be subject to these rules per year:
+
+-   greater than 1 acre: about 100 sites per year
+-   0.5-1.0 acre: about 25 sites per year
+-   less than 0.5 acre: 400 sites per year
+
+We gathered data on parcels from Denver's Open Data Portal ([Existing Landuse 2018](https://www.denvergov.org/opendata/dataset/city-and-county-of-denver-existing-landuse-2018)) and measured their area. A subset of these parcels near Union Station is mapped below. (Mapping all parcels is too much data to present.)
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+library(here)
+setwd(here("data-processed"))
+load("den_landuse_union_sta.RData") #created scripts/0_read_wrangle_denver_land_use.R
+
+mv_landuse_union_sta = den_landuse_union_sta %>% 
+  dplyr::select(-starts_with("address")) %>% 
+  mapview(
+    zcol = "CPD_LANDUS",
+    layer.name = "Land-use type",
+    col.regions = viridis::turbo(n=n_distinct(den_landuse_union_sta$CPD_LANDUS)))
+mv_landuse_union_sta@map %>% 
+  addFullscreenControl()
+```
+
+Then, from all parcels, we sampled 100 sites of size greater than 1 acre, 25 sites of size 0.5-1 acre, and 400 sites less than 0.5 acres. One such sample appears below.
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+library(here)
+setwd(here("data-processed"))
+load("den_landuse_sample.RData")
+mv_den_landuse_sample = den_landuse_sample %>% 
+  mapview(
+    layer.name = "Parcel size category",
+    zcol = "parcel_size_cat")
+mv_den_landuse_sample@map %>% 
+  addFullscreenControl()
+```
+
+From this point, we followed the same framework as for other scenarios. The baseline NDVI of the sampled parcels and that of their corresponding 500m buffers is visualized below.
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("den_bg_int_parcel_comp_ndvi.RData")
+load("den_bg_int_parcel_tx_ndvi.RData")
+load("study_area_2876.RData")
+load("union_station_1_mi_4326.RData") # we will limit to a 1-mi radius around union station
+pal_terrain_col = rev(terrain.colors(100)) 
+library(leaflet.extras)
+library(mapview)
+#### Buffer excluding the parking---------
+sf::sf_use_s2(FALSE) #have to use this as I was getting an error that loop not valid
+mv_union_sta_den_bg_int_parcel_comp_ndvi= den_bg_int_parcel_comp_ndvi %>% 
+  mapview(
+    col.regions= viridis_pal(option = "G", direction = 1),
+    layer.name = "NDVI, 500 m buffer, parcel",
+    zcol = "ndvi_mean_wt")
+
+#### The parking only----------
+mv_union_sta_den_bg_int_parcel_tx_ndvi= den_bg_int_parcel_tx_ndvi %>% 
+  mapview(
+    col.regions= viridis_pal(option = "G", direction = 1),
+    layer.name = "NDVI, parcel only",
+    zcol = "ndvi_mean_wt")
+
+#### Visualize all at once--------------
+mv_parcel_both = mv_union_sta_den_bg_int_parcel_comp_ndvi+ 
+  mv_union_sta_den_bg_int_parcel_tx_ndvi
+
+mv_parcel_both@map %>% 
+  addFullscreenControl()
+```
+
+## Scenario 4: parking lots
+
+Finally, we propose replacing a portion of parking-lot surface with native plants. Denver's area is about 9% parking lot (below table). We obtained spatial data on parking lots from the City of Denver Open Data Catalog.[@denvero2016]
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("den_prkng_tx_marg.RData")
+den_prkng_tx_marg %>% 
+  st_set_geometry(NULL) %>% 
+  mutate(
+    den_area_mi2_total = 155,
+    prop_den_parking = area_mi2_prkng/den_area_mi2_total
+         ) %>% 
+  dplyr::select(-starts_with("area_ft2")) %>% 
+  knitr::kable(
+    booktabs = TRUE,
+    caption = "Proportion of Denver's area covered by parking lots",
+    col.names = c("Total area (mi^2^), parking lots", "Total area (mi^2^), Denver", "proportion parking lots"),
+    digits = 2)
+```
+
+We similarly measured the NDVI on the parking lots as well as the NDVI in the census block groups within a 500-m buffer radius of any parking lot (which is almost the whole city). We present a subset of these areas in a 2-mile radius around Union Station (the complete data are too large to upload):
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("den_bg_int_prkng_comp_ndvi.RData")
+load("den_bg_int_prkng_tx_ndvi.RData")
+load("study_area_2876.RData")
+load("union_station_1_mi_4326.RData") # we will limit to a 1-mi radius around union station
+load("union_station_1_mi_2876.RData")
+load("union_station_2_mi_4326.RData") 
+load("union_station_2_mi_2876.RData")
+
+pal_terrain_col = rev(terrain.colors(100)) 
+library(leaflet.extras)
+library(mapview)
+#### Buffer excluding the parking---------
+sf::sf_use_s2(FALSE) #have to use this as I was getting an error that loop not valid
+mv_union_sta_den_bg_int_prkng_comp_ndvi= den_bg_int_prkng_comp_ndvi %>% 
+  st_transform(2876) %>% 
+  st_simplify(dTolerance = 20) %>%  #make size much smaller for visual. intentionally ordered here
+  st_intersection(union_station_2_mi_2876) %>% 
+  st_make_valid() %>% 
+  st_buffer(0) %>% 
+  mapview(
+    col.regions= viridis_pal(option = "G", direction = 1),
+    layer.name = "NDVI, 500 m buffer, parking",
+    zcol = "ndvi_mean_wt")
+
+#### The parking only----------
+mv_union_sta_den_bg_int_prkng_tx_ndvi= den_bg_int_prkng_tx_ndvi %>% 
+  st_transform(2876) %>% 
+  st_simplify(dTolerance = 20) %>%  #make size much smaller for visual. intentionally ordered here
+  st_intersection(union_station_2_mi_2876) %>% 
+  st_make_valid() %>% 
+  st_buffer(0) %>% 
+  mapview(
+    col.regions= viridis_pal(option = "G", direction = 1),
+    layer.name = "NDVI, parking only",
+    zcol = "ndvi_mean_wt")
+
+#### Visualize all at once--------------
+mv_prkng_both = mv_union_sta_den_bg_int_prkng_comp_ndvi+ 
+  mv_union_sta_den_bg_int_prkng_tx_ndvi
+
+mv_prkng_both@map %>% 
+  addFullscreenControl()
+```
+
+Due to space constraints, we cannot map each parking lot interactively on this website. Below is a static map of the parking lots in the Denver study area.
+
+```{r parking-union,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("den_bg_int_prkng_tx_union.RData")
+load("den_bg_int_prkng_comp_union.RData")
+den_bg_int_prkng_tx_union %>% 
+  ggplot()+
+  geom_sf()+
+  theme_bw()
+```
+
+# Stratified analyses by equity indices
 
 Both the State of Colorado and the City of Denver have created equity indices to guide their work. The Colorado Department of Public Health & Environment (CDPHE) describes their equity index here[@cdphe2021] and makes the index available for download here.[@cdphe] The City of Denver Department of Public Health & Environment (DDPHE) describes the neighborhood-level equity index here[@ddphe] and makes the data available for download here.[@denver]
 
 Note that for the CDPHE index, a higher score is a worse score, whereas for the DDPHE index, a lower score is a worse score. The map below presents tertiles of each score.
 
+## Maps of equity indices 
 ```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE, fig.cap = "Comparing equity indices"}
 library(scales)
 library(mapview)
@@ -443,292 +733,51 @@ compare_tertiles_chisq = chisq.test(table(
 compare_tertiles_chisq
 ```
 
-# Visualization of scenarios
 
-Note to self: This section is mostly copied from ~green-space-denver/docs/hia-results.Rmd
-
-## Scenario 1: fixed proportion of all block groups
-
-The weighted block-group-level mean NDVI on July 4, 2021 is presented here.
-
-```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE, fig.cap = "Mean normalized difference vegetation index (NDVI) of census block groups in Denver, Colorado (excluding some in the northeast, described in main text) on July 4, 2021 as measured by the Landsat-8 satellite on July 4, 2021. NDVI is measured at a spatial resolution of 30 meters squared. The weighted block-group-level mean NDVI is weighted by the proportion Landsat pixels overlap the water-free land area of the block group"}
-#update may 11 2022 to add figure caption
+## Scatterplot of equity and NDVI at the block-group level
+The horizontal lines correspond to the three NDVI defitions of native plants. The blue line is the linear line of best fit, showing a slight positive association between NDVI and equity scre, where a lower equity score indicates more disadvantage.
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
 setwd(here("data-processed"))
-load("den_co_bg_ndvi_geo.RData") #updated april 18 2022
-#names(den_co_bg_ndvi_geo)
-pal_terrain = terrain.colors(100) %>% rev()#reverse the order of the palette
-mv_den_co_bg_ndvi  = den_co_bg_ndvi_geo %>% 
-  dplyr::select(bg_fips, ndvi_mean_wt) %>% 
-  mapview(
-    layer.name = "NDVI, block group",
-    zcol = "ndvi_mean_wt",
-    col.regions = pal_terrain, 
-    at = seq(-0.1, 1, 0.1)
-  )
-mv_den_co_bg_ndvi@map %>% 
-  addFullscreenControl()
+load("den_co_bg_pop_per_ndvi.RData") #made in scripts/4_pop_dens_per_ndvi.R
+load("hia_all.RData")
+library(shades)
+ndvi_native_threshold_vector = hia_all %>% 
+  distinct(ndvi_native_threshold) %>% 
+  arrange(ndvi_native_threshold) %>% 
+  pull()
+terrain_colors_4= terrain.colors(4) %>% rev()
+den_co_bg_pop_per_ndvi %>% 
+  dplyr::select(-tract_fips) %>% 
+  link_equity_indices() %>% 
+  ggplot(aes(x=equity_nbhd_denver, y=ndvi_mean_wt )) + 
+  geom_point()+
+  ylab("NDVI") +
+  xlab("Denver Equity Index (lower is more disadvantaged)") +
+  theme_bw(base_size = 14) +
+  geom_hline(
+    yintercept = ndvi_native_threshold_vector[1],
+    linetype = "dashed", color = terrain_colors_4[4], lwd=1)+
+  geom_hline(
+    yintercept = ndvi_native_threshold_vector[2], lwd=1,
+    linetype = "dashed", color = terrain_colors_4[4]) +
+  geom_hline(
+    yintercept = ndvi_native_threshold_vector[3], lwd=1,
+    color = terrain_colors_4[4], #I thought about changing but I think one color is good
+             linetype = "dashed")+
+  geom_smooth(method = lm)
 ```
 
-For each definition of native-plants NDVI, We excluded census blocks whose baseline NDVI was above the threshold. The following map categorizes census block groups by at the NDVI cutoffs of 0.34, 0.42, and 0.54:
+The linear correlation between equity score and NDVI of the census block groups is positive but fairly weak.
+```{r}
+den_co_bg_pop_per_ndvi_equity_linked = den_co_bg_pop_per_ndvi %>% 
+  dplyr::select(-tract_fips) %>% 
+  link_equity_indices() %>% 
+  st_set_geometry(NULL)
 
-
-```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
-#revised this section july 8, 2022
-library(RColorBrewer)
-library(mapview)
-library(tidyverse)
-setwd(here("data-processed"))
-load("den_co_bg_ndvi_geo.RData")
-#names(den_co_bg_ndvi_geo)
-mv_bg_native_cat = den_co_bg_ndvi_geo %>% 
-  dplyr::select(bg_fips, ndvi_mean_wt) %>% 
-  mutate(ndvi_native_cat = cut(ndvi_mean_wt, breaks= c(0, 0.34, 0.42, 0.54,1))) %>% 
-  mapview(
-    layer.name = "NDVI category",
-    zcol = "ndvi_native_cat"
-  )
-mv_bg_native_cat
+cor(den_co_bg_pop_per_ndvi_equity_linked$equity_nbhd_denver, 
+     den_co_bg_pop_per_ndvi_equity_linked$ndvi_mean_wt)
 ```
 
-## Scenario 2: riparian areas
-
-We measured NDVI in a 200-foot buffer, a 100-foot buffer, and a 50-foot buffer around all bodies of water in Denver. We downloaded bodies of water from OpenStreetMap (code [here](https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_load_denver_osm_parks_water.R)). We defined residential exposure to these riparian areas as those individuals living within a 500-meter buffer.
-
-The below map depicts mean NDVI in the portions of census block groups that intersect a 200-foot buffer as well as those pieces that intersect the part of the 500 m buffer that would not be intervened upon, i.e., the part between the 200-foot buffer and the edge of the 500 m residential buffer.
-
-```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
-setwd(here("data-processed"))
-load("den_bg_int_wtr_200ft_comp_ndvi.RData")
-load("den_bg_int_wtr_200ft_tx_ndvi.RData")
-load("den_co_osm_wtr.RData")
-load("study_area_2876.RData")
-pal_terrain_col = rev(terrain.colors(100)) 
-mv_den_bg_int_wtr_200ft_comp_ndvi= den_bg_int_wtr_200ft_comp_ndvi %>% 
-  mapview(
-    col.regions = pal_terrain_col,
-    at = seq(-.1, 1, 0.1), #0 to 1 by .1; define the breaks so consistent between layers
-    layer.name = "NDVI, 200 ft - 500 m",
-    zcol = "ndvi_mean_wt")
-
-mv_den_bg_int_wtr_200ft_tx_ndvi= den_bg_int_wtr_200ft_tx_ndvi %>% 
-  mapview(
-    col.regions = pal_terrain_col,
-    at = seq(-.1, 1, 0.1), #0 to 1 by .1; define the breaks so consistent between layers
-    layer.name = "NDVI, 200 ft",
-    zcol = "ndvi_mean_wt")
-
-mv_den_co_osm_wtr = den_co_osm_wtr %>% 
-  st_intersection(study_area_2876) %>% 
-  mapview(
-    layer.name = "Water type",
-    col.regions = rainbow(n_distinct(den_co_osm_wtr$water_type)),
-    zcol = "water_type")
-
-#### Visualize all at once--------
-mv_rip_all3 = mv_den_bg_int_wtr_200ft_tx_ndvi+ mv_den_bg_int_wtr_200ft_comp_ndvi +mv_den_co_osm_wtr
-mv_rip_all3@map %>% 
-  addFullscreenControl()
-```
-
-## Scenario 3: green infrastructure
-
-### Scenario 3.1. stormwater retention projects
-
-We were provided a list of planned projects throughout Denver. Per our conversations, we assume that about 75% of the project's footprint would consist of native or vegetation. Like for riparian areas, we defined exposure to the projects as those individuals living within a 500 m buffer of the projects. A map of baseline NDVI of the projects themselves and of a 500 m residential buffer around the projects is below.
-
-```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
-setwd(here("data-processed"))
-load("den_bg_int_ogi_proj_comp_ndvi.RData")
-load("den_bg_int_ogi_proj_tx_ndvi.RData")
-load("den_co_osm_wtr.RData")
-load("study_area_2876.RData")
-pal_terrain_col = rev(terrain.colors(100)) 
-
-#### 500 m Buffer excluding the project---------
-mv_den_bg_int_ogi_proj_comp_ndvi= den_bg_int_ogi_proj_comp_ndvi %>% 
-  mapview(
-    col.regions = pal_terrain_col,
-    at = seq(-.1, 1, 0.1), #0 to 1 by .1; define the breaks so consistent between layers
-    layer.name = "NDVI, 500m buffer, projects",
-    zcol = "ndvi_mean_wt")
-
-#### The project only----------
-mv_den_bg_int_ogi_proj_tx_ndvi= den_bg_int_ogi_proj_tx_ndvi %>% 
-  mapview(
-    col.regions = pal_terrain_col,
-    at = seq(-.1, 1, 0.1), #0 to 1 by .1; define the breaks so consistent between layers
-    layer.name = "NDVI, projects only",
-    zcol = "ndvi_mean_wt")
-
-#### Bodies of water--------
-load("den_co_osm_water.RData")
-mv_den_co_osm_water = den_co_osm_water %>% 
-  st_intersection(study_area_2876) %>% 
-  mapview(
-    layer.name = "Water type",
-    col.regions = rainbow(n_distinct(den_co_osm_water$water_type)),
-    zcol = "water_type")
-
-#### Visualize all at once--------------
-mv_ogi_proj_all3 = mv_den_bg_int_ogi_proj_comp_ndvi+ 
-  mv_den_bg_int_ogi_proj_tx_ndvi +mv_den_co_osm_wtr
-mv_ogi_proj_all3@map %>% 
-  addFullscreenControl()
-```
-
-### Scenario 3.2. Site new or re-development storwmater controls
-
-A regulatory scenario suggested by this agency is stormwater controls on new and re-development to offset the negative impacts to flooding and water quality due to the increase in impervious surfaces added by development. These stormwater control measures would add vegetation using native or adapted plants. The approach for estimating the health impact of the redevelopment controls is distinct in that we will not know where the re-developments will occur. We thus simulated possible locations. Per our conversations with the stakeholder, we anticipate the following number of parcels will be subject to these rules per year:
-
--   greater than 1 acre: about 100 sites per year
--   0.5-1.0 acre: about 25 sites per year
--   less than 0.5 acre: 400 sites per year
-
-We gathered data on parcels from Denver's Open Data Portal ([Existing Landuse 2018](https://www.denvergov.org/opendata/dataset/city-and-county-of-denver-existing-landuse-2018)) and measured their area. A subset of these parcels near Union Station is mapped below. (Mapping all parcels is too much data to present.)
-
-```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
-library(here)
-setwd(here("data-processed"))
-load("den_landuse_union_sta.RData") #created scripts/0_read_wrangle_denver_land_use.R
-
-mv_landuse_union_sta = den_landuse_union_sta %>% 
-  dplyr::select(-starts_with("address")) %>% 
-  mapview(
-    zcol = "CPD_LANDUS",
-    layer.name = "Land-use type",
-    col.regions = rainbow(n=n_distinct(den_landuse_union_sta$CPD_LANDUS)))
-mv_landuse_union_sta@map %>% 
-  addFullscreenControl()
-```
-
-Then, from all parcels, we sampled 100 sites of size greater than 1 acre, 25 sites of size 0.5-1 acre, and 400 sites less than 0.5 acres. One such sample appears below.
-
-```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
-library(here)
-setwd(here("data-processed"))
-load("den_landuse_sample.RData")
-mv_den_landuse_sample = den_landuse_sample %>% 
-  mapview(
-    layer.name = "Parcel size category",
-    zcol = "parcel_size_cat")
-mv_den_landuse_sample@map %>% 
-  addFullscreenControl()
-```
-
-From this point, we followed the same framework as for other scenarios. The baseline NDVI of the sampled parcels and that of their corresponding 500m buffers is visualized below.
-
-```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
-setwd(here("data-processed"))
-load("den_bg_int_parcel_comp_ndvi.RData")
-load("den_bg_int_parcel_tx_ndvi.RData")
-load("study_area_2876.RData")
-load("union_station_1_mi_4326.RData") # we will limit to a 1-mi radius around union station
-pal_terrain_col = rev(terrain.colors(100)) 
-library(leaflet.extras)
-library(mapview)
-#### Buffer excluding the parking---------
-sf::sf_use_s2(FALSE) #have to use this as I was getting an error that loop not valid
-mv_union_sta_den_bg_int_parcel_comp_ndvi= den_bg_int_parcel_comp_ndvi %>% 
-  mapview(
-    col.regions = pal_terrain_col,
-    layer.name = "NDVI, 500 m buffer, parcel",
-    zcol = "ndvi_mean_wt")
-
-#### The parking only----------
-mv_union_sta_den_bg_int_parcel_tx_ndvi= den_bg_int_parcel_tx_ndvi %>% 
-  mapview(
-    col.regions = pal_terrain_col,
-    layer.name = "NDVI, parcel only",
-    zcol = "ndvi_mean_wt")
-
-#### Visualize all at once--------------
-mv_parcel_both = mv_union_sta_den_bg_int_parcel_comp_ndvi+ 
-  mv_union_sta_den_bg_int_parcel_tx_ndvi
-
-mv_parcel_both@map %>% 
-  addFullscreenControl()
-```
-
-## Scenario 4: parking lots
-
-Finally, we propose replacing a portion of parking-lot surface with native plants. Denver's area is about 9% parking lot (below table). We obtained spatial data on parking lots from the City of Denver Open Data Catalog.[@denvero2016]
-
-```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
-setwd(here("data-processed"))
-load("den_prkng_tx_marg.RData")
-den_prkng_tx_marg %>% 
-  st_set_geometry(NULL) %>% 
-  mutate(
-    den_area_mi2_total = 155,
-    prop_den_parking = area_mi2_prkng/den_area_mi2_total
-         ) %>% 
-  dplyr::select(-starts_with("area_ft2")) %>% 
-  knitr::kable(
-    booktabs = TRUE,
-    caption = "Proportion of Denver's area covered by parking lots",
-    col.names = c("Total area (mi^2^), parking lots", "Total area (mi^2^), Denver", "proportion parking lots"),
-    digits = 2)
-```
-
-We similarly measured the NDVI on the parking lots as well as the NDVI in the census block groups within a 500-m buffer radius of any parking lot (which is almost the whole city). We present a subset of these areas in a 2-mile radius around Union Station (the complete data are too large to upload):
-
-```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
-setwd(here("data-processed"))
-load("den_bg_int_prkng_comp_ndvi.RData")
-load("den_bg_int_prkng_tx_ndvi.RData")
-load("study_area_2876.RData")
-load("union_station_1_mi_4326.RData") # we will limit to a 1-mi radius around union station
-load("union_station_1_mi_2876.RData")
-load("union_station_2_mi_4326.RData") 
-load("union_station_2_mi_2876.RData")
-
-pal_terrain_col = rev(terrain.colors(100)) 
-library(leaflet.extras)
-library(mapview)
-#### Buffer excluding the parking---------
-sf::sf_use_s2(FALSE) #have to use this as I was getting an error that loop not valid
-mv_union_sta_den_bg_int_prkng_comp_ndvi= den_bg_int_prkng_comp_ndvi %>% 
-  st_transform(2876) %>% 
-  st_simplify(dTolerance = 20) %>%  #make size much smaller for visual. intentionally ordered here
-  st_intersection(union_station_2_mi_2876) %>% 
-  st_make_valid() %>% 
-  st_buffer(0) %>% 
-  mapview(
-    col.regions = pal_terrain_col,
-    layer.name = "NDVI, 500 m buffer, parking",
-    zcol = "ndvi_mean_wt")
-
-#### The parking only----------
-mv_union_sta_den_bg_int_prkng_tx_ndvi= den_bg_int_prkng_tx_ndvi %>% 
-  st_transform(2876) %>% 
-  st_simplify(dTolerance = 20) %>%  #make size much smaller for visual. intentionally ordered here
-  st_intersection(union_station_2_mi_2876) %>% 
-  st_make_valid() %>% 
-  st_buffer(0) %>% 
-  mapview(
-    col.regions = pal_terrain_col,
-    layer.name = "NDVI, parking only",
-    zcol = "ndvi_mean_wt")
-
-#### Visualize all at once--------------
-mv_prkng_both = mv_union_sta_den_bg_int_prkng_comp_ndvi+ 
-  mv_union_sta_den_bg_int_prkng_tx_ndvi
-
-mv_prkng_both@map %>% 
-  addFullscreenControl()
-```
-
-Due to space constraints, we cannot map each parking lot interactively on this website. Below is a static map of the parking lots in the Denver study area.
-
-```{r parking-union,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
-setwd(here("data-processed"))
-load("den_bg_int_prkng_tx_union.RData")
-load("den_bg_int_prkng_comp_union.RData")
-den_bg_int_prkng_tx_union %>% 
-  ggplot()+
-  geom_sf()+
-  theme_bw()
-```
 
 # Supplementary tables
 Note for internal reference that these tables are output in Word here:
@@ -942,50 +991,6 @@ hia_all_over_ndvi_over_equity_est_boot %>%
       "Deaths prevented per 100k, estimate (95% UI)"
       )
   )
-```
-
-# Scatterplot of equity and NDVI at the block-group level
-The horizontal lines correspond to the three NDVI defitions of native plants. The blue line is the linear line of best fit, showing a slight positive association between NDVI and equity scre, where a lower equity score indicates more disadvantage.
-```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
-setwd(here("data-processed"))
-load("den_co_bg_pop_per_ndvi.RData") #made in scripts/4_pop_dens_per_ndvi.R
-load("hia_all.RData")
-library(shades)
-ndvi_native_threshold_vector = hia_all %>% 
-  distinct(ndvi_native_threshold) %>% 
-  arrange(ndvi_native_threshold) %>% 
-  pull()
-terrain_colors_4= terrain.colors(4) %>% rev()
-den_co_bg_pop_per_ndvi %>% 
-  dplyr::select(-tract_fips) %>% 
-  link_equity_indices() %>% 
-  ggplot(aes(x=equity_nbhd_denver, y=ndvi_mean_wt )) + 
-  geom_point()+
-  ylab("NDVI") +
-  xlab("Denver Equity Index (lower is more disadvantaged)") +
-  theme_bw(base_size = 14) +
-  geom_hline(
-    yintercept = ndvi_native_threshold_vector[1],
-    linetype = "dashed", color = terrain_colors_4[4], lwd=1)+
-  geom_hline(
-    yintercept = ndvi_native_threshold_vector[2], lwd=1,
-    linetype = "dashed", color = terrain_colors_4[4]) +
-  geom_hline(
-    yintercept = ndvi_native_threshold_vector[3], lwd=1,
-    color = terrain_colors_4[4], #I thought about changing but I think one color is good
-             linetype = "dashed")+
-  geom_smooth(method = lm)
-```
-
-The linear correlation between equity score and NDVI of the census block groups is positive but fairly weak.
-```{r}
-den_co_bg_pop_per_ndvi_equity_linked = den_co_bg_pop_per_ndvi %>% 
-  dplyr::select(-tract_fips) %>% 
-  link_equity_indices() %>% 
-  st_set_geometry(NULL)
-
-cor(den_co_bg_pop_per_ndvi_equity_linked$equity_nbhd_denver, 
-     den_co_bg_pop_per_ndvi_equity_linked$ndvi_mean_wt)
 ```
 
 # References
