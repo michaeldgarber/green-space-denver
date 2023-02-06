@@ -1,0 +1,991 @@
+---
+title: "NATURGREEN paper tables & figure (appendix)"
+author: "Michael D Garber"
+date: '2022-05-24'
+#always_allow_html: true
+#note word doesn't seem to render unless I render the whole site ()rmarkdown::render_site(encoding = 'UTF-8').
+#Comment October 13, 2022: This no longer lines up
+#Comment Nov 7, 2022: I'm going to revise so it lines up.
+#February 3rd, 2023: this is old, but has lots of useful code, so don't put it in
+#old folder just yet.
+#I'm going to copy the figures to a normal R script, but
+
+#I'm still going to use markdown for tables. Done here:
+#green-space-denver/docs-for-word/tables-appendix.Rmd
+output:
+  # bookdown::word_document2:
+  #   toc: true #ignore this in web version
+  bookdown::html_document2:
+    toc: true
+    toc_float: true
+    toc_depth: 4
+    include: 
+      after_body: footer.html
+bibliography: references.bib
+csl: american-medical-association.csl
+link-citations: true
+---
+
+Filename: tables_figs_appendix
+
+This document contains supplementary material, mostly tables and figures, as well as some additional text and description.
+
+The URL for this page is https://michaeldgarber.github.io/green-space-denver/tables_figs_appendix.html
+
+
+# Demographics of Denver and study area
+
+## Table describing demographics of Denver and the study area
+
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+library(here)
+library(tidyverse)
+library(mapview)
+library(sf)
+#all of this info is created here:
+#scripts/0_import_manage_denver_acs.R
+setwd(here("data-processed"))
+load("lookup_tract_nbhd_northeast_exclude.RData")
+load("den_tract_acs5_wrangle_geo.RData")
+
+#See for where these are created:
+source(here("scripts", "4_mortality_area_study_area.R")) 
+
+mortality_rate_per1k_30_plus_study_area_pull = mortality_rate_per1k_30_plus_study_area %>%
+  pull()
+mortality_rate_per1k_18_plus_denver_pull = mortality_rate_per1k_18_plus_denver %>% 
+  pull()
+
+area_mi2_bg_med_denver_pull = bg_size_average_denver %>% 
+  dplyr::select(area_mi2_bg_med) %>% 
+  pull()
+area_mi2_bg_med_study_area_pull = bg_size_average_study_area %>%
+  dplyr::select(area_mi2_bg_med) %>% 
+  pull()
+
+### --------All of Denver---------------------------------------#
+#-------Tract-level data for most of the table------------------#
+#use tract-level data for the overall table
+t1_denver_all = den_tract_acs5_wrangle_geo %>% 
+  filter(county_fips=="031") %>% 
+  left_join(lookup_tract_nbhd_northeast_exclude, by = "tract_fips") %>% 
+#  filter(nbhd_northeast_exclude==0) %>% #Decide not to exclude, actually
+  st_set_geometry(NULL) %>% 
+  group_by(county_fips) %>% 
+  summarise(
+    area_mi2 = sum(area_mi2_tract, na.rm=TRUE),
+    pop_tot = sum(pop_tot, na.rm=TRUE),
+    
+    age_med = median(age_med , na.rm=TRUE),
+    hh_inc_med = median(hh_inc_med, na.rm=TRUE),
+    
+    race_tot = sum(race_tot, na.rm=TRUE),
+    race_w = sum(race_w, na.rm=TRUE),
+    race_h = sum(race_h, na.rm=TRUE),
+    race_b = sum(race_b, na.rm=TRUE),
+    
+    pov_last_12 = sum(pov_last_12, na.rm=TRUE),
+    pov_last_12_tot = sum(pov_last_12_tot, na.rm=TRUE),
+
+  ) %>% 
+  ungroup() %>% 
+  mutate(
+    pop_dens_mi2 = pop_tot/area_mi2,
+    race_w_prop = race_w/race_tot,           #prop for proportion
+    race_b_prop = race_b/race_tot,
+    race_h_prop = race_h/race_tot, 
+    race_nw_prop = 1-race_w_prop, #nw for nonwhite (i.e, 1-white)
+    race_o_prop = 1-(race_b_prop + race_w_prop +race_h_prop),
+    
+    pov_last_12_prop = pov_last_12/pov_last_12_tot,  #percent poverty
+    #add mortality rate for reference
+    rate_per_1k_est = mortality_rate_per1k_18_plus_denver_pull,
+    area_mi2_bg_med = area_mi2_bg_med_denver_pull
+  ) %>% 
+  dplyr::select(
+    area_mi2, pop_tot, pop_dens_mi2, race_w_prop, race_b_prop, race_h_prop, race_o_prop,
+    age_med,
+    pov_last_12_prop,
+    hh_inc_med, rate_per_1k_est, area_mi2_bg_med
+  ) %>% 
+  pivot_longer(
+    cols = everything(),
+    names_to = "measure_var_name",
+    values_to = "Denver"
+    ) 
+
+
+#------------Just the study area-----------------------#
+t1_study_area = den_tract_acs5_wrangle_geo %>% 
+  filter(county_fips=="031") %>% 
+  left_join(lookup_tract_nbhd_northeast_exclude, by = "tract_fips") %>% 
+  filter(nbhd_northeast_exclude==0) %>% 
+  st_set_geometry(NULL) %>% 
+  group_by(county_fips) %>% 
+  summarise(
+    area_mi2 = sum(area_mi2_tract, na.rm=TRUE),
+    pop_tot = sum(pop_tot, na.rm=TRUE),
+    
+    age_med = median(age_med , na.rm=TRUE),
+    hh_inc_med = median(hh_inc_med, na.rm=TRUE),
+    
+    race_tot = sum(race_tot, na.rm=TRUE),
+    race_w = sum(race_w, na.rm=TRUE),
+    race_h = sum(race_h, na.rm=TRUE),
+    race_b = sum(race_b, na.rm=TRUE),
+    
+    pov_last_12 = sum(pov_last_12, na.rm=TRUE),
+    pov_last_12_tot = sum(pov_last_12_tot, na.rm=TRUE),
+
+  ) %>% 
+  ungroup() %>% 
+  mutate(
+    pop_dens_mi2 = pop_tot/area_mi2,
+    race_w_prop = race_w/race_tot,           #prop for proportion
+    race_b_prop = race_b/race_tot,
+    race_h_prop = race_h/race_tot, 
+    race_nw_prop = 1-race_w_prop, #nw for nonwhite (i.e, 1-white)
+    race_o_prop = 1-(race_b_prop + race_w_prop +race_h_prop),
+    
+    pov_last_12_prop = pov_last_12/pov_last_12_tot,  #percent poverty
+    #add mortality rate for reference
+    rate_per_1k_est = mortality_rate_per1k_30_plus_study_area_pull,
+    area_mi2_bg_med = area_mi2_bg_med_study_area_pull
+  ) %>% 
+  dplyr::select(
+    area_mi2, pop_tot, pop_dens_mi2, race_w_prop, race_b_prop, race_h_prop, race_o_prop,
+    age_med,
+    pov_last_12_prop,
+    hh_inc_med, rate_per_1k_est, area_mi2_bg_med
+  ) %>% 
+  pivot_longer(
+    cols = everything(),
+    names_to = "measure_var_name",
+    values_to = "Study"
+    ) 
+
+
+#-------Combine them and print kable---------------------------#
+t1_appendix_denver_study_area = t1_denver_all %>% 
+  left_join(t1_study_area, by = "measure_var_name") %>% 
+  #change the name so easier to read
+  mutate(
+    Measure = case_when(
+      measure_var_name == "area_mi2" ~ "Area (sq. mi.)",
+      measure_var_name == "pop_tot" ~ "Population",
+      measure_var_name == "pop_dens_mi2" ~ "Population density (per sq. mi.)",
+      measure_var_name == "race_w_prop" ~ "Proportion White race",
+      measure_var_name == "race_b_prop" ~ "Proportion Black race",
+      measure_var_name == "race_h_prop" ~ "Proportion Hispanic or Latino race",
+      measure_var_name == "race_o_prop" ~ "Proportion other race",
+      measure_var_name == "age_med" ~ "Median age (years)",
+      measure_var_name == "pov_last_12_prop" ~ "Proportion in poverty, last 12 mos.",
+      measure_var_name == "hh_inc_med" ~ "Median household income (USD)",
+      measure_var_name == "rate_per_1k_est" ~ "Estimated all-cause mortality rate per 1,000",
+      measure_var_name == "area_mi2_bg_med" ~ "Median block-group area (sq. mi.)"
+    )
+  ) %>% 
+  dplyr::select(Measure, Denver, Study) %>% 
+  knitr::kable(
+    caption = "Summary of study-area demographics. The study restricts to adults 30 years and older and excludes certain census tracts in Denver's northeast.",
+    digits = 2)
+
+
+t1_appendix_denver_study_area
+
+```
+
+## Map population density by block group
+
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+#scripts/0_import_manage_denver_acs.R
+setwd(here("data-processed"))
+load("lookup_tract_nbhd_northeast_exclude.RData")
+load("den_bg_acs5_wrangle_geo.RData")
+den_bg_acs5_wrangle_geo %>% 
+  filter(county_fips=="031") %>% 
+  left_join(lookup_tract_nbhd_northeast_exclude, by = "tract_fips") %>% 
+#  filter(nbhd_northeast_exclude==0) %>% 
+  dplyr::select(ends_with( "fips"), contains("pop_dens")) %>% 
+  mapview(
+    layer.name = "Population density per square mile",
+    zcol = "pop_dens_mi2_all")
+```
+
+## Map median age by census tract
+
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("lookup_tract_nbhd_northeast_exclude.RData")
+load("den_bg_acs5_wrangle_geo.RData")
+load("den_tract_acs5_wrangle_geo.RData")
+den_tract_acs5_wrangle_geo %>% 
+  filter(county_fips=="031") %>% 
+  left_join(lookup_tract_nbhd_northeast_exclude, by = "tract_fips") %>% 
+ # filter(nbhd_northeast_exclude==0) %>% 
+  dplyr::select(ends_with( "fips"), contains("age")) %>% 
+  mapview(
+    layer.name = "Median age",
+    zcol = "age_med")
+```
+
+## Map race (proportion non-white) by census tract
+
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("lookup_tract_nbhd_northeast_exclude.RData")
+load("den_tract_acs5_wrangle_geo.RData")
+den_tract_acs5_wrangle_geo %>% 
+  filter(county_fips=="031") %>% 
+  left_join(lookup_tract_nbhd_northeast_exclude, by = "tract_fips") %>% 
+#  filter(nbhd_northeast_exclude==0) %>% 
+  dplyr::select(ends_with( "fips"), contains("race")) %>% 
+  mapview(
+    layer.name = "Proportion non-white race",
+    zcol = "race_nw_prop")
+```
+
+## Map percent in poverty in last 12 months by census tract
+
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("lookup_tract_nbhd_northeast_exclude.RData")
+load("den_tract_acs5_wrangle_geo.RData")
+den_tract_acs5_wrangle_geo %>% 
+  filter(county_fips=="031") %>% 
+  left_join(lookup_tract_nbhd_northeast_exclude, by = "tract_fips") %>% 
+#  filter(nbhd_northeast_exclude==0) %>% 
+  dplyr::select(ends_with( "fips"), contains("pov")) %>% 
+  mapview(
+    layer.name = "Proportion in poverty, last year",
+    zcol = "pov_last_12_prop")
+```
+
+## Map median household income by census tract
+
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("lookup_tract_nbhd_northeast_exclude.RData")
+load("den_tract_acs5_wrangle_geo.RData")
+den_tract_acs5_wrangle_geo %>% 
+  filter(county_fips=="031") %>% 
+  left_join(lookup_tract_nbhd_northeast_exclude, by = "tract_fips") %>% 
+ # filter(nbhd_northeast_exclude==0) %>% 
+  dplyr::select(ends_with( "fips"), contains("hh_inc")) %>% 
+  mapview(
+    layer.name = "Median household income",
+    zcol = "hh_inc_med")
+```
+
+# Native-plants polygons
+
+## Map of native-plants polygons
+
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+#I need a version that is just points because the polygons are hard to see on the map
+library(here)
+library(tidyverse)
+library(sf)
+library(terra)
+library(raster) 
+library(mapview) 
+library(knitr) #to make sure kable works
+library(viridis)
+library(scales)
+library(lubridate) #for ggplot
+setwd(here("data-processed"))
+load("places_native_geo.RData")
+load("places_native_nogeo.RData")
+load("native_places_ndvi_day_nogeo.RData")
+sf::sf_use_s2(FALSE) 
+places_native_geo_points = places_native_geo %>% 
+  st_make_valid() %>% 
+  st_transform(2876) %>% 
+  st_centroid()
+
+mv_places_native_polygons = places_native_geo %>%
+  st_simplify() %>% 
+  st_transform(2876) %>% 
+  st_union(by_feature = TRUE) %>% 
+  st_cast("POLYGON") %>% #This fixed the c-stack issue. too many combined sf feature types.
+  st_as_sf() %>% 
+  mapview(zcol = "place_type",
+          layer.name = "Place category (as polygons)")
+
+
+mv_places_native_points = places_native_geo_points %>%
+  mapview(zcol = "place_type",
+          layer.name = "Place category (as points)")
+
+library(leaflet)
+library(leaflet.extras)
+mv_places_polygons_points =mv_places_native_points+
+  mv_places_native_polygons
+
+mv_places_polygons_points@map %>%
+  addFullscreenControl()
+
+```
+
+\newpage
+
+## NDVI of native-plants polygons
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+library(here)
+library(tidyverse)
+library(rmarkdown)
+library(sf)
+setwd(here("data-processed"))
+load("places_native_geo.RData")
+load("places_native_nogeo.RData")
+load("native_places_ndvi_day_nogeo.RData")
+native_places_ndvi_day_nogeo %>% 
+  filter(date_is_valid_all==1) %>% 
+  group_by(place_type, place_name_fac) %>% 
+  summarise(
+    ndvi_mean = mean(ndvi_mean_wt, na.rm=TRUE), # mean of means
+    ndvi_25th = quantile(ndvi_med, probs =c(0.25), na.rm=TRUE), #percentile of medians
+    ndvi_med = median(ndvi_med, na.rm=TRUE), #percentile of medians
+    ndvi_75th = quantile(ndvi_med, probs =c(0.75), na.rm=TRUE) ) %>% #percentile of medians
+  ungroup() %>% 
+  left_join(places_native_nogeo, by = c("place_name_fac", "place_type")) %>% 
+  dplyr::select(
+    starts_with("place_type"),
+    starts_with("place_name_fac"),
+    starts_with("area_ac"),
+    starts_with("area_mi"),
+    starts_with("ndvi_mea"),
+    starts_with("ndvi_25"),
+    starts_with("ndvi_med"),
+    starts_with("ndvi_75th"),
+  ) %>% 
+  as_tibble() %>% 
+  knitr::kable(
+    booktabs = TRUE,
+        caption = "NDVI of selected places of varying levels of plant nativity on selected cloud-free summer (May, June, July, August) days over five years (2016-2021)",
+    col.names = c("Place type", "Place name", "Area (acres)", "Area (sq. mi.)", "NDVI, mean", "NDVI, 25th-ile", "NDVI, 50th-ile", "NDVI, 75th-ile"),
+  digits = c(0, 0, 1, 2, 2, 2, 2, 2, 2)
+  )
+```
+
+# Equity indices
+
+Both the State of Colorado and the City of Denver have created equity indices to guide their work. The Colorado Department of Public Health & Environment (CDPHE) describes their equity index here[@cdphe2021] and makes the index available for download here.[@cdphe] The City of Denver Department of Public Health & Environment (DDPHE) describes the neighborhood-level equity index here[@ddphe] and makes the data available for download here.[@denver]
+
+Note that for the CDPHE index, a higher score is a worse score, whereas for the DDPHE index, a lower score is a worse score. The map below presents tertiles of each score.
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE, fig.cap = "Comparing equity indices"}
+library(scales)
+library(mapview)
+library(leafsync)
+library(leaflet.extras)
+setwd(here("data-processed"))
+load("den_equity_ind_2020.RData") #updated april 18 2022
+load("cdphe_equity_geo.RData")
+mv_cdphe_equity_den_tertile =  cdphe_equity_geo %>% 
+  filter(county_fips == "031") %>% 
+  mapview(
+    layer.name = "Equity Index, CDPHE, tertile",
+    zcol = "equity_bg_cdphe_tertile_den",
+    col.regions = viridis_pal(direction = -1) #flip scale
+    )
+
+mv_den_equity_ind_tertile = den_equity_ind_2020 %>% 
+  mapview(
+    layer.name = "Equity Index, Denver, tertile",
+    zcol = "equity_nbhd_denver_tertile",
+    col.regions = viridis_pal(direction = 1) #don't flip scale
+    
+    )
+
+#From leafsync
+mv_equity_both = sync(mv_den_equity_ind_tertile,mv_cdphe_equity_den_tertile)
+
+mv_equity_both
+#mv_equity_both@map %>% 
+#  addFullscreenControl()
+```
+
+Below are results of a chi-square test comparing tertiles of CDPHE Equity Index vs the DDPHE Equity index.
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+#to keep consistent, using exact same function used in 3_hia_for_each_scenario
+link_equity_indices= function(df){
+  df %>% 
+    left_join(lookup_colorado_bg_tract, by = "bg_fips") %>% #2020 ok
+    left_join(lookup_den_nbhd_tract, by = "tract_fips") %>%  
+    left_join(lookup_equity_nbhd_denver, by = "nbhd_id") %>% 
+    rename(bg_fips_2020 = bg_fips) %>%   
+    left_join(lookup_colorado_bg_2020_vs_2019_nogeo, by = "bg_fips_2020") %>% 
+    left_join(lookup_equity_bg_cdphe_2019, by = "bg_fips_2019") %>% 
+    rename(bg_fips = bg_fips_2020)      #change name back
+}
+
+setwd(here("data-processed"))
+load("den_bg_acs5_wrangle_geo.RData")
+load("lookup_colorado_bg_tract.RData")
+load("lookup_den_nbhd_tract.RData") #neighborhood ids in denver linked to tracts
+load("lookup_equity_nbhd_denver.RData")
+load("lookup_colorado_bg_2020_vs_2019_nogeo.RData")
+load("lookup_equity_bg_cdphe_2019.RData")
+compare_tertiles = den_bg_acs5_wrangle_geo %>% 
+  dplyr::select(bg_fips, county_fips, geometry) %>% 
+  link_equity_indices() %>% 
+  filter(county_fips == "031") %>% 
+  dplyr::select(contains("fips"), contains("equity")) %>% 
+  st_set_geometry(NULL)
+
+compare_tertiles_chisq = chisq.test(table(
+  compare_tertiles$equity_bg_cdphe_tertile_den, compare_tertiles$equity_nbhd_denver_tertile)
+)
+
+compare_tertiles_chisq
+```
+
+# Visualization of scenarios
+
+Note to self: This section is mostly copied from ~green-space-denver/docs/hia-results.Rmd
+
+## Scenario 1: fixed proportion of all block groups
+
+The weighted block-group-level mean NDVI on July 4, 2021 is presented here.
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE, fig.cap = "Mean normalized difference vegetation index (NDVI) of census block groups in Denver, Colorado (excluding some in the northeast, described in main text) on July 4, 2021 as measured by the Landsat-8 satellite on July 4, 2021. NDVI is measured at a spatial resolution of 30 meters squared. The weighted block-group-level mean NDVI is weighted by the proportion Landsat pixels overlap the water-free land area of the block group"}
+#update may 11 2022 to add figure caption
+setwd(here("data-processed"))
+load("den_co_bg_ndvi_geo.RData") #updated april 18 2022
+#names(den_co_bg_ndvi_geo)
+pal_terrain = terrain.colors(100) %>% rev()#reverse the order of the palette
+mv_den_co_bg_ndvi  = den_co_bg_ndvi_geo %>% 
+  dplyr::select(bg_fips, ndvi_mean_wt) %>% 
+  mapview(
+    layer.name = "NDVI, block group",
+    zcol = "ndvi_mean_wt",
+    col.regions = pal_terrain, 
+    at = seq(-0.1, 1, 0.1)
+  )
+mv_den_co_bg_ndvi@map %>% 
+  addFullscreenControl()
+```
+
+For each definition of native-plants NDVI, We excluded census blocks whose baseline NDVI was above the threshold. The following map categorizes census block groups by at the NDVI cutoffs of 0.34, 0.42, and 0.54:
+
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+#revised this section july 8, 2022
+library(RColorBrewer)
+library(mapview)
+library(tidyverse)
+setwd(here("data-processed"))
+load("den_co_bg_ndvi_geo.RData")
+#names(den_co_bg_ndvi_geo)
+mv_bg_native_cat = den_co_bg_ndvi_geo %>% 
+  dplyr::select(bg_fips, ndvi_mean_wt) %>% 
+  mutate(ndvi_native_cat = cut(ndvi_mean_wt, breaks= c(0, 0.34, 0.42, 0.54,1))) %>% 
+  mapview(
+    layer.name = "NDVI category",
+    zcol = "ndvi_native_cat"
+  )
+mv_bg_native_cat
+```
+
+## Scenario 2: riparian areas
+
+We measured NDVI in a 200-foot buffer, a 100-foot buffer, and a 50-foot buffer around all bodies of water in Denver. We downloaded bodies of water from OpenStreetMap (code [here](https://github.com/michaeldgarber/green-space-denver/blob/main/scripts/0_load_denver_osm_parks_water.R)). We defined residential exposure to these riparian areas as those individuals living within a 500-meter buffer.
+
+The below map depicts mean NDVI in the portions of census block groups that intersect a 200-foot buffer as well as those pieces that intersect the part of the 500 m buffer that would not be intervened upon, i.e., the part between the 200-foot buffer and the edge of the 500 m residential buffer.
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("den_bg_int_wtr_200ft_comp_ndvi.RData")
+load("den_bg_int_wtr_200ft_tx_ndvi.RData")
+load("den_co_osm_wtr.RData")
+load("study_area_2876.RData")
+pal_terrain_col = rev(terrain.colors(100)) 
+mv_den_bg_int_wtr_200ft_comp_ndvi= den_bg_int_wtr_200ft_comp_ndvi %>% 
+  mapview(
+    col.regions = pal_terrain_col,
+    at = seq(-.1, 1, 0.1), #0 to 1 by .1; define the breaks so consistent between layers
+    layer.name = "NDVI, 200 ft - 500 m",
+    zcol = "ndvi_mean_wt")
+
+mv_den_bg_int_wtr_200ft_tx_ndvi= den_bg_int_wtr_200ft_tx_ndvi %>% 
+  mapview(
+    col.regions = pal_terrain_col,
+    at = seq(-.1, 1, 0.1), #0 to 1 by .1; define the breaks so consistent between layers
+    layer.name = "NDVI, 200 ft",
+    zcol = "ndvi_mean_wt")
+
+mv_den_co_osm_wtr = den_co_osm_wtr %>% 
+  st_intersection(study_area_2876) %>% 
+  mapview(
+    layer.name = "Water type",
+    col.regions = rainbow(n_distinct(den_co_osm_wtr$water_type)),
+    zcol = "water_type")
+
+#### Visualize all at once--------
+mv_rip_all3 = mv_den_bg_int_wtr_200ft_tx_ndvi+ mv_den_bg_int_wtr_200ft_comp_ndvi +mv_den_co_osm_wtr
+mv_rip_all3@map %>% 
+  addFullscreenControl()
+```
+
+## Scenario 3: green infrastructure
+
+### Scenario 3.1. stormwater retention projects
+
+We were provided a list of planned projects throughout Denver. Per our conversations, we assume that about 75% of the project's footprint would consist of native or vegetation. Like for riparian areas, we defined exposure to the projects as those individuals living within a 500 m buffer of the projects. A map of baseline NDVI of the projects themselves and of a 500 m residential buffer around the projects is below.
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("den_bg_int_ogi_proj_comp_ndvi.RData")
+load("den_bg_int_ogi_proj_tx_ndvi.RData")
+load("den_co_osm_wtr.RData")
+load("study_area_2876.RData")
+pal_terrain_col = rev(terrain.colors(100)) 
+
+#### 500 m Buffer excluding the project---------
+mv_den_bg_int_ogi_proj_comp_ndvi= den_bg_int_ogi_proj_comp_ndvi %>% 
+  mapview(
+    col.regions = pal_terrain_col,
+    at = seq(-.1, 1, 0.1), #0 to 1 by .1; define the breaks so consistent between layers
+    layer.name = "NDVI, 500m buffer, projects",
+    zcol = "ndvi_mean_wt")
+
+#### The project only----------
+mv_den_bg_int_ogi_proj_tx_ndvi= den_bg_int_ogi_proj_tx_ndvi %>% 
+  mapview(
+    col.regions = pal_terrain_col,
+    at = seq(-.1, 1, 0.1), #0 to 1 by .1; define the breaks so consistent between layers
+    layer.name = "NDVI, projects only",
+    zcol = "ndvi_mean_wt")
+
+#### Bodies of water--------
+load("den_co_osm_water.RData")
+mv_den_co_osm_water = den_co_osm_water %>% 
+  st_intersection(study_area_2876) %>% 
+  mapview(
+    layer.name = "Water type",
+    col.regions = rainbow(n_distinct(den_co_osm_water$water_type)),
+    zcol = "water_type")
+
+#### Visualize all at once--------------
+mv_ogi_proj_all3 = mv_den_bg_int_ogi_proj_comp_ndvi+ 
+  mv_den_bg_int_ogi_proj_tx_ndvi +mv_den_co_osm_wtr
+mv_ogi_proj_all3@map %>% 
+  addFullscreenControl()
+```
+
+### Scenario 3.2. Site new or re-development storwmater controls
+
+A regulatory scenario suggested by this agency is stormwater controls on new and re-development to offset the negative impacts to flooding and water quality due to the increase in impervious surfaces added by development. These stormwater control measures would add vegetation using native or adapted plants. The approach for estimating the health impact of the redevelopment controls is distinct in that we will not know where the re-developments will occur. We thus simulated possible locations. Per our conversations with the stakeholder, we anticipate the following number of parcels will be subject to these rules per year:
+
+-   greater than 1 acre: about 100 sites per year
+-   0.5-1.0 acre: about 25 sites per year
+-   less than 0.5 acre: 400 sites per year
+
+We gathered data on parcels from Denver's Open Data Portal ([Existing Landuse 2018](https://www.denvergov.org/opendata/dataset/city-and-county-of-denver-existing-landuse-2018)) and measured their area. A subset of these parcels near Union Station is mapped below. (Mapping all parcels is too much data to present.)
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+library(here)
+setwd(here("data-processed"))
+load("den_landuse_union_sta.RData") #created scripts/0_read_wrangle_denver_land_use.R
+
+mv_landuse_union_sta = den_landuse_union_sta %>% 
+  dplyr::select(-starts_with("address")) %>% 
+  mapview(
+    zcol = "CPD_LANDUS",
+    layer.name = "Land-use type",
+    col.regions = rainbow(n=n_distinct(den_landuse_union_sta$CPD_LANDUS)))
+mv_landuse_union_sta@map %>% 
+  addFullscreenControl()
+```
+
+Then, from all parcels, we sampled 100 sites of size greater than 1 acre, 25 sites of size 0.5-1 acre, and 400 sites less than 0.5 acres. One such sample appears below.
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+library(here)
+setwd(here("data-processed"))
+load("den_landuse_sample.RData")
+mv_den_landuse_sample = den_landuse_sample %>% 
+  mapview(
+    layer.name = "Parcel size category",
+    zcol = "parcel_size_cat")
+mv_den_landuse_sample@map %>% 
+  addFullscreenControl()
+```
+
+From this point, we followed the same framework as for other scenarios. The baseline NDVI of the sampled parcels and that of their corresponding 500m buffers is visualized below.
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("den_bg_int_parcel_comp_ndvi.RData")
+load("den_bg_int_parcel_tx_ndvi.RData")
+load("study_area_2876.RData")
+load("union_station_1_mi_4326.RData") # we will limit to a 1-mi radius around union station
+pal_terrain_col = rev(terrain.colors(100)) 
+library(leaflet.extras)
+library(mapview)
+#### Buffer excluding the parking---------
+sf::sf_use_s2(FALSE) #have to use this as I was getting an error that loop not valid
+mv_union_sta_den_bg_int_parcel_comp_ndvi= den_bg_int_parcel_comp_ndvi %>% 
+  mapview(
+    col.regions = pal_terrain_col,
+    layer.name = "NDVI, 500 m buffer, parcel",
+    zcol = "ndvi_mean_wt")
+
+#### The parking only----------
+mv_union_sta_den_bg_int_parcel_tx_ndvi= den_bg_int_parcel_tx_ndvi %>% 
+  mapview(
+    col.regions = pal_terrain_col,
+    layer.name = "NDVI, parcel only",
+    zcol = "ndvi_mean_wt")
+
+#### Visualize all at once--------------
+mv_parcel_both = mv_union_sta_den_bg_int_parcel_comp_ndvi+ 
+  mv_union_sta_den_bg_int_parcel_tx_ndvi
+
+mv_parcel_both@map %>% 
+  addFullscreenControl()
+```
+
+## Scenario 4: parking lots
+
+Finally, we propose replacing a portion of parking-lot surface with native plants. Denver's area is about 9% parking lot (below table). We obtained spatial data on parking lots from the City of Denver Open Data Catalog.[@denvero2016]
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("den_prkng_tx_marg.RData")
+den_prkng_tx_marg %>% 
+  st_set_geometry(NULL) %>% 
+  mutate(
+    den_area_mi2_total = 155,
+    prop_den_parking = area_mi2_prkng/den_area_mi2_total
+         ) %>% 
+  dplyr::select(-starts_with("area_ft2")) %>% 
+  knitr::kable(
+    booktabs = TRUE,
+    caption = "Proportion of Denver's area covered by parking lots",
+    col.names = c("Total area (mi^2^), parking lots", "Total area (mi^2^), Denver", "proportion parking lots"),
+    digits = 2)
+```
+
+We similarly measured the NDVI on the parking lots as well as the NDVI in the census block groups within a 500-m buffer radius of any parking lot (which is almost the whole city). We present a subset of these areas in a 2-mile radius around Union Station (the complete data are too large to upload):
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("den_bg_int_prkng_comp_ndvi.RData")
+load("den_bg_int_prkng_tx_ndvi.RData")
+load("study_area_2876.RData")
+load("union_station_1_mi_4326.RData") # we will limit to a 1-mi radius around union station
+load("union_station_1_mi_2876.RData")
+load("union_station_2_mi_4326.RData") 
+load("union_station_2_mi_2876.RData")
+
+pal_terrain_col = rev(terrain.colors(100)) 
+library(leaflet.extras)
+library(mapview)
+#### Buffer excluding the parking---------
+sf::sf_use_s2(FALSE) #have to use this as I was getting an error that loop not valid
+mv_union_sta_den_bg_int_prkng_comp_ndvi= den_bg_int_prkng_comp_ndvi %>% 
+  st_transform(2876) %>% 
+  st_simplify(dTolerance = 20) %>%  #make size much smaller for visual. intentionally ordered here
+  st_intersection(union_station_2_mi_2876) %>% 
+  st_make_valid() %>% 
+  st_buffer(0) %>% 
+  mapview(
+    col.regions = pal_terrain_col,
+    layer.name = "NDVI, 500 m buffer, parking",
+    zcol = "ndvi_mean_wt")
+
+#### The parking only----------
+mv_union_sta_den_bg_int_prkng_tx_ndvi= den_bg_int_prkng_tx_ndvi %>% 
+  st_transform(2876) %>% 
+  st_simplify(dTolerance = 20) %>%  #make size much smaller for visual. intentionally ordered here
+  st_intersection(union_station_2_mi_2876) %>% 
+  st_make_valid() %>% 
+  st_buffer(0) %>% 
+  mapview(
+    col.regions = pal_terrain_col,
+    layer.name = "NDVI, parking only",
+    zcol = "ndvi_mean_wt")
+
+#### Visualize all at once--------------
+mv_prkng_both = mv_union_sta_den_bg_int_prkng_comp_ndvi+ 
+  mv_union_sta_den_bg_int_prkng_tx_ndvi
+
+mv_prkng_both@map %>% 
+  addFullscreenControl()
+```
+
+Due to space constraints, we cannot map each parking lot interactively on this website. Below is a static map of the parking lots in the Denver study area.
+
+```{r parking-union,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("den_bg_int_prkng_tx_union.RData")
+load("den_bg_int_prkng_comp_union.RData")
+den_bg_int_prkng_tx_union %>% 
+  ggplot()+
+  geom_sf()+
+  theme_bw()
+```
+
+# Supplementary tables
+Note for internal reference that these tables are output in Word here:
+~green-space-denver/docs-for-word/tables-appendix.Rmd
+
+## Table 1: Description of scenarios (area, pop affecteds)
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("hia_all_over_ndvi_over_equity_est_boot.RData")
+load("hia_all_over_ndvi_by_equity_est_boot.RData")
+load("lookup_scenario_sort_order.RData") #to get it to sort how I want
+load("lookup_scenario_main_text.RData") #to restrict to those in the main text if necessary
+load("lookup_scenario_num.RData")
+load("lookup_scenario_label.RData")
+hia_all_over_ndvi_over_equity_est_boot %>% 
+  bind_rows(hia_all_over_ndvi_by_equity_est_boot) %>% 
+  arrange(scenario_sort_order) %>% 
+  left_join(lookup_scenario_main_text, by = c("scenario", "scenario_sub")) %>% 
+#  filter(scenario_main_text==1) %>% #remove from appendix but include in main-text tables
+  left_join(lookup_scenario_num , by = c("scenario", "scenario_sub")) %>% #add this for presentation
+  left_join(lookup_scenario_label, by=  c("scenario", "scenario_sub")) %>% #add better scenario labels
+  #Create concatenated version of estimates + confidence intervals in one cell
+  #I learned about formatC, which I have never used before 
+  #https://stackoverflow.com/questions/3443687/formatting-decimal-places-in-r
+  mutate(
+    area_mi2_bg_int_tx_conc = paste0(
+      as.character(formatC(area_mi2_bg_int_tx_med,digits=1, format = "f")),
+      " (", 
+      as.character(formatC(area_mi2_bg_int_tx_min,digits=1, format = "f")),
+      ", ",
+      as.character(formatC(area_mi2_bg_int_tx_max,digits=1, format="f")),
+      ")")
+    ,
+    area_mi2_bg_int_res_conc = paste0(
+      as.character(formatC(area_mi2_bg_int_res_med,digits=1, format = "f")),
+      " (", 
+      as.character(formatC(area_mi2_bg_int_res_min,digits=1, format = "f")),
+      ", ",
+      as.character(formatC(area_mi2_bg_int_res_max,digits=1, format="f")),
+      ")")
+    ,
+    area_prop_tx_res_conc = paste0(
+      as.character(formatC(area_prop_tx_res_med,digits=2, format = "f")),
+      " (", 
+      as.character(formatC(area_prop_tx_res_min,digits=2, format = "f")),
+      ", ",
+      as.character(formatC(area_prop_tx_res_max,digits=2, format="f")),
+      ")"),
+    #here, use big.mark to add a comma.
+    pop_affected_conc =  paste0(
+        as.character(formatC(pop_affected_med,digits=0, format = "f", big.mark=",")),
+        " (", 
+        as.character(formatC(pop_affected_ll,digits=0, format = "f", big.mark=",")),
+        "; ", #using a semi-colon as a separator instead to avoid confusion with comma
+        #for every thousand.
+        as.character(formatC(pop_affected_ul,digits=0, format="f", big.mark=",")),
+        ")")
+  ) %>% 
+  dplyr::select(
+    scenario_num,
+  scenario_label, 
+    scenario_sub,
+  #  scenario_sub, #not presenting sub-scenarios in the main text table
+    starts_with("equity_nbhd_denver_tertile"),
+    ends_with("_conc") #this picks up all the variables you just created with formatC
+  ) %>%
+  ungroup() %>% 
+  knitr::kable(
+    caption = "The cumulative area of the treatment, its corresponding residential buffer, and the population affected",
+    booktabs = TRUE,
+    format.args = list(big.mark = ","),
+#    digits = c(0, 0, 0, 1, 1, 1, 1, 1, 1,2,2,2,0, 0,0),
+    col.names = c(
+            "Scenario num.",
+      "Scenario",
+      "Sub-scenario",
+      "Equity Tertile",
+      "Area, treatment (mi^2^), median (95% UI)",
+      "Area, residential buffer (mi^2^), median (95% UI)",
+      "Prop. of residential buffer treated, median (95% UI)",
+      "Pop. affected, estimate (95% UI)"
+      )  )
+```
+## Table 2: NDVI at baseline, alternative, and difference therein
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("hia_all_over_ndvi_over_equity_est_boot.RData")
+load("hia_all_over_ndvi_by_equity_est_boot.RData")
+load("lookup_scenario_sort_order.RData") #to get it to sort how I want
+load("lookup_scenario_main_text.RData") #to restrict to those in the main text if necessary
+load("lookup_scenario_num.RData")
+hia_all_over_ndvi_over_equity_est_boot %>% 
+  bind_rows(hia_all_over_ndvi_by_equity_est_boot) %>% 
+  arrange(scenario_sort_order) %>% 
+  #filter to just the main sub-scenarios to present in the main text
+  left_join(lookup_scenario_main_text, by = c("scenario", "scenario_sub")) %>% 
+#  filter(scenario_main_text==1) %>% #remove from appendix but include in main-text tables
+  left_join(lookup_scenario_num , by = c("scenario", "scenario_sub")) %>% #add this for presentation
+  left_join(lookup_scenario_label, by=  c("scenario", "scenario_sub")) %>% #add better scenario labels
+     #more concatenate
+  mutate(
+    
+    #baseline ndvi of the treatment area 
+    ndvi_mean_wt_tx_conc = paste0(
+      as.character(formatC(ndvi_mean_wt_tx_med,digits=2, format = "f")),
+      " (", 
+      as.character(formatC(ndvi_mean_wt_tx_min,digits=2, format = "f")),
+      ", ",
+      as.character(formatC(ndvi_mean_wt_tx_max,digits=2, format="f")),
+      ")"),
+    
+    #baseline NDVI of the full residential area
+    ndvi_quo_conc = paste0(
+      as.character(formatC(ndvi_quo_med,digits=2, format = "f")),
+      " (", 
+      as.character(formatC(ndvi_quo_min,digits=2, format = "f")),
+      ", ",
+      as.character(formatC(ndvi_quo_max,digits=2, format="f")),
+      ")")
+    ,
+    ndvi_mean_alt_conc = paste0(
+      as.character(formatC(ndvi_mean_alt_med,digits=2, format = "f")),
+      " (", 
+      as.character(formatC(ndvi_mean_alt_min,digits=2, format = "f")),
+      ", ",
+      as.character(formatC(ndvi_mean_alt_max,digits=2, format="f")),
+      ")"),
+    ndvi_diff_conc = paste0(
+      as.character(formatC(ndvi_diff_med,digits=3, format = "f")),
+      " (", 
+      as.character(formatC(ndvi_diff_min,digits=3, format = "f")),
+      ", ",
+      as.character(formatC(ndvi_diff_max,digits=3, format="f")),
+      ")")
+  ) %>% 
+  dplyr::select(
+    scenario_num,
+        scenario_label, 
+        scenario_sub,
+
+    starts_with("equity_nbhd_denver_tertile"),
+    ends_with("_conc") #this picks up all the variables you just created with formatC
+  ) %>% 
+  knitr::kable(
+    caption = "Baseline and alternative NDVI of the residential buffer and the corresponding difference",
+    booktabs = TRUE,
+#    format.args = list(big.mark = ","), #not necessary because we formatted in the paste0
+#    digits = c(0,0,0,2,2,2,2,2,2,2,2,2,3,3,3), ##max digits after decimal. also not necessary
+    col.names = c(
+      "Scenario num.",
+      "Scenario", 
+      "Sub-scenario",
+      "Equity Tertile", 
+      "Baseline NDVI, treatment area, median (95% UI)",
+      "Baseline NDVI, residential buffer, median (95% UI)",
+      "Alternative NDVI, residential buffer, median (95% UI)",
+      "Difference: NDVI, residential buffer, median (95% UI)"
+      )
+) 
+```
+
+## Table 3: Estimated deaths averted (total and rate per 100k) under each scenario
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("hia_all_over_ndvi_over_equity_est_boot.RData")
+load("hia_all_over_ndvi_by_equity_est_boot.RData")
+load("lookup_scenario_sort_order.RData") #to get it to sort how I want
+load("lookup_scenario_main_text.RData") #to restrict to those in the main text if necessary
+load("lookup_scenario_num.RData")
+hia_all_over_ndvi_over_equity_est_boot %>% 
+  bind_rows(hia_all_over_ndvi_by_equity_est_boot) %>% 
+  arrange(scenario_sort_order) %>% 
+#  filter(scenario_main_text==1) %>% #remove from appendix but include in main-text tables
+  left_join(lookup_scenario_main_text, by = c("scenario", "scenario_sub")) %>% 
+  left_join(lookup_scenario_num , by = c("scenario", "scenario_sub")) %>% #add this for presentation
+  left_join(lookup_scenario_label, by=  c("scenario", "scenario_sub")) %>% #add better scenario labels
+   #more concatenate
+  mutate(
+    deaths_prevented_count_conc = paste0(
+      as.character(formatC(deaths_prevented_count_med,digits=0, format = "f")),
+      " (", 
+      as.character(formatC(deaths_prevented_count_ll,digits=0, format = "f")),
+      ", ",
+      as.character(formatC(deaths_prevented_count_ul,digits=0, format="f")),
+      ")"),
+    
+    deaths_prevented_per_pop_100k_conc = paste0(
+      as.character(formatC(deaths_prevented_per_pop_100k_med,digits=0, format = "f")),
+      " (", 
+      as.character(formatC(deaths_prevented_per_pop_100k_ll,digits=0, format = "f")),
+      ", ",
+      as.character(formatC(deaths_prevented_per_pop_100k_ul,digits=0, format="f")),
+      ")")
+  ) %>% 
+  dplyr::select(
+    scenario_num,
+    scenario_label, 
+        scenario_sub,
+    starts_with("equity_nbhd_denver_tertile"),
+    ends_with("conc")
+  ) %>% 
+  knitr::kable(
+    caption = "Estimated annual premature deaths prevented",
+    booktabs = TRUE,
+        col.names = c(
+      "Scenario num.",
+      "Scenario", 
+      "Sub-scenario",
+      "Equity Tertile", 
+      "Deaths prevented, estimate (95% UI)", 
+      "Deaths prevented per 100k, estimate (95% UI)"
+      )
+  )
+```
+
+# Scatterplot of equity and NDVI at the block-group level
+The horizontal lines correspond to the three NDVI defitions of native plants. The blue line is the linear line of best fit, showing a slight positive association between NDVI and equity scre, where a lower equity score indicates more disadvantage.
+```{r, eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("den_co_bg_pop_per_ndvi.RData") #made in scripts/4_pop_dens_per_ndvi.R
+load("hia_all.RData")
+library(shades)
+ndvi_native_threshold_vector = hia_all %>% 
+  distinct(ndvi_native_threshold) %>% 
+  arrange(ndvi_native_threshold) %>% 
+  pull()
+terrain_colors_4= terrain.colors(4) %>% rev()
+den_co_bg_pop_per_ndvi %>% 
+  dplyr::select(-tract_fips) %>% 
+  link_equity_indices() %>% 
+  ggplot(aes(x=equity_nbhd_denver, y=ndvi_mean_wt )) + 
+  geom_point()+
+  ylab("NDVI") +
+  xlab("Denver Equity Index (lower is more disadvantaged)") +
+  theme_bw(base_size = 14) +
+  geom_hline(
+    yintercept = ndvi_native_threshold_vector[1],
+    linetype = "dashed", color = terrain_colors_4[4], lwd=1)+
+  geom_hline(
+    yintercept = ndvi_native_threshold_vector[2], lwd=1,
+    linetype = "dashed", color = terrain_colors_4[4]) +
+  geom_hline(
+    yintercept = ndvi_native_threshold_vector[3], lwd=1,
+    color = terrain_colors_4[4], #I thought about changing but I think one color is good
+             linetype = "dashed")+
+  geom_smooth(method = lm)
+```
+
+The linear correlation between equity score and NDVI of the census block groups is positive but fairly weak.
+```{r}
+den_co_bg_pop_per_ndvi_equity_linked = den_co_bg_pop_per_ndvi %>% 
+  dplyr::select(-tract_fips) %>% 
+  link_equity_indices() %>% 
+  st_set_geometry(NULL)
+
+cor(den_co_bg_pop_per_ndvi_equity_linked$equity_nbhd_denver, 
+     den_co_bg_pop_per_ndvi_equity_linked$ndvi_mean_wt)
+```
+
+# References

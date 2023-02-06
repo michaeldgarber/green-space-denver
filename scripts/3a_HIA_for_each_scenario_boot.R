@@ -9,8 +9,10 @@ setwd(here("data-processed"))
 #revised 5/26/22
 # Rerunning February 2, 2023 including the 
 #new definition for native plants (July 4, 2021)
+
 #Run functions here:
 #scripts/3_hia_functions_needed_for_boot.R
+source(here("scripts", "3_hia_functions_needed_for_boot.R"))
 
 #This is the bootstrapping code for the HIA
 #Three sources of error for first group (stratified by native definition): 
@@ -68,7 +70,7 @@ bootstrap_hia = function(s_id_val){
 # Feb 2, 2023: 200 is reaching memory limit. hmm. Let me try with no applications open.
 #2 pm: still failed - trying with 100 (worked). 150? worked. 175 good. 200 and 199 failed. Trying 190.
 #180 failed. Let's go with 175 and maybe we can change later by rewriting code
-n_boot_reps = 175 #200 good.
+n_boot_reps = 50 #175 works if nothing else is open.
 s_id_val_list <- seq(from = 1, to = n_boot_reps, by = 1)
 
 hia_all_boot  = s_id_val_list %>% 

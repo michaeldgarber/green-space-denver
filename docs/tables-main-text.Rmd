@@ -1,0 +1,115 @@
+---
+title: "Tables - main text"
+author: "Michael D Garber"
+date: '2023-02-06'
+#always_allow_html: true
+#note word doesn't seem to render unless I render the whole site ()rmarkdown::render_site(encoding = 'UTF-8')
+output:
+  bookdown::word_document2:
+    toc: true
+  # bookdown::html_document2:
+  #   toc: true
+  #   toc_float: true
+  #   toc_depth: 4
+  #   include: 
+  #     after_body: footer.html
+---
+
+February 3rd, 2023: I updated this include the tables in the most recent version of the main text.
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+library(here)
+library(tidyverse)
+library(mapview)
+library(sf)
+library(leaflet.extras)
+```
+
+# Tables 
+## Table 1: Population exposed to each scenario, difference in normalized difference vegetation index (NDVI) within the residential buffer, and estimated premature mortality prevented.
+
+```{r,  eval=TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+setwd(here("data-processed"))
+load("hia_all_over_ndvi_over_equity_est_boot.RData")
+load("hia_all_over_ndvi_by_equity_est_boot.RData")
+load("lookup_scenario_sort_order.RData") #to get it to sort how I want
+load("lookup_scenario_main_text.RData") #to restrict to those in the main text if necessary
+load("lookup_scenario_num.RData")
+load("lookup_scenario_label.RData")
+library(scales)
+hia_all_over_ndvi_over_equity_est_boot %>% 
+  bind_rows(hia_all_over_ndvi_by_equity_est_boot) %>% 
+  arrange(scenario_sort_order) %>% 
+  #filter to just the main sub-scenarios to present in the main text
+  left_join(lookup_scenario_main_text, by = c("scenario", "scenario_sub")) %>% 
+  filter(scenario_main_text==1) %>% 
+  left_join(lookup_scenario_num , by = c("scenario", "scenario_sub")) %>% #add this for presentation
+  left_join(lookup_scenario_label, by=  c("scenario", "scenario_sub")) %>% #add better scenario labels
+  #Create concatenated version of estimates + confidence intervals in one cell
+  #I learned about formatC, which I have never used before 
+  #https://stackoverflow.com/questions/3443687/formatting-decimal-places-in-r
+  mutate(
+    area_mi2_bg_int_res_conc = paste0(
+      as.character(formatC(area_mi2_bg_int_res_med,digits=1, format = "f")),
+      " (", 
+      as.character(formatC(area_mi2_bg_int_res_min,digits=1, format = "f")),
+      ", ",
+      as.character(formatC(area_mi2_bg_int_res_max,digits=1, format="f")),
+      ")")
+    ,
+    pop_affected_conc =  paste0(    #here, use big.mark to add a comma.
+        as.character(formatC(pop_affected_med,digits=0, format = "f", big.mark=",")),
+        " (", 
+        as.character(formatC(pop_affected_ll,digits=0, format = "f", big.mark=",")),
+        "; ", #using a semi-colon as a separator instead to avoid confusion with comma
+        #for every thousand.
+        as.character(formatC(pop_affected_ul,digits=0, format="f", big.mark=",")),
+        ")"),
+    ndvi_diff_conc = paste0(
+      as.character(formatC(ndvi_diff_med,digits=3, format = "f")),
+      " (", 
+      as.character(formatC(ndvi_diff_min,digits=3, format = "f")),
+      ", ",
+      as.character(formatC(ndvi_diff_max,digits=3, format="f")),
+      ")"),
+    deaths_prevented_count_conc = paste0(
+      as.character(formatC(deaths_prevented_count_med,digits=0, format = "f")),
+      " (", 
+      as.character(formatC(deaths_prevented_count_ll,digits=0, format = "f")),
+      ", ",
+      as.character(formatC(deaths_prevented_count_ul,digits=0, format="f")),
+      ")"),
+    
+    deaths_prevented_per_pop_100k_conc = paste0(
+      as.character(formatC(deaths_prevented_per_pop_100k_med,digits=0, format = "f")),
+      " (", 
+      as.character(formatC(deaths_prevented_per_pop_100k_ll,digits=0, format = "f")),
+      ", ",
+      as.character(formatC(deaths_prevented_per_pop_100k_ul,digits=0, format="f")),
+      ")")
+    
+  ) %>% 
+  dplyr::select(
+    scenario_num,
+    scenario_label, 
+    starts_with("equity_nbhd_denver_tertile"),
+    ends_with("_conc") #this picks up all the variables you just created with formatC
+  ) %>%
+  ungroup() %>% 
+  knitr::kable(
+    caption = "Table 1",
+    booktabs = TRUE,
+    format.args = list(big.mark = ","),
+#    digits = c(0, 0, 0, 1, 1, 1, 1, 1, 1,2,2,2,0, 0,0),
+    col.names = c(
+            "Scenario num.",
+      "Scenario",
+      "Equity Tertile",
+      "Area, residential buffer (mi^2^), median (95% UI)",
+      "Pop. affected, estimate (95% UI)", 
+      "Difference: NDVI, residential buffer, median (95% UI)", 
+      "Deaths prevented, estimate (95% UI)",
+      "Deaths prevented per 100k, estimate (95% UI)"
+      )  )
+```
+

@@ -1425,7 +1425,8 @@ map_over_native_ndvi_all_ogi_proj = function(ndvi_native_threshold_val){
       #add the native-plants NDVI value here instead of above so I can loop it through
       #various possible values 
       ndvi_native_threshold = ndvi_native_threshold_val, #define it here as a variable
-      #whether treatment area was above native threshold. note this is different than the scenarios
+      #whether treatment area was above native threshold. 
+      #note this is different than the scenarios
       #at the block-group level
       #note! ndvi_mean_wt_tx is created in the pivot_wider calculation above
       ndvi_below_native_threshold = case_when( 
@@ -2456,6 +2457,9 @@ mutate_part_of_hia = function(df){ #make a function out of it since
 names(den_co_bg_ndvi_alt_all_nogeo)
 names(den_bg_int_wtr_ndvi_all_nogeo)
 nrow(den_co_bg_ndvi_alt_30_nogeo)
+den_bg_int_ogi_proj_ndvi_wide
+table(den_bg_int_ogi_proj_ndvi_wide$ndvi_below_native_threshold)
+table(den_bg_int_ogi_proj_ndvi_wide$ndvi_native_threshold)
 hia_all  = den_co_bg_ndvi_alt_all_nogeo %>% #scenario all bg
   #to make sure that ndvi_mean_wt_tx works throughout, add it here for the block-group-level scenario
   #as simply equal to ndvi_mean_wt
@@ -2470,7 +2474,8 @@ hia_all  = den_co_bg_ndvi_alt_all_nogeo %>% #scenario all bg
   dplyr::select(-contains("tract_fips"), -contains("county_fips")) %>% 
   #add equity indices to all scenarios but before I do that,
   #remove variables that may duplicate and get in the way
-  dplyr::select(-starts_with("equity"), -starts_with("nbhd"), -starts_with("bg_fips_2019")) %>% 
+  dplyr::select(
+    -starts_with("equity"), -starts_with("nbhd"), -starts_with("bg_fips_2019")) %>% 
   link_equity_indices() %>% #defined above
   dplyr::select(-starts_with("tract_fips")) %>% #again, tract_fips gets duplicated so remove 
   left_join(den_co_bg_sex_age_gbd_wrangle, by = "bg_fips") %>% 
@@ -2498,15 +2503,11 @@ hia_all  = den_co_bg_ndvi_alt_all_nogeo %>% #scenario all bg
       TRUE ~ area_mi2_bg_int_res 
     ),
     
-    #one thing to check is whether we've limited to ndvi_below_threshold and how
-    #does it make sense to simply not intervene upon any block group that has a ndvi above threshold?
-    #or, so we don't lose so much, for the non-bg interventions, we could only not intervene
-    #if the block-group piece is below ndvi
-    #probably simplest to re-calculate this. I think this will suffice.
-    ndvi_below_native_threshold = case_when( 
-      ndvi_quo   < ndvi_native_threshold ~1,
-      TRUE ~0
-    ),
+    #February 6th, 2023:
+    #It looks like I don't need to re-calculate 
+    #ndvi_below_native_threshold,
+    #as it's already done above, so deleting here.
+
     scenario_main_text = case_when(
       scenario == "all-bg" & scenario_sub == "30-pct" ~1,
       scenario == "riparian" & scenario_sub == "200-ft" ~1,
@@ -2601,7 +2602,8 @@ lookup_bg_fips_scenario_area = hia_all %>%
     bg_fips,
     scenario, scenario_sub, 
     # ndvi_native_threshold, 
-    ##not necessary for lookup. doesn't change the size of each bg. just affects what bgs are excluded/included
+    ##not necessary for lookup. doesn't change the size of each bg. 
+    #just affects what bgs are excluded/included
     area_mi2_bg_int_tx, area_mi2_bg_int_res ) %>% 
   arrange(bg_fips)
 # 
@@ -2647,7 +2649,8 @@ summarise_ungroup_hia_area_stuff_by_ndvi = function(df){
       area_mi2_bg_int_tx = sum(area_mi2_bg_int_tx, na.rm=TRUE), #treatment area; same for bg-level ones
       
       #sum these products before computing the weighted average below.
-      #note these _int values are products of the block-group-level value and the corresponding area (weight)
+      #note these _int values are products of the block-group-level value and the 
+      #corresponding area (weight)
       ndvi_mean_alt_int = sum(ndvi_mean_alt_int, na.rm=TRUE),
       ndvi_quo_int = sum(ndvi_quo_int, na.rm=TRUE),
       ndvi_mean_wt_tx_int = sum(ndvi_mean_wt_tx_int, na.rm=TRUE) #keep track of this for summary
@@ -2662,7 +2665,9 @@ summarise_ungroup_hia_area_stuff_by_ndvi = function(df){
       ndvi_mean_alt =ndvi_mean_alt_int/area_mi2_bg_int_res, #weighted mean
       ndvi_quo =ndvi_quo_int/area_mi2_bg_int_res, #weighted mean
       ndvi_diff = ndvi_mean_alt-ndvi_quo, #useful to keep
-      ndvi_mean_wt_tx = ndvi_mean_wt_tx_int/area_mi2_bg_int_tx  #weighted average of NDVI over treatment area only. note diff denom
+      
+      #weighted average of NDVI over treatment area only. note diff denom
+      ndvi_mean_wt_tx = ndvi_mean_wt_tx_int/area_mi2_bg_int_tx  
     ) 
 }
   
