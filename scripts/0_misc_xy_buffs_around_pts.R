@@ -13,6 +13,7 @@ here()
 
 #test push
 #google api key registered in a separate script
+#Avoid publishing key
 union_station_tib = as_tibble("Union Station, Denver, Colorado") %>% 
   rename(address = value)
 union_station_geo = mutate_geocode(union_station_tib, address, force=TRUE) %>%
