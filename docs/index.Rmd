@@ -1,5 +1,5 @@
 ---
-title: "green-space-denver"
+title: "Health impacts of native plants in Denver, Colorado"
 output: 
   bookdown::html_document2:
     toc: FALSE #overwrite the _yml
@@ -7,15 +7,16 @@ output:
       after_body: footer.html
 ---
 
+URL of this page: <https://michaeldgarber.github.io/green-space-denver/index.html>
 
--   Tables and figures (main text and appendix; revised Feb 6, 2023):
+Github repository: <https://github.com/michaeldgarber/green-space-denver>
 
-    -   <https://michaeldgarber.github.io/green-space-denver/tables-main-text-web.html>
+Related article: [Impact of native-plants policy scenarios on premature mortality in Denver: A quantitative health impact assessment](https://www.sciencedirect.com/science/article/pii/S0160412023003239). Environment International. 2023
 
-    -   <https://michaeldgarber.github.io/green-space-denver/tables-figs-appendix-web.html>
+Tables and figures (main text and appendix, article; revised Feb 6, 2023)
 
+-   <https://michaeldgarber.github.io/green-space-denver/tables-main-text-web.html>
 
+-   <https://michaeldgarber.github.io/green-space-denver/tables-figs-appendix-web.html>
 
 <br>
-
-source repository: <https://github.com/michaeldgarber/green-space-denver>
