@@ -5,7 +5,7 @@ navbar:
     - icon: fa-home
       href: https://michaeldgarber.github.io/
       text: "MDG"
-    - text: "green-space-denver"
+    - text: "Denver native plants HIA"
       href: index.html
 output:
   bookdown::html_document2:
