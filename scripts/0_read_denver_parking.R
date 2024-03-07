@@ -8,6 +8,9 @@ library(here)
 
 # Load parking data and measure area--------
 #dsn = #the folder where the shapefile is located
+library(here)
+library(sf)
+library(tidyverse)
 setwd(here("data-input", "city-of-denver-data"))
 den_prkng = st_read(dsn ="parking") %>%
   st_transform(2876) %>% #local feet

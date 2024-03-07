@@ -31,9 +31,10 @@ setwd(here("data-processed"))
 reticulate::py_config()
 rgee::ee_check() #worked.
 rgee::ee_check_credentials()
+rgee::ee_clean_user_credentials()
 #source(here("scripts", "configure  _rgee_lenovo.R")) #initialize rgee for Windows PC
 rgee::ee_Initialize(drive = T) #must run every time.
-
+rgee::ee_Authenticate()
 #Load denver area data for your region of interest
 setwd(here("data-processed"))
 load("den_metro_co_geo.RData")
@@ -85,7 +86,7 @@ den_metro_ee = den_metro_bbox_custom %>%
 #first, specify the image collections (landsat 8-day)
 #https://developers.google.com/earth-engine/datasets/catalog/LANDSAT_LC08_C01_T1_8DAY_NDVI
 #update: I'm separating by one-year increments to make sure it runs.
-landsat_8_ndvi_image_coll_2016<- ee$ImageCollection('LANDSAT/LC08/C01/T1_8DAY_NDVI')$ 
+landsat_8_ndvi_image_coll_2016<- rgee::ee$ImageCollection('LANDSAT/LC08/C01/T1_8DAY_NDVI')$ 
   filterDate("2016-01-01", "2016-12-31")$    #1/15/22 update to include 5 years per meeting
   select("NDVI")$  #select the NDVI band. note it works with single or double quotes. I prefer dbl
   toBands() #from imagecollection to image
@@ -122,8 +123,9 @@ n_m_per_pixel = 30#30 is the lowest you can go.
 #note renaming...removing the lsat...was too long.
 ndvi_den_metro_rast_2016 = landsat_8_ndvi_image_coll_2016 %>% 
   ee_as_raster(
-    dsn = "ndvi_den_metro_rast_2016", #very important to specify this; 
-                                  #otherwise will overwrite and  duplicate info
+    dsn = "ndvi_den_metro_rast_2016", 
+    #very important to specify this;
+    #otherwise will overwrite and  duplicate info
     region = den_metro_ee, #use metro to ensure coverage throughout region
     #number of meters per pixel. 
     #smaller number...slower speed...better resolution

@@ -66,11 +66,13 @@ bootstrap_hia = function(s_id_val){
 }  
 
 # Run bootstrap function----------
-#run the function x times; 500 reaches memory limit. 200 is fine. don't save the data frame because it's huge
+#run the function x times; 500 reaches memory limit. 200 is fine. 
+#don't save the data frame  because it's huge
 # Feb 2, 2023: 200 is reaching memory limit. hmm. Let me try with no applications open.
-#2 pm: still failed - trying with 100 (worked). 150? worked. 175 good. 200 and 199 failed. Trying 190.
-#180 failed. Let's go with 175 and maybe we can change later by rewriting code
-n_boot_reps = 50 #175 works if nothing else is open.
+#2 pm: still failed - trying with 100 (worked). 150? worked. 175 good. 200 and 199 failed. 
+#Trying 190.
+#200 works if I start from a fresh R program and close other programs.
+n_boot_reps = 200 
 s_id_val_list <- seq(from = 1, to = n_boot_reps, by = 1)
 
 hia_all_boot  = s_id_val_list %>% 
