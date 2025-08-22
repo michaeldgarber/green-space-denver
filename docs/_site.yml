@@ -1,6 +1,7 @@
 name: "green-space-denver"
 output_dir: "."
 navbar:
+  type: inverse #inverse the background color
   left:
     - icon: fa-home
       href: https://michaeldgarber.github.io/
@@ -9,6 +10,7 @@ navbar:
       href: index.html
 output:
   bookdown::html_document2:
+    theme: yeti
     toc: true 
     toc_float: true
     toc_depth: 4
